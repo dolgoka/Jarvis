@@ -7,10 +7,11 @@ import OpenAI from "openai";
 const router: IRouter = Router();
 
 function makeClient() {
-  return new OpenAI({
-    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  });
+  // Replit AI Integrations proxy takes priority; falls back to standard OPENAI_API_KEY for Railway/self-hosted
+  const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
+  const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY;
+  if (!apiKey) throw new Error("No OpenAI API key configured (set OPENAI_API_KEY)");
+  return new OpenAI({ ...(baseURL ? { baseURL } : {}), apiKey });
 }
 
 async function buildBusinessContext(period = "month") {

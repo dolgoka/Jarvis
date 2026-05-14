@@ -43,7 +43,7 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
           <div className="flex items-center gap-2 mb-2.5 flex-wrap">
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest font-semibold"
               style={{ background: `${color}18`, color, border: `1px solid ${color}38` }}>
-              {business?.sector || '—'}
+              {business?.industry || '—'}
             </span>
             <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest"
               style={{
@@ -150,7 +150,7 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
 }
 
 export default function GlobeDashboard() {
-  const globeEl = useRef<any>();
+  const globeEl = useRef<any>(null);
   const [hoveredPoint, setHoveredPoint] = useState<any | null>(null);
   const [selectedBusiness, setSelectedBusiness] = useState<{ id: number; color: string } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
