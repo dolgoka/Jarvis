@@ -181,8 +181,8 @@ export default function GlobeDashboard() {
       lat: b.lat,
       lng: b.lng,
       color: getBeaconColor(i),
-      alt: 0,
-      radius: 0.55,
+      alt: 0.025,
+      radius: 0.52,
       business: b,
     }));
   }, [businesses]);
@@ -257,7 +257,7 @@ export default function GlobeDashboard() {
                 polygonCapColor={(d: any) => d === hoveredPolygon ? "rgba(0,212,255,0.18)" : "rgba(255,255,255,0.02)"}
                 polygonSideColor={() => "rgba(0,180,255,0.04)"}
                 polygonStrokeColor={(d: any) => d === hoveredPolygon ? "#00d4ff" : "rgba(0,180,255,0.18)"}
-                polygonAltitude={(d: any) => d === hoveredPolygon ? 0.018 : 0.002}
+                polygonAltitude={(d: any) => d === hoveredPolygon ? 0.015 : 0.001}
                 onPolygonHover={(d: any) => setHoveredPolygon(d || null)}
                 polygonsTransitionDuration={200}
 
