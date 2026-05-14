@@ -35,9 +35,10 @@ async function seed() {
     const report = MONTHLY_REPORTS[i];
 
     // Insert business
+    const { sector, ...bizRest } = biz;
     const [inserted] = await db
       .insert(businessesTable)
-      .values({ ...biz, managerId: 0 })
+      .values({ ...bizRest, industry: sector, managerId: 0 })
       .onConflictDoNothing()
       .returning();
 
