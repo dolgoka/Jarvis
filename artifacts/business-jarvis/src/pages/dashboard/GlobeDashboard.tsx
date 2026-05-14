@@ -152,9 +152,17 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
 export default function GlobeDashboard() {
   const globeEl = useRef<any>(null);
   const [hoveredPoint, setHoveredPoint] = useState<any | null>(null);
+  const [hoveredPolygon, setHoveredPolygon] = useState<any | null>(null);
+  const [countries, setCountries] = useState<any[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState<{ id: number; color: string } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    fetch("https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson")
+      .then(r => r.json())
+      .then(data => setCountries(data.features));
+  }, []);
 
   const { data: businesses } = useListBusinesses({ query: { queryKey: getListBusinessesQueryKey() } });
   const { data: stats, isLoading: isLoadingStats } = useGetDashboardStats({ period: 'month' }, { query: { queryKey: getGetDashboardStatsQueryKey({ period: 'month' }) } });
@@ -244,7 +252,16 @@ export default function GlobeDashboard() {
                 atmosphereColor="#4db8ff"
                 atmosphereAltitude={0.32}
 
-                /* Short pillar beacons — each has unique color */
+                /* Country polygons — highlight on hover */
+                polygonsData={countries}
+                polygonCapColor={(d: any) => d === hoveredPolygon ? "rgba(0,212,255,0.18)" : "rgba(255,255,255,0.02)"}
+                polygonSideColor={() => "rgba(0,180,255,0.04)"}
+                polygonStrokeColor={(d: any) => d === hoveredPolygon ? "#00d4ff" : "rgba(0,180,255,0.18)"}
+                polygonAltitude={(d: any) => d === hoveredPolygon ? 0.018 : 0.002}
+                onPolygonHover={(d: any) => setHoveredPolygon(d || null)}
+                polygonsTransitionDuration={200}
+
+                /* Flat glowing dot beacons */
                 pointsData={markersData}
                 pointLat="lat"
                 pointLng="lng"
@@ -271,6 +288,16 @@ export default function GlobeDashboard() {
             </GlobeErrorBoundary>
           )}
         </div>
+
+        {/* Country hover tooltip */}
+        {hoveredPolygon && !hoveredPoint && !selectedBusiness && (
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none rounded-xl font-mono glass"
+            style={{ padding: '8px 18px', border: '1px solid rgba(0,212,255,0.25)', boxShadow: '0 0 24px rgba(0,212,255,0.15)' }}>
+            <div className="text-[13px] font-semibold text-cyan-300 tracking-widest uppercase">
+              {hoveredPolygon.properties?.NAME || hoveredPolygon.properties?.name || ''}
+            </div>
+          </div>
+        )}
 
         {/* Hover tooltip */}
         {hoveredPoint && !selectedBusiness && (
