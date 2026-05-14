@@ -166,17 +166,15 @@ export default function GlobeDashboard() {
     return map;
   }, [businesses]);
 
-  // Each marker: short pillar (pointAltitude) with a wide sphere top (pointRadius)
+  // Each marker: flat glowing dot on globe surface
   const markersData = useMemo(() => {
     if (!businesses) return [];
     return businesses.map((b, i) => ({
       lat: b.lat,
       lng: b.lng,
       color: getBeaconColor(i),
-      // Pillar: short but clearly visible
-      alt: 0.055,
-      // Beacon sphere on top: wide enough to glow visibly
-      radius: 0.42,
+      alt: 0,
+      radius: 0.55,
       business: b,
     }));
   }, [businesses]);
@@ -215,16 +213,13 @@ export default function GlobeDashboard() {
           const x = 260 + rx * Math.cos(angle);
           const y = 260 + ry * Math.sin(angle);
           return (
-            <div key={i} className="absolute cursor-pointer flex flex-col items-center"
-              style={{ left: x - 8, top: y - 22 }}
+            <div key={i} className="absolute cursor-pointer"
+              style={{ left: x - 8, top: y - 8 }}
               onClick={() => setSelectedBusiness({ id: p.business.id, color: p.color })}>
-              {/* Pillar */}
-              <div style={{ width: 3, height: 16, background: p.color, opacity: 0.72, borderRadius: 2 }} />
-              {/* Beacon */}
               <div style={{
-                width: 14, height: 14, borderRadius: '50%', marginTop: -2,
+                width: 16, height: 16, borderRadius: '50%',
                 background: `radial-gradient(circle at 35% 30%, #fff 0%, ${p.color} 60%)`,
-                boxShadow: `0 0 10px 4px ${p.color}cc, 0 0 22px 8px ${p.color}55`,
+                boxShadow: `0 0 12px 5px ${p.color}cc, 0 0 28px 10px ${p.color}55`,
               }} />
             </div>
           );
