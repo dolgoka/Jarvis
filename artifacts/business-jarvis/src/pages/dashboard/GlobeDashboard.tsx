@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from 
 import Globe from "react-globe.gl";
 import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
 import { formatCurrency, formatNumber } from "@/lib/utils";
-import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, DollarSign, User, Mail, Building2, Zap } from "lucide-react";
+import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, DollarSign, User, Mail, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
@@ -17,24 +17,21 @@ class GlobeErrorBoundary extends Component<{ children: ReactNode; fallback: Reac
   render() { return this.state.hasError ? this.props.fallback : this.props.children; }
 }
 
-const SECTOR_COLORS: Record<string, string> = {
-  "Logistics":       "#f97316",
-  "Agriculture":     "#22c55e",
-  "Hospitality":     "#ec4899",
-  "Energy":          "#facc15",
-  "Real Estate":     "#fb923c",
-  "Finance":         "#06b6d4",
-  "Mining":          "#ef4444",
-  "Technology":      "#6366f1",
-  "Automotive":      "#a855f7",
-  "Food & Beverage": "#10b981",
-};
+const BEACON_PALETTE = [
+  "#00d4ff", // cyan
+  "#ff4d6d", // red-pink
+  "#7fff00", // chartreuse
+  "#ff9500", // orange
+  "#bf5fff", // violet
+  "#ffdd00", // yellow
+  "#00ff9f", // mint
+  "#ff6b35", // coral
+  "#4fc3f7", // sky blue
+  "#ff69b4", // hot pink
+];
 
-function getSectorColor(sector: string): string {
-  for (const key of Object.keys(SECTOR_COLORS)) {
-    if (sector?.toLowerCase().includes(key.toLowerCase())) return SECTOR_COLORS[key];
-  }
-  return "#00d4ff";
+function getBeaconColor(index: number): string {
+  return BEACON_PALETTE[index % BEACON_PALETTE.length];
 }
 
 function BusinessSlideOver({ businessId, color, onClose }: { businessId: number; color: string; onClose: () => void }) {
@@ -56,65 +53,65 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
     <div
       className="absolute top-0 right-0 h-full w-[420px] backdrop-blur-xl z-20 flex flex-col"
       style={{
-        background: 'linear-gradient(135deg, rgba(0,0,0,0.92) 0%, rgba(5,10,20,0.96) 100%)',
-        borderLeft: `1px solid ${color}44`,
-        boxShadow: `-12px 0 40px ${color}18`,
+        background: 'linear-gradient(160deg, rgba(5,12,26,0.97) 0%, rgba(2,6,15,0.99) 100%)',
+        borderLeft: `1px solid ${color}50`,
+        boxShadow: `-16px 0 48px ${color}1a`,
       }}
     >
-      <div className="p-6 border-b flex justify-between items-start" style={{ borderColor: `${color}30` }}>
+      <div className="p-6 border-b flex justify-between items-start" style={{ borderColor: `${color}28` }}>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2.5 flex-wrap">
             <span
-              className="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-widest font-bold"
-              style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}
+              className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest font-semibold"
+              style={{ background: `${color}1a`, color, border: `1px solid ${color}40` }}
             >
-              {business?.sector || 'NODE'}
+              {business?.sector || '—'}
             </span>
             <span
-              className="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-widest"
+              className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest"
               style={{
-                background: business?.status === 'active' ? '#22c55e22' : '#ef444422',
+                background: business?.status === 'active' ? '#22c55e1a' : '#ef44441a',
                 color: business?.status === 'active' ? '#22c55e' : '#ef4444',
-                border: `1px solid ${business?.status === 'active' ? '#22c55e44' : '#ef444444'}`,
+                border: `1px solid ${business?.status === 'active' ? '#22c55e40' : '#ef444440'}`,
               }}
             >
-              {business?.status || 'unknown'}
+              {business?.status ?? 'unknown'}
             </span>
           </div>
-          <h2 className="text-xl font-semibold text-white tracking-wide leading-tight">{business?.name || 'Loading...'}</h2>
-          <div className="flex items-center gap-1.5 mt-1.5 text-sm" style={{ color: `${color}cc` }}>
+          <h2 className="text-[22px] font-semibold text-white leading-tight">{business?.name ?? 'Loading...'}</h2>
+          <div className="flex items-center gap-1.5 mt-2 text-[13px]" style={{ color: `${color}bb` }}>
             <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="font-mono">{business?.city}, {business?.country}</span>
           </div>
         </div>
         <button
           onClick={onClose}
-          className="ml-4 p-1.5 rounded-full transition-colors hover:bg-white/10"
-          style={{ color: `${color}88` }}
+          className="ml-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
+          style={{ color: `${color}77` }}
         >
-          <X className="w-5 h-5" />
+          <X className="w-4 h-4" />
         </button>
       </div>
 
       {business?.managerName && (
-        <div className="px-6 py-4 border-b" style={{ borderColor: `${color}18`, background: `${color}08` }}>
-          <div className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: `${color}88` }}>Commander</div>
+        <div className="px-6 py-4 border-b" style={{ borderColor: `${color}18`, background: `${color}07` }}>
+          <div className="text-[10px] font-mono uppercase tracking-widest mb-2.5" style={{ color: `${color}77` }}>Commander</div>
           <div className="flex items-center gap-3">
             <div
-              className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold flex-shrink-0"
-              style={{ background: `${color}22`, color, border: `1px solid ${color}44` }}
+              className="w-10 h-10 rounded-full flex items-center justify-center text-[15px] font-bold flex-shrink-0"
+              style={{ background: `${color}1f`, color, border: `1.5px solid ${color}44` }}
             >
-              {business.managerName.charAt(0)}
+              {business.managerName.charAt(0).toUpperCase()}
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-white text-sm font-medium">
-                <User className="w-3.5 h-3.5" style={{ color }} />
-                {business.managerName}
+                <User className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />
+                <span className="truncate">{business.managerName}</span>
               </div>
               {business.managerEmail && (
-                <div className="flex items-center gap-1.5 text-xs mt-0.5" style={{ color: `${color}99` }}>
-                  <Mail className="w-3 h-3" />
-                  {business.managerEmail}
+                <div className="flex items-center gap-1.5 text-[12px] mt-0.5 truncate" style={{ color: `${color}88` }}>
+                  <Mail className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{business.managerEmail}</span>
                 </div>
               )}
             </div>
@@ -122,10 +119,10 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
         </div>
       )}
 
-      <div className="px-6 py-4 flex items-center justify-between">
-        <div className="text-[10px] font-mono uppercase tracking-widest" style={{ color: `${color}88` }}>
+      <div className="px-6 py-3.5 flex items-center justify-between border-b" style={{ borderColor: `${color}18` }}>
+        <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: `${color}77` }}>
           Telemetry — {period && periodLabel[period]}
-        </div>
+        </span>
         <Select value={period} onValueChange={(val: FetchLatestReportPeriod) => setPeriod(val)}>
           <SelectTrigger className="w-24 h-7 text-xs font-mono border-white/10 bg-white/5 text-white">
             <SelectValue />
@@ -138,75 +135,57 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
         </Select>
       </div>
 
-      <div className="px-6 pb-2 flex-1 overflow-y-auto space-y-3">
+      <div className="px-6 py-4 flex-1 overflow-y-auto space-y-3">
         {isLoading ? (
           <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin" style={{ color }} /></div>
         ) : report ? (
           <>
-            <div
-              className="rounded-xl p-4 flex items-center justify-between"
-              style={{ background: `${color}0d`, border: `1px solid ${color}25` }}
-            >
+            <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: `${color}0c`, border: `1px solid ${color}22` }}>
               <div>
                 <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: `${color}88` }}>Revenue</div>
-                <div className="text-2xl font-light text-white">{formatCurrency(report.revenue)}</div>
+                <div className="text-[26px] font-light text-white tabular-nums">{formatCurrency(report.revenue)}</div>
               </div>
-              <DollarSign className="w-8 h-8 opacity-30" style={{ color }} />
+              <DollarSign className="w-9 h-9 opacity-20" style={{ color }} />
             </div>
 
-            <div
-              className="rounded-xl p-4 flex items-center justify-between"
-              style={{ background: `${color}0d`, border: `1px solid ${color}25` }}
-            >
+            <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: `${color}0c`, border: `1px solid ${color}22` }}>
               <div>
                 <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: `${color}88` }}>Profit</div>
-                <div className="text-2xl font-light text-white">{formatCurrency(report.profit)}</div>
-                {margin && (
-                  <div className="text-xs mt-1 font-mono" style={{ color: parseFloat(margin) > 0 ? '#22c55e' : '#ef4444' }}>
-                    {parseFloat(margin) > 0 ? '+' : ''}{margin}% margin
+                <div className="text-[26px] font-light text-white tabular-nums">{formatCurrency(report.profit)}</div>
+                {margin !== null && (
+                  <div className="text-xs mt-1 font-mono" style={{ color: parseFloat(margin) >= 0 ? '#22c55e' : '#ef4444' }}>
+                    {parseFloat(margin) >= 0 ? '+' : ''}{margin}% margin
                   </div>
                 )}
               </div>
-              <TrendingUp className="w-8 h-8 opacity-30" style={{ color }} />
+              <TrendingUp className="w-9 h-9 opacity-20" style={{ color }} />
             </div>
 
-            <div
-              className="rounded-xl p-4 flex items-center justify-between"
-              style={{ background: `${color}0d`, border: `1px solid ${color}25` }}
-            >
+            <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: `${color}0c`, border: `1px solid ${color}22` }}>
               <div>
                 <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: `${color}88` }}>Orders</div>
-                <div className="text-2xl font-light text-white">{formatNumber(report.orders)}</div>
+                <div className="text-[26px] font-light text-white tabular-nums">{formatNumber(report.orders)}</div>
               </div>
-              <ShoppingCart className="w-8 h-8 opacity-30" style={{ color }} />
+              <ShoppingCart className="w-9 h-9 opacity-20" style={{ color }} />
             </div>
 
             {report.notes && (
-              <div
-                className="rounded-xl p-4"
-                style={{ background: `${color}08`, border: `1px solid ${color}20` }}
-              >
-                <div className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: `${color}88` }}>Field Notes</div>
-                <p className="text-sm text-white/70 leading-relaxed">{report.notes}</p>
+              <div className="rounded-xl p-4" style={{ background: `${color}07`, border: `1px solid ${color}1c` }}>
+                <div className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: `${color}77` }}>Field Notes</div>
+                <p className="text-[13px] text-white/65 leading-relaxed">{report.notes}</p>
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-16 text-white/30 font-mono text-sm">No telemetry available</div>
+          <div className="text-center py-16 text-white/25 font-mono text-sm">No telemetry available</div>
         )}
       </div>
 
-      <div className="px-6 py-5 border-t" style={{ borderColor: `${color}20` }}>
+      <div className="px-6 py-5 border-t" style={{ borderColor: `${color}1c` }}>
         <Link
           href={`/businesses/${businessId}`}
-          className="w-full flex items-center justify-center gap-2 h-10 rounded-lg font-mono text-xs uppercase tracking-widest transition-all"
-          style={{
-            background: `${color}18`,
-            color,
-            border: `1px solid ${color}40`,
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = color; (e.currentTarget as HTMLElement).style.color = '#000'; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = `${color}18`; (e.currentTarget as HTMLElement).style.color = color; }}
+          className="w-full flex items-center justify-center gap-2 h-10 rounded-lg font-mono text-xs uppercase tracking-widest transition-all duration-200"
+          style={{ background: `${color}16`, color, border: `1px solid ${color}3a` }}
         >
           <Zap className="w-3.5 h-3.5" />
           Full Node Analysis
@@ -218,7 +197,7 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
 
 export default function GlobeDashboard() {
   const globeEl = useRef<any>();
-  const [hoveredLocation, setHoveredLocation] = useState<any | null>(null);
+  const [hoveredPoint, setHoveredPoint] = useState<any | null>(null);
   const [selectedBusiness, setSelectedBusiness] = useState<{ id: number; color: string } | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -227,30 +206,23 @@ export default function GlobeDashboard() {
   const { data: stats, isLoading: isLoadingStats } = useGetDashboardStats({ period: 'month' }, { query: { queryKey: getGetDashboardStatsQueryKey({ period: 'month' }) } });
   const { data: topBusinesses, isLoading: isLoadingTop } = useGetTopBusinesses({ period: 'month', limit: 5 }, { query: { queryKey: getGetTopBusinessesQueryKey({ period: 'month', limit: 5 }) } });
 
-  const markersData = useMemo(() => {
-    if (!businesses) return [];
-    return businesses.map(b => ({
-      lat: b.lat,
-      lng: b.lng,
-      color: getSectorColor(b.sector),
-      business: b,
-    }));
+  const colorMap = useMemo(() => {
+    const map = new Map<number, string>();
+    businesses?.forEach((b, i) => map.set(b.id, getBeaconColor(i)));
+    return map;
   }, [businesses]);
 
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.id = 'globe-beacon-styles';
-    style.textContent = `
-      @keyframes beacon-outer { 0%,100%{transform:scale(1);opacity:.9} 50%{transform:scale(1.3);opacity:.55} }
-      @keyframes beacon-ring  { 0%{transform:scale(1);opacity:.75} 100%{transform:scale(3.2);opacity:0} }
-      @keyframes beacon-ring2 { 0%{transform:scale(1);opacity:.55} 100%{transform:scale(3.2);opacity:0} }
-      .globe-beacon  { animation: beacon-outer 2.2s ease-in-out infinite; }
-      .globe-beacon-ring  { animation: beacon-ring  2.2s ease-out infinite; }
-      .globe-beacon-ring2 { animation: beacon-ring2 2.2s ease-out infinite 0.8s; }
-    `;
-    if (!document.getElementById('globe-beacon-styles')) document.head.appendChild(style);
-    return () => { document.getElementById('globe-beacon-styles')?.remove(); };
-  }, []);
+  const pointsData = useMemo(() => {
+    if (!businesses) return [];
+    return businesses.map((b, i) => ({
+      lat: b.lat,
+      lng: b.lng,
+      color: getBeaconColor(i),
+      size: 0.6,
+      business: b,
+      idx: i,
+    }));
+  }, [businesses]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -274,7 +246,7 @@ export default function GlobeDashboard() {
 
   return (
     <Shell>
-      <div className="relative w-full h-full bg-[#020810] overflow-hidden flex" ref={containerRef}>
+      <div className="relative w-full h-full bg-[#020810] overflow-hidden" ref={containerRef}>
         <div className="absolute inset-0 z-0 cursor-move">
           {dimensions.width > 0 && dimensions.height > 0 && (
             <GlobeErrorBoundary fallback={
@@ -284,12 +256,12 @@ export default function GlobeDashboard() {
                     className="absolute inset-0 rounded-full"
                     style={{
                       background: 'radial-gradient(circle at 38% 32%, #0d3a6e 0%, #082040 35%, #041020 65%, #020810 100%)',
-                      boxShadow: '0 0 140px 40px rgba(0,150,255,0.2), inset 0 0 80px rgba(0,80,180,0.25)',
+                      boxShadow: '0 0 140px 40px rgba(0,150,255,0.18), inset 0 0 80px rgba(0,80,180,0.22)',
                     }}
                   />
-                  {markersData.map((p, i) => {
-                    const angle = (i / markersData.length) * 2 * Math.PI;
-                    const radius = 180 + Math.sin(i * 1.7) * 50;
+                  {pointsData.map((p, i) => {
+                    const angle = (i / pointsData.length) * 2 * Math.PI;
+                    const radius = 185 + Math.sin(i * 1.7) * 50;
                     const x = 260 + radius * Math.cos(angle);
                     const y = 260 + radius * Math.sin(angle) * 0.55;
                     return (
@@ -300,12 +272,12 @@ export default function GlobeDashboard() {
                         onClick={() => setSelectedBusiness({ id: p.business.id, color: p.color })}
                       >
                         <div className="w-6 h-6 relative flex items-center justify-center">
-                          <div className="absolute inset-0 rounded-full animate-ping" style={{ background: p.color, opacity: 0.25 }} />
+                          <div className="absolute inset-0 rounded-full animate-ping" style={{ background: p.color, opacity: 0.22 }} />
                           <div
-                            className="w-3.5 h-3.5 rounded-full"
+                            className="w-4 h-4 rounded-full"
                             style={{
-                              background: `radial-gradient(circle at 35% 32%, #fff, ${p.color})`,
-                              boxShadow: `0 0 10px 4px ${p.color}bb, 0 0 20px 8px ${p.color}44`,
+                              background: `radial-gradient(circle at 32% 28%, #fff 0%, ${p.color} 60%)`,
+                              boxShadow: `0 0 12px 5px ${p.color}bb, 0 0 24px 10px ${p.color}44`,
                             }}
                           />
                         </div>
@@ -322,30 +294,23 @@ export default function GlobeDashboard() {
                 globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
                 backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-                htmlElementsData={markersData}
-                htmlLat="lat"
-                htmlLng="lng"
-                htmlElement={(d: any) => {
-                  const c = d.color;
-                  const el = document.createElement('div');
-                  el.style.cssText = `width:32px;height:32px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;`;
-                  el.innerHTML = `
-                    <div class="globe-beacon-ring"  style="position:absolute;inset:0;border-radius:50%;border:2px solid ${c};pointer-events:none;"></div>
-                    <div class="globe-beacon-ring2" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid ${c};pointer-events:none;"></div>
-                    <div class="globe-beacon" style="width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 35% 32%,#ffffff,${c});box-shadow:0 0 16px 7px ${c}cc,0 0 32px 14px ${c}44;border:1.5px solid ${c};"></div>
-                  `;
-                  el.addEventListener('click', () => setSelectedBusiness({ id: d.business.id, color: c }));
-                  el.addEventListener('mouseenter', () => setHoveredLocation(d));
-                  el.addEventListener('mouseleave', () => setHoveredLocation(null));
-                  return el;
-                }}
-                ringsData={markersData}
+                pointsData={pointsData}
+                pointLat="lat"
+                pointLng="lng"
+                pointColor="color"
+                pointAltitude="size"
+                pointRadius={0.55}
+                pointsMerge={false}
+                pointResolution={12}
+                onPointClick={(point: any) => setSelectedBusiness({ id: point.business.id, color: point.color })}
+                onPointHover={(point: any) => setHoveredPoint(point)}
+                ringsData={pointsData}
                 ringLat="lat"
                 ringLng="lng"
-                ringColor={(d: any) => (t: number) => `${d.color}${Math.round((1 - t) * 170).toString(16).padStart(2, '0')}`}
-                ringMaxRadius={4}
+                ringColor={(d: any) => (t: number) => `${d.color}${Math.round((1 - t) * 200).toString(16).padStart(2, '0')}`}
+                ringMaxRadius={4.5}
                 ringPropagationSpeed={2.5}
-                ringRepeatPeriod={850}
+                ringRepeatPeriod={900}
                 atmosphereColor="#4db8ff"
                 atmosphereAltitude={0.32}
               />
@@ -353,75 +318,76 @@ export default function GlobeDashboard() {
           )}
         </div>
 
-        {hoveredLocation && !selectedBusiness && (
+        {hoveredPoint && !selectedBusiness && (
           <div
-            className="absolute z-10 pointer-events-none backdrop-blur-md text-white font-mono text-sm rounded-xl"
+            className="absolute z-10 pointer-events-none rounded-xl font-mono text-sm"
             style={{
-              top: '50%', left: '50%', transform: 'translate(20px, -20px)',
-              background: 'rgba(0,0,0,0.85)',
-              border: `1px solid ${hoveredLocation.color}55`,
+              top: '50%', left: '50%', transform: 'translate(20px, -28px)',
+              background: 'rgba(2,6,18,0.92)',
+              border: `1px solid ${hoveredPoint.color}50`,
               padding: '12px 16px',
-              boxShadow: `0 0 20px ${hoveredLocation.color}33`,
+              boxShadow: `0 0 24px ${hoveredPoint.color}30`,
+              backdropFilter: 'blur(12px)',
             }}
           >
-            <div className="font-bold tracking-wider" style={{ color: hoveredLocation.color }}>{hoveredLocation.business.name}</div>
-            <div className="text-white/50 mt-1 text-xs">{hoveredLocation.business.city}, {hoveredLocation.business.country}</div>
+            <div className="font-semibold text-sm" style={{ color: hoveredPoint.color }}>{hoveredPoint.business.name}</div>
+            <div className="text-white/45 mt-1 text-[12px]">{hoveredPoint.business.city}, {hoveredPoint.business.country}</div>
             <div
-              className="mt-2 text-[10px] uppercase tracking-widest px-2 py-0.5 rounded inline-block"
-              style={{ background: `${hoveredLocation.color}20`, color: hoveredLocation.color }}
+              className="mt-1.5 text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full inline-block"
+              style={{ background: `${hoveredPoint.color}18`, color: hoveredPoint.color }}
             >
-              {hoveredLocation.business.sector}
+              {hoveredPoint.business.sector}
             </div>
           </div>
         )}
 
-        <div className="absolute top-6 left-6 z-10 flex flex-col gap-4 pointer-events-none">
-          <div className="flex items-center gap-3 mb-2">
-            <Activity className="w-5 h-5 text-primary animate-pulse" />
-            <h1 className="text-xl font-mono font-bold text-white tracking-widest">GLOBAL COMMAND</h1>
-          </div>
+        <div className="absolute top-6 left-6 z-10 flex items-center gap-3 pointer-events-none">
+          <Activity className="w-5 h-5 text-primary animate-pulse" />
+          <h1 className="text-xl font-mono font-bold text-white tracking-widest">GLOBAL COMMAND</h1>
         </div>
 
         <div
           className="absolute top-6 right-6 z-10 flex flex-col gap-4 w-72 pointer-events-auto transition-all duration-300"
           style={{ transform: selectedBusiness ? 'translateX(130%)' : 'translateX(0)', opacity: selectedBusiness ? 0 : 1 }}
         >
-          <Card className="bg-black/70 border-primary/20 backdrop-blur-md shadow-[0_0_30px_rgba(0,212,255,0.08)]">
+          <Card className="bg-black/75 border-white/8 backdrop-blur-md">
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] text-primary/60 uppercase tracking-widest font-mono">Global Revenue (30D)</CardTitle>
+              <CardTitle className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Global Revenue (30D)</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoadingStats ? (
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               ) : (
-                <div className="text-3xl font-light text-white font-mono">{formatCurrency(stats?.totalRevenue || 0)}</div>
+                <div className="text-3xl font-light text-white font-mono tabular-nums">{formatCurrency(stats?.totalRevenue || 0)}</div>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-black/70 border-primary/20 backdrop-blur-md shadow-[0_0_30px_rgba(0,212,255,0.08)]">
+          <Card className="bg-black/75 border-white/8 backdrop-blur-md">
             <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] text-primary/60 uppercase tracking-widest font-mono">Top Nodes</CardTitle>
+              <CardTitle className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Top Nodes</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoadingTop ? (
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               ) : (
                 <div className="space-y-3">
-                  {topBusinesses?.map((b, idx) => {
-                    const bColor = getSectorColor(b.sector || '');
+                  {topBusinesses?.map((b) => {
+                    const bColor = colorMap.get(b.id) ?? '#00d4ff';
                     return (
                       <div
                         key={b.id}
                         className="flex justify-between items-center cursor-pointer group"
                         onClick={() => setSelectedBusiness({ id: b.id, color: bColor })}
                       >
-                        <div className="flex items-center gap-2">
-                          <span className="text-white/30 font-mono text-xs">{idx + 1}.</span>
-                          <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: bColor, boxShadow: `0 0 6px ${bColor}` }} />
-                          <span className="text-white/80 text-sm group-hover:text-white transition-colors">{b.name}</span>
+                        <div className="flex items-center gap-2 min-w-0">
+                          <div
+                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ background: bColor, boxShadow: `0 0 8px 2px ${bColor}99` }}
+                          />
+                          <span className="text-white/70 text-sm group-hover:text-white transition-colors truncate">{b.name}</span>
                         </div>
-                        <span className="text-white/40 font-mono text-xs">{formatCurrency(b.revenue)}</span>
+                        <span className="text-white/35 font-mono text-xs ml-2 flex-shrink-0 tabular-nums">{formatCurrency(b.revenue)}</span>
                       </div>
                     );
                   })}
