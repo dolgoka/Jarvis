@@ -1,10 +1,8 @@
 import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from "react";
 import Globe from "react-globe.gl";
-import * as THREE from "three";
 import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, DollarSign, User, Mail, Zap } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 import { Shell } from "@/components/layout/Shell";
@@ -23,28 +21,6 @@ const BEACON_PALETTE = [
   "#ffdd00", "#00ff9f", "#ff6b35", "#4fc3f7", "#ff69b4",
 ];
 function getBeaconColor(index: number) { return BEACON_PALETTE[index % BEACON_PALETTE.length]; }
-
-// Build a Three.js group: short pillar + glowing sphere beacon on top
-function buildBeaconObject(color: string): THREE.Group {
-  const c = new THREE.Color(color);
-  const group = new THREE.Group();
-
-  // Short thin pillar
-  const pillarGeo = new THREE.CylinderGeometry(0.35, 0.35, 2.8, 8);
-  const pillarMat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.75 });
-  const pillar = new THREE.Mesh(pillarGeo, pillarMat);
-  pillar.position.y = 1.4; // center of pillar
-  group.add(pillar);
-
-  // Glowing beacon sphere at top
-  const beaconGeo = new THREE.SphereGeometry(1.1, 16, 16);
-  const beaconMat = new THREE.MeshBasicMaterial({ color: c });
-  const beacon = new THREE.Mesh(beaconGeo, beaconMat);
-  beacon.position.y = 2.8 + 1.1; // top of pillar + sphere radius
-  group.add(beacon);
-
-  return group;
-}
 
 function BusinessSlideOver({ businessId, color, onClose }: { businessId: number; color: string; onClose: () => void }) {
   const [period, setPeriod] = useState<FetchLatestReportPeriod>('month');
@@ -146,7 +122,7 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
                   <div className="text-[25px] font-light text-white tabular-nums">{value}</div>
                   {sub && <div className="text-xs mt-1 font-mono" style={{ color: sub.startsWith('+') ? '#22c55e' : '#ef4444' }}>{sub}</div>}
                 </div>
-                <Icon className="w-9 h-9 opacity-18" style={{ color }} />
+                <Icon className="w-9 h-9 opacity-20" style={{ color }} />
               </div>
             ))}
             {report.notes && (
@@ -190,12 +166,17 @@ export default function GlobeDashboard() {
     return map;
   }, [businesses]);
 
+  // Each marker: short pillar (pointAltitude) with a wide sphere top (pointRadius)
   const markersData = useMemo(() => {
     if (!businesses) return [];
     return businesses.map((b, i) => ({
       lat: b.lat,
       lng: b.lng,
       color: getBeaconColor(i),
+      // Pillar: short but clearly visible
+      alt: 0.055,
+      // Beacon sphere on top: wide enough to glow visibly
+      radius: 0.42,
       business: b,
     }));
   }, [businesses]);
@@ -220,41 +201,44 @@ export default function GlobeDashboard() {
     }
   }, []);
 
+  const Fallback2D = (
+    <div className="w-full h-full flex items-center justify-center">
+      <div className="relative" style={{ width: 520, height: 520 }}>
+        <div className="absolute inset-0 rounded-full" style={{
+          background: 'radial-gradient(circle at 38% 32%, #0d3a6e 0%, #082040 35%, #041020 65%, #020810 100%)',
+          boxShadow: '0 0 140px 40px rgba(0,150,255,0.18), inset 0 0 80px rgba(0,80,180,0.22)',
+        }} />
+        {markersData.map((p, i) => {
+          const angle = (i / markersData.length) * 2 * Math.PI;
+          const rx = 195 + Math.sin(i * 1.7) * 55;
+          const ry = rx * 0.55;
+          const x = 260 + rx * Math.cos(angle);
+          const y = 260 + ry * Math.sin(angle);
+          return (
+            <div key={i} className="absolute cursor-pointer flex flex-col items-center"
+              style={{ left: x - 8, top: y - 22 }}
+              onClick={() => setSelectedBusiness({ id: p.business.id, color: p.color })}>
+              {/* Pillar */}
+              <div style={{ width: 3, height: 16, background: p.color, opacity: 0.72, borderRadius: 2 }} />
+              {/* Beacon */}
+              <div style={{
+                width: 14, height: 14, borderRadius: '50%', marginTop: -2,
+                background: `radial-gradient(circle at 35% 30%, #fff 0%, ${p.color} 60%)`,
+                boxShadow: `0 0 10px 4px ${p.color}cc, 0 0 22px 8px ${p.color}55`,
+              }} />
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
   return (
     <Shell>
       <div className="relative w-full h-full bg-[#020810] overflow-hidden" ref={containerRef}>
-        <div className="absolute inset-0 z-0 cursor-move">
+        <div className="absolute inset-0 z-0">
           {dimensions.width > 0 && dimensions.height > 0 && (
-            <GlobeErrorBoundary fallback={
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="relative w-[520px] h-[520px]">
-                  <div className="absolute inset-0 rounded-full" style={{
-                    background: 'radial-gradient(circle at 38% 32%, #0d3a6e 0%, #082040 35%, #041020 65%, #020810 100%)',
-                    boxShadow: '0 0 140px 40px rgba(0,150,255,0.18), inset 0 0 80px rgba(0,80,180,0.22)',
-                  }} />
-                  {markersData.map((p, i) => {
-                    const angle = (i / markersData.length) * 2 * Math.PI;
-                    const radius = 185 + Math.sin(i * 1.7) * 50;
-                    const x = 260 + radius * Math.cos(angle);
-                    const y = 260 + radius * Math.sin(angle) * 0.55;
-                    return (
-                      <div key={i} className="absolute cursor-pointer" style={{ left: x - 12, top: y - 20 }}
-                        onClick={() => setSelectedBusiness({ id: p.business.id, color: p.color })}>
-                        {/* Pillar */}
-                        <div className="w-1.5 mx-auto" style={{ height: 18, background: p.color, opacity: 0.7, borderRadius: 1 }} />
-                        {/* Beacon */}
-                        <div className="w-4 h-4 rounded-full -mt-1 mx-auto relative" style={{
-                          background: `radial-gradient(circle at 35% 30%, #fff, ${p.color})`,
-                          boxShadow: `0 0 10px 4px ${p.color}bb, 0 0 20px 8px ${p.color}44`,
-                        }}>
-                          <div className="absolute inset-0 rounded-full animate-ping" style={{ background: p.color, opacity: 0.2 }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            }>
+            <GlobeErrorBoundary fallback={Fallback2D}>
               <Globe
                 ref={globeEl}
                 width={dimensions.width}
@@ -262,31 +246,38 @@ export default function GlobeDashboard() {
                 globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
                 backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-                customThreeObjectsData={markersData}
-                customThreeObject={(d: any) => buildBeaconObject(d.color)}
-                customThreeObjectUpdate={(obj: any, d: any) => {
-                  if (!globeEl.current) return;
-                  const coords = globeEl.current.getCoords(d.lat, d.lng, 0);
-                  obj.position.set(coords.x, coords.y, coords.z);
-                  const normal = new THREE.Vector3(coords.x, coords.y, coords.z).normalize();
-                  obj.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
-                }}
-                onCustomLayerClick={(d: any) => setSelectedBusiness({ id: d.business.id, color: d.color })}
-                onCustomLayerHover={(d: any) => setHoveredPoint(d || null)}
+                atmosphereColor="#4db8ff"
+                atmosphereAltitude={0.32}
+
+                /* Short pillar beacons — each has unique color */
+                pointsData={markersData}
+                pointLat="lat"
+                pointLng="lng"
+                pointAltitude="alt"
+                pointRadius="radius"
+                pointColor="color"
+                pointResolution={16}
+                pointsMerge={false}
+                onPointClick={(d: any) => setSelectedBusiness({ id: d.business.id, color: d.color })}
+                onPointHover={(d: any) => setHoveredPoint(d || null)}
+
+                /* Pulsing rings around each beacon */
                 ringsData={markersData}
                 ringLat="lat"
                 ringLng="lng"
-                ringColor={(d: any) => (t: number) => `${d.color}${Math.round((1 - t) * 190).toString(16).padStart(2, '0')}`}
+                ringColor={(d: any) => (t: number) =>
+                  `${d.color}${Math.round((1 - t) * 220).toString(16).padStart(2, '0')}`
+                }
                 ringMaxRadius={4.5}
-                ringPropagationSpeed={2.5}
-                ringRepeatPeriod={900}
-                atmosphereColor="#4db8ff"
-                atmosphereAltitude={0.32}
+                ringPropagationSpeed={2.2}
+                ringRepeatPeriod={850}
+                ringAltitude={0.001}
               />
             </GlobeErrorBoundary>
           )}
         </div>
 
+        {/* Hover tooltip */}
         {hoveredPoint && !selectedBusiness && (
           <div className="absolute z-10 pointer-events-none rounded-xl font-mono text-sm glass"
             style={{
@@ -304,13 +295,17 @@ export default function GlobeDashboard() {
           </div>
         )}
 
+        {/* Header */}
         <div className="absolute top-6 left-6 z-10 flex items-center gap-3 pointer-events-none">
           <Activity className="w-5 h-5 text-primary animate-pulse" />
           <h1 className="text-xl font-mono font-bold text-white tracking-widest">GLOBAL COMMAND</h1>
         </div>
 
-        <div className="absolute top-6 right-6 z-10 flex flex-col gap-3 w-72 pointer-events-auto transition-all duration-300"
-          style={{ transform: selectedBusiness ? 'translateX(130%)' : 'translateX(0)', opacity: selectedBusiness ? 0 : 1 }}>
+        {/* Stats panel */}
+        <div
+          className="absolute top-6 right-6 z-10 flex flex-col gap-3 w-72 pointer-events-auto transition-all duration-300"
+          style={{ transform: selectedBusiness ? 'translateX(130%)' : 'translateX(0)', opacity: selectedBusiness ? 0 : 1 }}
+        >
           <div className="glass-cyan rounded-xl p-5">
             <div className="text-[10px] text-primary/50 uppercase tracking-widest font-mono mb-2">Global Revenue (30D)</div>
             {isLoadingStats
@@ -343,8 +338,24 @@ export default function GlobeDashboard() {
               )
             }
           </div>
+
+          {/* Legend */}
+          <div className="glass rounded-xl p-4">
+            <div className="text-[10px] text-white/30 uppercase tracking-widest font-mono mb-3">Active Nodes</div>
+            <div className="grid grid-cols-2 gap-y-2 gap-x-3">
+              {businesses?.slice(0, 10).map((b, i) => (
+                <div key={b.id} className="flex items-center gap-1.5 cursor-pointer group min-w-0"
+                  onClick={() => setSelectedBusiness({ id: b.id, color: getBeaconColor(i) })}>
+                  <div className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{ background: getBeaconColor(i), boxShadow: `0 0 6px 1px ${getBeaconColor(i)}99` }} />
+                  <span className="text-white/45 text-[11px] group-hover:text-white/80 transition-colors truncate font-mono">{b.name.split(' ').slice(0, 2).join(' ')}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
+        {/* Slide-over panel */}
         {selectedBusiness && (
           <BusinessSlideOver
             businessId={selectedBusiness.id}
