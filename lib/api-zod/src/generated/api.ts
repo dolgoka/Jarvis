@@ -223,6 +223,19 @@ export const GetAiSummaryResponse = zod.object({
 
 
 /**
+ * @summary Chat with AI about your businesses
+ */
+export const AiChatBody = zod.object({
+  "message": zod.string()
+})
+
+export const AiChatResponse = zod.object({
+  "reply": zod.string(),
+  "timestamp": zod.string()
+})
+
+
+/**
  * @summary Manager connects their business to the platform
  */
 export const ConnectBusinessBody = zod.object({

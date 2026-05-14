@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from "react";
 import Globe from "react-globe.gl";
+import * as THREE from "three";
 import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, DollarSign, User, Mail, Zap } from "lucide-react";
@@ -18,20 +19,31 @@ class GlobeErrorBoundary extends Component<{ children: ReactNode; fallback: Reac
 }
 
 const BEACON_PALETTE = [
-  "#00d4ff", // cyan
-  "#ff4d6d", // red-pink
-  "#7fff00", // chartreuse
-  "#ff9500", // orange
-  "#bf5fff", // violet
-  "#ffdd00", // yellow
-  "#00ff9f", // mint
-  "#ff6b35", // coral
-  "#4fc3f7", // sky blue
-  "#ff69b4", // hot pink
+  "#00d4ff", "#ff4d6d", "#7fff00", "#ff9500", "#bf5fff",
+  "#ffdd00", "#00ff9f", "#ff6b35", "#4fc3f7", "#ff69b4",
 ];
+function getBeaconColor(index: number) { return BEACON_PALETTE[index % BEACON_PALETTE.length]; }
 
-function getBeaconColor(index: number): string {
-  return BEACON_PALETTE[index % BEACON_PALETTE.length];
+// Build a Three.js group: short pillar + glowing sphere beacon on top
+function buildBeaconObject(color: string): THREE.Group {
+  const c = new THREE.Color(color);
+  const group = new THREE.Group();
+
+  // Short thin pillar
+  const pillarGeo = new THREE.CylinderGeometry(0.35, 0.35, 2.8, 8);
+  const pillarMat = new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: 0.75 });
+  const pillar = new THREE.Mesh(pillarGeo, pillarMat);
+  pillar.position.y = 1.4; // center of pillar
+  group.add(pillar);
+
+  // Glowing beacon sphere at top
+  const beaconGeo = new THREE.SphereGeometry(1.1, 16, 16);
+  const beaconMat = new THREE.MeshBasicMaterial({ color: c });
+  const beacon = new THREE.Mesh(beaconGeo, beaconMat);
+  beacon.position.y = 2.8 + 1.1; // top of pillar + sphere radius
+  group.add(beacon);
+
+  return group;
 }
 
 function BusinessSlideOver({ businessId, color, onClose }: { businessId: number; color: string; onClose: () => void }) {
@@ -42,65 +54,47 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
   );
   const { data: businesses } = useListBusinesses({ query: { queryKey: getListBusinessesQueryKey() } });
   const business = businesses?.find(b => b.id === businessId);
-
-  const margin = report && report.revenue > 0
-    ? ((report.profit / report.revenue) * 100).toFixed(1)
-    : null;
-
+  const margin = report && report.revenue > 0 ? ((report.profit / report.revenue) * 100).toFixed(1) : null;
   const periodLabel: Record<FetchLatestReportPeriod, string> = { day: '24 hrs', week: '7 days', month: '30 days' };
 
   return (
     <div
-      className="absolute top-0 right-0 h-full w-[420px] backdrop-blur-xl z-20 flex flex-col"
-      style={{
-        background: 'linear-gradient(160deg, rgba(5,12,26,0.97) 0%, rgba(2,6,15,0.99) 100%)',
-        borderLeft: `1px solid ${color}50`,
-        boxShadow: `-16px 0 48px ${color}1a`,
-      }}
+      className="absolute top-0 right-0 h-full w-[420px] z-20 flex flex-col glass-panel"
+      style={{ borderLeft: `1px solid ${color}44`, boxShadow: `-16px 0 48px ${color}14` }}
     >
-      <div className="p-6 border-b flex justify-between items-start" style={{ borderColor: `${color}28` }}>
+      <div className="p-6 flex justify-between items-start" style={{ borderBottom: `1px solid ${color}22` }}>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-            <span
-              className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest font-semibold"
-              style={{ background: `${color}1a`, color, border: `1px solid ${color}40` }}
-            >
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest font-semibold"
+              style={{ background: `${color}18`, color, border: `1px solid ${color}38` }}>
               {business?.sector || '—'}
             </span>
-            <span
-              className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest"
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest"
               style={{
-                background: business?.status === 'active' ? '#22c55e1a' : '#ef44441a',
+                background: business?.status === 'active' ? '#22c55e16' : '#ef444416',
                 color: business?.status === 'active' ? '#22c55e' : '#ef4444',
-                border: `1px solid ${business?.status === 'active' ? '#22c55e40' : '#ef444440'}`,
-              }}
-            >
+                border: `1px solid ${business?.status === 'active' ? '#22c55e38' : '#ef444438'}`,
+              }}>
               {business?.status ?? 'unknown'}
             </span>
           </div>
-          <h2 className="text-[22px] font-semibold text-white leading-tight">{business?.name ?? 'Loading...'}</h2>
-          <div className="flex items-center gap-1.5 mt-2 text-[13px]" style={{ color: `${color}bb` }}>
+          <h2 className="text-[21px] font-semibold text-white leading-tight">{business?.name ?? '...'}</h2>
+          <div className="flex items-center gap-1.5 mt-1.5 text-[13px]" style={{ color: `${color}aa` }}>
             <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
             <span className="font-mono">{business?.city}, {business?.country}</span>
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="ml-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-white/10"
-          style={{ color: `${color}77` }}
-        >
+        <button onClick={onClose} className="ml-4 w-8 h-8 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors" style={{ color: `${color}66` }}>
           <X className="w-4 h-4" />
         </button>
       </div>
 
       {business?.managerName && (
-        <div className="px-6 py-4 border-b" style={{ borderColor: `${color}18`, background: `${color}07` }}>
-          <div className="text-[10px] font-mono uppercase tracking-widest mb-2.5" style={{ color: `${color}77` }}>Commander</div>
+        <div className="px-6 py-4" style={{ borderBottom: `1px solid ${color}14`, background: `${color}06` }}>
+          <div className="text-[10px] font-mono uppercase tracking-widest mb-2.5" style={{ color: `${color}66` }}>Commander</div>
           <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-[15px] font-bold flex-shrink-0"
-              style={{ background: `${color}1f`, color, border: `1.5px solid ${color}44` }}
-            >
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-[15px] font-bold flex-shrink-0"
+              style={{ background: `${color}18`, color, border: `1.5px solid ${color}38` }}>
               {business.managerName.charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
@@ -109,7 +103,7 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
                 <span className="truncate">{business.managerName}</span>
               </div>
               {business.managerEmail && (
-                <div className="flex items-center gap-1.5 text-[12px] mt-0.5 truncate" style={{ color: `${color}88` }}>
+                <div className="flex items-center gap-1.5 text-[12px] mt-0.5 truncate" style={{ color: `${color}77` }}>
                   <Mail className="w-3 h-3 flex-shrink-0" />
                   <span className="truncate">{business.managerEmail}</span>
                 </div>
@@ -119,9 +113,9 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
         </div>
       )}
 
-      <div className="px-6 py-3.5 flex items-center justify-between border-b" style={{ borderColor: `${color}18` }}>
-        <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: `${color}77` }}>
-          Telemetry — {period && periodLabel[period]}
+      <div className="px-6 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${color}14` }}>
+        <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: `${color}66` }}>
+          Telemetry — {periodLabel[period]}
         </span>
         <Select value={period} onValueChange={(val: FetchLatestReportPeriod) => setPeriod(val)}>
           <SelectTrigger className="w-24 h-7 text-xs font-mono border-white/10 bg-white/5 text-white">
@@ -140,39 +134,25 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
           <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin" style={{ color }} /></div>
         ) : report ? (
           <>
-            <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: `${color}0c`, border: `1px solid ${color}22` }}>
-              <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: `${color}88` }}>Revenue</div>
-                <div className="text-[26px] font-light text-white tabular-nums">{formatCurrency(report.revenue)}</div>
+            {[
+              { label: 'Revenue', value: formatCurrency(report.revenue), icon: DollarSign, sub: null },
+              { label: 'Profit', value: formatCurrency(report.profit), icon: TrendingUp, sub: margin !== null ? `${parseFloat(margin) >= 0 ? '+' : ''}${margin}% margin` : null },
+              { label: 'Orders', value: formatNumber(report.orders), icon: ShoppingCart, sub: null },
+            ].map(({ label, value, icon: Icon, sub }) => (
+              <div key={label} className="rounded-xl p-4 flex items-center justify-between"
+                style={{ background: `${color}0a`, border: `1px solid ${color}1e` }}>
+                <div>
+                  <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: `${color}77` }}>{label}</div>
+                  <div className="text-[25px] font-light text-white tabular-nums">{value}</div>
+                  {sub && <div className="text-xs mt-1 font-mono" style={{ color: sub.startsWith('+') ? '#22c55e' : '#ef4444' }}>{sub}</div>}
+                </div>
+                <Icon className="w-9 h-9 opacity-18" style={{ color }} />
               </div>
-              <DollarSign className="w-9 h-9 opacity-20" style={{ color }} />
-            </div>
-
-            <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: `${color}0c`, border: `1px solid ${color}22` }}>
-              <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: `${color}88` }}>Profit</div>
-                <div className="text-[26px] font-light text-white tabular-nums">{formatCurrency(report.profit)}</div>
-                {margin !== null && (
-                  <div className="text-xs mt-1 font-mono" style={{ color: parseFloat(margin) >= 0 ? '#22c55e' : '#ef4444' }}>
-                    {parseFloat(margin) >= 0 ? '+' : ''}{margin}% margin
-                  </div>
-                )}
-              </div>
-              <TrendingUp className="w-9 h-9 opacity-20" style={{ color }} />
-            </div>
-
-            <div className="rounded-xl p-4 flex items-center justify-between" style={{ background: `${color}0c`, border: `1px solid ${color}22` }}>
-              <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: `${color}88` }}>Orders</div>
-                <div className="text-[26px] font-light text-white tabular-nums">{formatNumber(report.orders)}</div>
-              </div>
-              <ShoppingCart className="w-9 h-9 opacity-20" style={{ color }} />
-            </div>
-
+            ))}
             {report.notes && (
-              <div className="rounded-xl p-4" style={{ background: `${color}07`, border: `1px solid ${color}1c` }}>
-                <div className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: `${color}77` }}>Field Notes</div>
-                <p className="text-[13px] text-white/65 leading-relaxed">{report.notes}</p>
+              <div className="rounded-xl p-4" style={{ background: `${color}06`, border: `1px solid ${color}18` }}>
+                <div className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: `${color}66` }}>Field Notes</div>
+                <p className="text-[13px] text-white/60 leading-relaxed">{report.notes}</p>
               </div>
             )}
           </>
@@ -181,12 +161,10 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
         )}
       </div>
 
-      <div className="px-6 py-5 border-t" style={{ borderColor: `${color}1c` }}>
-        <Link
-          href={`/businesses/${businessId}`}
-          className="w-full flex items-center justify-center gap-2 h-10 rounded-lg font-mono text-xs uppercase tracking-widest transition-all duration-200"
-          style={{ background: `${color}16`, color, border: `1px solid ${color}3a` }}
-        >
+      <div className="px-6 py-5" style={{ borderTop: `1px solid ${color}18` }}>
+        <Link href={`/businesses/${businessId}`}
+          className="w-full flex items-center justify-center gap-2 h-10 rounded-xl font-mono text-xs uppercase tracking-widest transition-all duration-200"
+          style={{ background: `${color}14`, color, border: `1px solid ${color}33` }}>
           <Zap className="w-3.5 h-3.5" />
           Full Node Analysis
         </Link>
@@ -212,15 +190,13 @@ export default function GlobeDashboard() {
     return map;
   }, [businesses]);
 
-  const pointsData = useMemo(() => {
+  const markersData = useMemo(() => {
     if (!businesses) return [];
     return businesses.map((b, i) => ({
       lat: b.lat,
       lng: b.lng,
       color: getBeaconColor(i),
-      size: 0.6,
       business: b,
-      idx: i,
     }));
   }, [businesses]);
 
@@ -252,34 +228,26 @@ export default function GlobeDashboard() {
             <GlobeErrorBoundary fallback={
               <div className="w-full h-full flex items-center justify-center">
                 <div className="relative w-[520px] h-[520px]">
-                  <div
-                    className="absolute inset-0 rounded-full"
-                    style={{
-                      background: 'radial-gradient(circle at 38% 32%, #0d3a6e 0%, #082040 35%, #041020 65%, #020810 100%)',
-                      boxShadow: '0 0 140px 40px rgba(0,150,255,0.18), inset 0 0 80px rgba(0,80,180,0.22)',
-                    }}
-                  />
-                  {pointsData.map((p, i) => {
-                    const angle = (i / pointsData.length) * 2 * Math.PI;
+                  <div className="absolute inset-0 rounded-full" style={{
+                    background: 'radial-gradient(circle at 38% 32%, #0d3a6e 0%, #082040 35%, #041020 65%, #020810 100%)',
+                    boxShadow: '0 0 140px 40px rgba(0,150,255,0.18), inset 0 0 80px rgba(0,80,180,0.22)',
+                  }} />
+                  {markersData.map((p, i) => {
+                    const angle = (i / markersData.length) * 2 * Math.PI;
                     const radius = 185 + Math.sin(i * 1.7) * 50;
                     const x = 260 + radius * Math.cos(angle);
                     const y = 260 + radius * Math.sin(angle) * 0.55;
                     return (
-                      <div
-                        key={i}
-                        className="absolute cursor-pointer"
-                        style={{ left: x - 12, top: y - 12 }}
-                        onClick={() => setSelectedBusiness({ id: p.business.id, color: p.color })}
-                      >
-                        <div className="w-6 h-6 relative flex items-center justify-center">
-                          <div className="absolute inset-0 rounded-full animate-ping" style={{ background: p.color, opacity: 0.22 }} />
-                          <div
-                            className="w-4 h-4 rounded-full"
-                            style={{
-                              background: `radial-gradient(circle at 32% 28%, #fff 0%, ${p.color} 60%)`,
-                              boxShadow: `0 0 12px 5px ${p.color}bb, 0 0 24px 10px ${p.color}44`,
-                            }}
-                          />
+                      <div key={i} className="absolute cursor-pointer" style={{ left: x - 12, top: y - 20 }}
+                        onClick={() => setSelectedBusiness({ id: p.business.id, color: p.color })}>
+                        {/* Pillar */}
+                        <div className="w-1.5 mx-auto" style={{ height: 18, background: p.color, opacity: 0.7, borderRadius: 1 }} />
+                        {/* Beacon */}
+                        <div className="w-4 h-4 rounded-full -mt-1 mx-auto relative" style={{
+                          background: `radial-gradient(circle at 35% 30%, #fff, ${p.color})`,
+                          boxShadow: `0 0 10px 4px ${p.color}bb, 0 0 20px 8px ${p.color}44`,
+                        }}>
+                          <div className="absolute inset-0 rounded-full animate-ping" style={{ background: p.color, opacity: 0.2 }} />
                         </div>
                       </div>
                     );
@@ -294,20 +262,21 @@ export default function GlobeDashboard() {
                 globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
                 backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-                pointsData={pointsData}
-                pointLat="lat"
-                pointLng="lng"
-                pointColor="color"
-                pointAltitude="size"
-                pointRadius={0.55}
-                pointsMerge={false}
-                pointResolution={12}
-                onPointClick={(point: any) => setSelectedBusiness({ id: point.business.id, color: point.color })}
-                onPointHover={(point: any) => setHoveredPoint(point)}
-                ringsData={pointsData}
+                customThreeObjectsData={markersData}
+                customThreeObject={(d: any) => buildBeaconObject(d.color)}
+                customThreeObjectUpdate={(obj: any, d: any) => {
+                  if (!globeEl.current) return;
+                  const coords = globeEl.current.getCoords(d.lat, d.lng, 0);
+                  obj.position.set(coords.x, coords.y, coords.z);
+                  const normal = new THREE.Vector3(coords.x, coords.y, coords.z).normalize();
+                  obj.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+                }}
+                onCustomLayerClick={(d: any) => setSelectedBusiness({ id: d.business.id, color: d.color })}
+                onCustomLayerHover={(d: any) => setHoveredPoint(d || null)}
+                ringsData={markersData}
                 ringLat="lat"
                 ringLng="lng"
-                ringColor={(d: any) => (t: number) => `${d.color}${Math.round((1 - t) * 200).toString(16).padStart(2, '0')}`}
+                ringColor={(d: any) => (t: number) => `${d.color}${Math.round((1 - t) * 190).toString(16).padStart(2, '0')}`}
                 ringMaxRadius={4.5}
                 ringPropagationSpeed={2.5}
                 ringRepeatPeriod={900}
@@ -319,23 +288,17 @@ export default function GlobeDashboard() {
         </div>
 
         {hoveredPoint && !selectedBusiness && (
-          <div
-            className="absolute z-10 pointer-events-none rounded-xl font-mono text-sm"
+          <div className="absolute z-10 pointer-events-none rounded-xl font-mono text-sm glass"
             style={{
               top: '50%', left: '50%', transform: 'translate(20px, -28px)',
-              background: 'rgba(2,6,18,0.92)',
-              border: `1px solid ${hoveredPoint.color}50`,
               padding: '12px 16px',
-              boxShadow: `0 0 24px ${hoveredPoint.color}30`,
-              backdropFilter: 'blur(12px)',
-            }}
-          >
+              borderColor: `${hoveredPoint.color}44`,
+              boxShadow: `0 0 24px ${hoveredPoint.color}28`,
+            }}>
             <div className="font-semibold text-sm" style={{ color: hoveredPoint.color }}>{hoveredPoint.business.name}</div>
-            <div className="text-white/45 mt-1 text-[12px]">{hoveredPoint.business.city}, {hoveredPoint.business.country}</div>
-            <div
-              className="mt-1.5 text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full inline-block"
-              style={{ background: `${hoveredPoint.color}18`, color: hoveredPoint.color }}
-            >
+            <div className="text-white/40 mt-0.5 text-[12px]">{hoveredPoint.business.city}, {hoveredPoint.business.country}</div>
+            <div className="mt-1.5 text-[10px] uppercase tracking-widest px-2 py-0.5 rounded-full inline-block"
+              style={{ background: `${hoveredPoint.color}18`, color: hoveredPoint.color }}>
               {hoveredPoint.business.sector}
             </div>
           </div>
@@ -346,55 +309,40 @@ export default function GlobeDashboard() {
           <h1 className="text-xl font-mono font-bold text-white tracking-widest">GLOBAL COMMAND</h1>
         </div>
 
-        <div
-          className="absolute top-6 right-6 z-10 flex flex-col gap-4 w-72 pointer-events-auto transition-all duration-300"
-          style={{ transform: selectedBusiness ? 'translateX(130%)' : 'translateX(0)', opacity: selectedBusiness ? 0 : 1 }}
-        >
-          <Card className="bg-black/75 border-white/8 backdrop-blur-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Global Revenue (30D)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingStats ? (
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              ) : (
-                <div className="text-3xl font-light text-white font-mono tabular-nums">{formatCurrency(stats?.totalRevenue || 0)}</div>
-              )}
-            </CardContent>
-          </Card>
+        <div className="absolute top-6 right-6 z-10 flex flex-col gap-3 w-72 pointer-events-auto transition-all duration-300"
+          style={{ transform: selectedBusiness ? 'translateX(130%)' : 'translateX(0)', opacity: selectedBusiness ? 0 : 1 }}>
+          <div className="glass-cyan rounded-xl p-5">
+            <div className="text-[10px] text-primary/50 uppercase tracking-widest font-mono mb-2">Global Revenue (30D)</div>
+            {isLoadingStats
+              ? <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              : <div className="text-3xl font-light text-white font-mono tabular-nums">{formatCurrency(stats?.totalRevenue || 0)}</div>
+            }
+          </div>
 
-          <Card className="bg-black/75 border-white/8 backdrop-blur-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-[10px] text-white/40 uppercase tracking-widest font-mono">Top Nodes</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isLoadingTop ? (
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              ) : (
+          <div className="glass rounded-xl p-5">
+            <div className="text-[10px] text-white/30 uppercase tracking-widest font-mono mb-3">Top Nodes</div>
+            {isLoadingTop
+              ? <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              : (
                 <div className="space-y-3">
                   {topBusinesses?.map((b) => {
                     const bColor = colorMap.get(b.id) ?? '#00d4ff';
                     return (
-                      <div
-                        key={b.id}
-                        className="flex justify-between items-center cursor-pointer group"
-                        onClick={() => setSelectedBusiness({ id: b.id, color: bColor })}
-                      >
+                      <div key={b.id} className="flex justify-between items-center cursor-pointer group"
+                        onClick={() => setSelectedBusiness({ id: b.id, color: bColor })}>
                         <div className="flex items-center gap-2 min-w-0">
-                          <div
-                            className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                            style={{ background: bColor, boxShadow: `0 0 8px 2px ${bColor}99` }}
-                          />
-                          <span className="text-white/70 text-sm group-hover:text-white transition-colors truncate">{b.name}</span>
+                          <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                            style={{ background: bColor, boxShadow: `0 0 8px 2px ${bColor}88` }} />
+                          <span className="text-white/65 text-sm group-hover:text-white transition-colors truncate">{b.name}</span>
                         </div>
-                        <span className="text-white/35 font-mono text-xs ml-2 flex-shrink-0 tabular-nums">{formatCurrency(b.revenue)}</span>
+                        <span className="text-white/30 font-mono text-xs ml-2 flex-shrink-0 tabular-nums">{formatCurrency(b.revenue)}</span>
                       </div>
                     );
                   })}
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              )
+            }
+          </div>
         </div>
 
         {selectedBusiness && (

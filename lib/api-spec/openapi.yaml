@@ -249,6 +249,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/AiSummary"
 
+  /ai/chat:
+    post:
+      operationId: aiChat
+      tags: [ai]
+      summary: Chat with AI about your businesses
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AiChatInput"
+      responses:
+        "200":
+          description: AI chat reply
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiChatReply"
+
   /managers/connect:
     post:
       operationId: connectBusiness
@@ -450,6 +469,22 @@ components:
           items:
             type: string
         generatedAt:
+          type: string
+
+    AiChatInput:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    AiChatReply:
+      type: object
+      required: [reply, timestamp]
+      properties:
+        reply:
+          type: string
+        timestamp:
           type: string
 
     ConnectInput:

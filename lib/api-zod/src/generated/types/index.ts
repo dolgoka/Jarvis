@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './aiChatInput';
+export * from './aiChatReply';
 export * from './aiSummary';
 export * from './business';
 export * from './businessInput';

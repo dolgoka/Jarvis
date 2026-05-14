@@ -136,6 +136,15 @@ export interface AiSummary {
   generatedAt: string;
 }
 
+export interface AiChatInput {
+  message: string;
+}
+
+export interface AiChatReply {
+  reply: string;
+  timestamp: string;
+}
+
 export interface ConnectInput {
   name: string;
   city: string;
