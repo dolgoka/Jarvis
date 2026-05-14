@@ -3,20 +3,30 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Business Jarvis API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: businesses
+    description: Business management
+  - name: reports
+    description: Business reports
+  - name: managers
+    description: Manager operations
+  - name: dashboard
+    description: Dashboard and aggregates
+  - name: ai
+    description: AI summaries
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +34,445 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /businesses:
+    get:
+      operationId: listBusinesses
+      tags: [businesses]
+      summary: List all businesses
+      responses:
+        "200":
+          description: List of businesses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Business"
+    post:
+      operationId: createBusiness
+      tags: [businesses]
+      summary: Register a new business
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BusinessInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+
+  /businesses/{id}:
+    get:
+      operationId: getBusiness
+      tags: [businesses]
+      summary: Get business by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Business details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateBusiness
+      tags: [businesses]
+      summary: Update business
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BusinessUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+
+  /reports:
+    get:
+      operationId: listReports
+      tags: [reports]
+      summary: Get reports for a business
+      parameters:
+        - name: businessId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month]
+      responses:
+        "200":
+          description: List of reports
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Report"
+    post:
+      operationId: createReport
+      tags: [reports]
+      summary: Submit a report for a business
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+
+  /reports/latest:
+    get:
+      operationId: fetchLatestReport
+      tags: [reports]
+      summary: Get latest report for a business
+      parameters:
+        - name: businessId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month]
+      responses:
+        "200":
+          description: Latest report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Report"
+        "404":
+          description: No report found
+
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Get global dashboard stats across all businesses
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month]
+      responses:
+        "200":
+          description: Global stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/top-businesses:
+    get:
+      operationId: getTopBusinesses
+      tags: [dashboard]
+      summary: Get top businesses by revenue for a period
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month]
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Top businesses with their latest metrics
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BusinessMetric"
+
+  /ai/summary:
+    get:
+      operationId: getAiSummary
+      tags: [ai]
+      summary: Get AI-generated summary across all businesses
+      parameters:
+        - name: period
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [day, week, month]
+      responses:
+        "200":
+          description: AI summary
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AiSummary"
+
+  /managers/connect:
+    post:
+      operationId: connectBusiness
+      tags: [managers]
+      summary: Manager connects their business to the platform
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectInput"
+      responses:
+        "201":
+          description: Business connected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Business"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    Business:
+      type: object
+      required: [id, name, city, country, lat, lng, industry, status, managerId, managerName, managerEmail, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        industry:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, pending]
+        managerId:
+          type: integer
+        managerName:
+          type: string
+        managerEmail:
+          type: string
+        createdAt:
+          type: string
+        description:
+          type: ["string", "null"]
+
+    BusinessInput:
+      type: object
+      required: [name, city, country, lat, lng, industry, managerName, managerEmail]
+      properties:
+        name:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        industry:
+          type: string
+        managerName:
+          type: string
+        managerEmail:
+          type: string
+        description:
+          type: string
+
+    BusinessUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        industry:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, pending]
+        description:
+          type: string
+
+    Report:
+      type: object
+      required: [id, businessId, period, revenue, orders, profit, date]
+      properties:
+        id:
+          type: integer
+        businessId:
+          type: integer
+        period:
+          type: string
+          enum: [day, week, month]
+        revenue:
+          type: number
+        orders:
+          type: integer
+        profit:
+          type: number
+        date:
+          type: string
+        notes:
+          type: ["string", "null"]
+
+    ReportInput:
+      type: object
+      required: [businessId, period, revenue, orders, profit, date]
+      properties:
+        businessId:
+          type: integer
+        period:
+          type: string
+          enum: [day, week, month]
+        revenue:
+          type: number
+        orders:
+          type: integer
+        profit:
+          type: number
+        date:
+          type: string
+        notes:
+          type: string
+
+    DashboardStats:
+      type: object
+      required: [totalRevenue, totalOrders, totalProfit, activeBusinesses, totalBusinesses, period]
+      properties:
+        totalRevenue:
+          type: number
+        totalOrders:
+          type: integer
+        totalProfit:
+          type: number
+        activeBusinesses:
+          type: integer
+        totalBusinesses:
+          type: integer
+        period:
+          type: string
+
+    BusinessMetric:
+      type: object
+      required: [id, name, city, country, lat, lng, industry, revenue, orders, profit]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        industry:
+          type: string
+        revenue:
+          type: number
+        orders:
+          type: integer
+        profit:
+          type: number
+
+    AiSummary:
+      type: object
+      required: [period, summary, highlights, generatedAt]
+      properties:
+        period:
+          type: string
+        summary:
+          type: string
+        highlights:
+          type: array
+          items:
+            type: string
+        generatedAt:
+          type: string
+
+    ConnectInput:
+      type: object
+      required: [name, city, country, lat, lng, industry, managerName, managerEmail, accessCode]
+      properties:
+        name:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        lat:
+          type: number
+        lng:
+          type: number
+        industry:
+          type: string
+        managerName:
+          type: string
+        managerEmail:
+          type: string
+        accessCode:
+          type: string
+        description:
+          type: string

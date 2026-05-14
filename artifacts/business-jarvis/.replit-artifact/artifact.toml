@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Business Jarvis"
+version = "1.0.0"
+id = "artifacts/business-jarvis"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24644
+
+[services.development]
+run = "pnpm --filter @workspace/business-jarvis run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/business-jarvis", "run", "build" ]
+publicDir = "artifacts/business-jarvis/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24644"
+BASE_PATH = "/"

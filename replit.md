@@ -1,44 +1,63 @@
-# [Project name]
+# Business Jarvis
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Global business intelligence command center — a real-time dashboard where an owner monitors all their worldwide businesses from a single interface, featuring an interactive 3D globe with clickable business nodes, AI executive briefings, and per-period financial reports.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
+- `pnpm --filter @workspace/business-jarvis run dev` — run the frontend
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `AI_INTEGRATIONS_OPENAI_BASE_URL`, `AI_INTEGRATIONS_OPENAI_API_KEY` — for AI summaries (auto-provisioned via Replit AI Integrations)
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React + Vite, Tailwind CSS, shadcn/ui, react-globe.gl (Three.js 3D globe), Recharts
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
+- AI: OpenAI via Replit AI Integrations
 - Build: esbuild (CJS bundle)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — API contract source of truth
+- `lib/db/src/schema/` — DB schema: `businesses.ts`, `reports.ts`
+- `artifacts/api-server/src/routes/` — Express route handlers
+- `artifacts/business-jarvis/src/pages/` — Frontend pages
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Contract-first API: OpenAPI spec → Orval codegen → typed React Query hooks + Zod validators
+- Globe uses react-globe.gl (WebGL/Three.js); GlobeErrorBoundary provides 2D fallback for headless environments
+- Manager connect endpoint uses access code `JARVIS2024` as lightweight auth
+- AI summaries are generated on-demand per period via OpenAI chat completions with structured JSON output
+- Reports are stored flat (businessId + period + date) — one row per business per period per date
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Globe Dashboard** (`/`): Interactive 3D globe with business pins, global revenue stats, top businesses ranking, and a slide-over panel for per-business telemetry
+- **Network** (`/businesses`): Table of all business nodes with location, sector, and status
+- **Business Detail** (`/businesses/:id`): Full telemetry view with revenue/profit charts, period switcher, manager info
+- **AI Briefing** (`/ai-summary`): AI-generated executive summary with highlights, powered by OpenAI
+- **Establish Link** (`/connect`): Manager portal to register a new business node (access code: JARVIS2024)
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Dark theme throughout — deep space / command center aesthetic
+- Cyan/electric blue as primary accent color
+- All business language uses "command center" framing (nodes, uplink, telemetry, etc.)
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- WebGL 3D globe won't render in headless/screenshot environments — GlobeErrorBoundary shows a 2D fallback automatically
+- Always run codegen after changing openapi.yaml before touching frontend or backend
+- Operations with both path AND query params cause Zod/TypeScript collision in api-zod barrel — move to query-only params to avoid
 
 ## Pointers
 
