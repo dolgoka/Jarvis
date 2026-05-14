@@ -11,7 +11,7 @@ class GlobeErrorBoundary extends Component<{ children: ReactNode; fallback: Reac
   render() { return this.state.hasError ? this.props.fallback : this.props.children; }
 }
 import { formatCurrency, formatNumber } from "@/lib/utils";
-import { Loader2, Crosshair, X, TrendingUp, DollarSign, Target, Activity } from "lucide-react";
+import { Loader2, X, Activity } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -94,16 +94,37 @@ export default function GlobeDashboard() {
   const { data: stats, isLoading: isLoadingStats } = useGetDashboardStats({ period: 'month' }, { query: { queryKey: getGetDashboardStatsQueryKey({ period: 'month' }) }});
   const { data: topBusinesses, isLoading: isLoadingTop } = useGetTopBusinesses({ period: 'month', limit: 5 }, { query: { queryKey: getGetTopBusinessesQueryKey({ period: 'month', limit: 5 }) }});
   
-  const pointsData = useMemo(() => {
+  const markersData = useMemo(() => {
     if (!businesses) return [];
     return businesses.map(b => ({
       lat: b.lat,
       lng: b.lng,
-      size: 0.1,
       color: b.status === 'active' ? '#00d4ff' : (b.status === 'inactive' ? '#ef4444' : '#eab308'),
       business: b
     }));
   }, [businesses]);
+
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.id = 'globe-beacon-styles';
+    style.textContent = `
+      @keyframes beacon-outer {
+        0%, 100% { transform: scale(1); opacity: 0.9; }
+        50% { transform: scale(1.25); opacity: 0.6; }
+      }
+      @keyframes beacon-ring {
+        0% { transform: scale(1); opacity: 0.8; }
+        100% { transform: scale(3); opacity: 0; }
+      }
+      .globe-beacon { animation: beacon-outer 2s ease-in-out infinite; }
+      .globe-beacon-ring { animation: beacon-ring 2s ease-out infinite; }
+      .globe-beacon-ring2 { animation: beacon-ring 2s ease-out infinite 0.7s; }
+    `;
+    if (!document.getElementById('globe-beacon-styles')) {
+      document.head.appendChild(style);
+    }
+    return () => { const s = document.getElementById('globe-beacon-styles'); if (s) s.remove(); };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -137,17 +158,18 @@ export default function GlobeDashboard() {
             <GlobeErrorBoundary fallback={
               <div className="w-full h-full flex items-center justify-center">
                 <div className="relative w-[500px] h-[500px]">
-                  <div className="absolute inset-0 rounded-full bg-gradient-radial from-[#0a2a4a] via-[#050a14] to-transparent border border-cyan-500/20 shadow-[0_0_80px_rgba(0,212,255,0.15)]" />
-                  <div className="absolute inset-[30px] rounded-full border border-cyan-500/10 animate-spin" style={{animationDuration:'20s'}} />
-                  <div className="absolute inset-[60px] rounded-full border border-cyan-500/15 animate-spin" style={{animationDuration:'15s',animationDirection:'reverse'}} />
-                  {pointsData.map((p, i) => {
-                    const angle = (i / pointsData.length) * 2 * Math.PI;
-                    const radius = 180 + Math.sin(i * 1.3) * 40;
+                  <div className="absolute inset-0 rounded-full" style={{background:'radial-gradient(circle at 40% 35%, #0e3a5c 0%, #071a2e 45%, #050a14 100%)', boxShadow:'0 0 120px 30px rgba(0,212,255,0.25), inset 0 0 60px rgba(0,100,180,0.3)'}} />
+                  {markersData.map((p, i) => {
+                    const angle = (i / markersData.length) * 2 * Math.PI;
+                    const radius = 175 + Math.sin(i * 1.3) * 45;
                     const x = 250 + radius * Math.cos(angle);
-                    const y = 250 + radius * Math.sin(angle) * 0.5;
+                    const y = 250 + radius * Math.sin(angle) * 0.55;
                     return (
-                      <div key={i} className="absolute cursor-pointer" style={{left: x - 6, top: y - 6}} onClick={() => setSelectedBusiness(p.business.id)}>
-                        <div className="w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(0,212,255,0.8)] animate-pulse" />
+                      <div key={i} className="absolute cursor-pointer" style={{left: x - 10, top: y - 10}} onClick={() => setSelectedBusiness(p.business.id)}>
+                        <div className="w-5 h-5 relative flex items-center justify-center">
+                          <div className="absolute inset-0 rounded-full animate-ping" style={{background: p.color, opacity: 0.3}} />
+                          <div className="w-3 h-3 rounded-full" style={{background:`radial-gradient(circle at 35% 35%, white, ${p.color})`, boxShadow:`0 0 10px 4px ${p.color}cc, 0 0 20px 8px ${p.color}55`}} />
+                        </div>
                       </div>
                     );
                   })}
@@ -158,21 +180,34 @@ export default function GlobeDashboard() {
                 ref={globeEl}
                 width={dimensions.width}
                 height={dimensions.height}
-                globeImageUrl="//unpkg.com/three-globe/example/img/earth-dark.jpg"
+                globeImageUrl="//unpkg.com/three-globe/example/img/earth-night.jpg"
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
                 backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-                pointsData={pointsData}
-                pointLat="lat"
-                pointLng="lng"
-                pointColor="color"
-                pointAltitude="size"
-                pointRadius={0.5}
-                pointsMerge={false}
-                onPointHover={(point: any) => setHoveredLocation(point)}
-                onPointClick={(point: any) => setSelectedBusiness(point.business.id)}
-                pointResolution={2}
+                htmlElementsData={markersData}
+                htmlLat="lat"
+                htmlLng="lng"
+                htmlElement={(d: any) => {
+                  const el = document.createElement('div');
+                  el.style.cssText = `width:28px;height:28px;position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;`;
+                  el.innerHTML = `
+                    <div class="globe-beacon-ring" style="position:absolute;inset:0;border-radius:50%;border:2px solid ${d.color};"></div>
+                    <div class="globe-beacon-ring2" style="position:absolute;inset:0;border-radius:50%;border:1.5px solid ${d.color};"></div>
+                    <div class="globe-beacon" style="width:14px;height:14px;border-radius:50%;background:radial-gradient(circle at 35% 35%, #ffffff, ${d.color});box-shadow:0 0 14px 6px ${d.color}cc, 0 0 28px 12px ${d.color}55;border:1.5px solid ${d.color};"></div>
+                  `;
+                  el.addEventListener('click', () => setSelectedBusiness(d.business.id));
+                  el.addEventListener('mouseenter', () => setHoveredLocation(d));
+                  el.addEventListener('mouseleave', () => setHoveredLocation(null));
+                  return el;
+                }}
+                ringsData={markersData}
+                ringLat="lat"
+                ringLng="lng"
+                ringColor={(d: any) => (t: number) => `${d.color}${Math.round((1 - t) * 180).toString(16).padStart(2, '0')}`}
+                ringMaxRadius={3.5}
+                ringPropagationSpeed={2}
+                ringRepeatPeriod={900}
                 atmosphereColor="#00d4ff"
-                atmosphereAltitude={0.15}
+                atmosphereAltitude={0.28}
               />
             </GlobeErrorBoundary>
           )}
@@ -240,10 +275,6 @@ export default function GlobeDashboard() {
           </Card>
         </div>
 
-        <div className="absolute inset-0 pointer-events-none z-0 flex items-center justify-center opacity-20">
-          <Crosshair className="w-[600px] h-[600px] text-primary" strokeWidth={0.5} />
-        </div>
-        
         {selectedBusiness && (
           <BusinessSlideOver businessId={selectedBusiness} onClose={() => setSelectedBusiness(null)} />
         )}
