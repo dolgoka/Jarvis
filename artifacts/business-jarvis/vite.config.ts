@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-// PORT is only needed for the dev server — fall back to 3000 at build time
+// PORT is only needed for the dev server — fall back to 5000 at build time
 const rawPort = process.env.PORT ?? "3000";
 const port = Number(rawPort);
 if (Number.isNaN(port) || port <= 0) {
@@ -55,6 +55,12 @@ export default defineConfig({
     allowedHosts: true,
     fs: {
       strict: true,
+    },
+    proxy: {
+      "/api": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
     },
   },
   preview: {

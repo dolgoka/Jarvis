@@ -26,7 +26,7 @@ async function buildBusinessContext(period = "month") {
       name: b.name,
       city: b.city,
       country: b.country,
-      sector: b.sector,
+      sector: b.industry,
       status: b.status,
       managerName: b.managerName,
       revenue: latest?.revenue ?? 0,
