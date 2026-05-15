@@ -3,11 +3,21 @@ import { Shell } from "@/components/layout/Shell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useGetAiSummary, getGetAiSummaryQueryKey, GetAiSummaryPeriod } from "@workspace/api-client-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Brain, Sparkles, Loader2 } from "lucide-react";
+import { Brain, Sparkles, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function AiSummary() {
   const [period, setPeriod] = useState<GetAiSummaryPeriod>('month');
-  const { data: summary, isLoading } = useGetAiSummary({ period }, { query: { queryKey: getGetAiSummaryQueryKey({ period }) }});
+  const queryClient = useQueryClient();
+  const queryKey = getGetAiSummaryQueryKey({ period });
+  const { data: summary, isLoading, isError, error } = useGetAiSummary(
+    { period },
+    { query: { queryKey, retry: 1, staleTime: 5 * 60 * 1000 } }
+  );
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey });
+  };
 
   return (
     <Shell>
@@ -20,16 +30,25 @@ export default function AiSummary() {
             </h1>
             <p className="text-muted-foreground mt-1">Dry distillation of global network telemetry.</p>
           </div>
-          <Select value={period} onValueChange={(val: GetAiSummaryPeriod) => setPeriod(val)}>
-            <SelectTrigger className="w-32 bg-black/40 border-primary/20 text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="day">24 Hours</SelectItem>
-              <SelectItem value="week">7 Days</SelectItem>
-              <SelectItem value="month">30 Days</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleRefresh}
+              className="p-2 rounded-lg border border-primary/20 text-primary/60 hover:text-primary hover:border-primary/40 hover:bg-primary/5 transition-all"
+              title="Regenerate briefing"
+            >
+              <RefreshCw className="w-4 h-4" />
+            </button>
+            <Select value={period} onValueChange={(val: GetAiSummaryPeriod) => setPeriod(val)}>
+              <SelectTrigger className="w-32 bg-black/40 border-primary/20 text-white">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="day">24 Hours</SelectItem>
+                <SelectItem value="week">7 Days</SelectItem>
+                <SelectItem value="month">30 Days</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {isLoading ? (
@@ -39,6 +58,25 @@ export default function AiSummary() {
               <Loader2 className="w-12 h-12 animate-spin text-primary relative z-10" />
             </div>
             <div className="text-primary font-mono text-sm tracking-widest animate-pulse">SYNTHESIZING TELEMETRY...</div>
+            <div className="text-white/20 font-mono text-xs">AI analysis in progress — may take 5–10 seconds</div>
+          </div>
+        ) : isError ? (
+          <div className="flex flex-col items-center justify-center py-32 space-y-5">
+            <div className="relative">
+              <div className="absolute inset-0 bg-red-500/10 blur-xl rounded-full"></div>
+              <AlertTriangle className="w-12 h-12 text-red-400/70 relative z-10" />
+            </div>
+            <div className="text-red-400/80 font-mono text-sm tracking-widest">UPLINK FAILURE</div>
+            <div className="text-white/30 font-mono text-xs text-center max-w-sm">
+              {(error as any)?.message ?? "AI synthesis unavailable. Check server configuration."}
+            </div>
+            <button
+              onClick={handleRefresh}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-primary/30 text-primary font-mono text-xs uppercase tracking-widest hover:bg-primary/10 transition-all"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              Retry Uplink
+            </button>
           </div>
         ) : summary ? (
           <div className="space-y-6">

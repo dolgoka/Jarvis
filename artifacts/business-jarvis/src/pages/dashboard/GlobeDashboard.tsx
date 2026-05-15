@@ -296,7 +296,7 @@ export default function GlobeDashboard() {
     if (!businesses) return [];
     return businesses.map((b, i) => ({
       lat: b.lat, lng: b.lng,
-      color: getBeaconColor(i), alt: 0.025, radius: 0.52, business: b,
+      color: getBeaconColor(i), alt: 0.022, radius: 0.26, business: b,
     }));
   }, [businesses]);
 
@@ -381,13 +381,22 @@ export default function GlobeDashboard() {
                 polygonsTransitionDuration={200}
                 pointsData={markersData}
                 pointLat="lat" pointLng="lng" pointAltitude="alt" pointRadius="radius" pointColor="color"
-                pointResolution={16} pointsMerge={false}
+                pointResolution={12} pointsMerge={false}
                 onPointClick={(d: any) => setSelectedBusiness({ id: d.business.id, color: d.color })}
                 onPointHover={(d: any) => setHoveredPoint(d || null)}
                 ringsData={markersData}
                 ringLat="lat" ringLng="lng"
-                ringColor={(d: any) => (t: number) => `${d.color}${Math.round((1 - t) * 220).toString(16).padStart(2, '0')}`}
-                ringMaxRadius={4.5} ringPropagationSpeed={2.2} ringRepeatPeriod={850} ringAltitude={0.001}
+                ringColor={(d: any) => (t: number) => `${d.color}${Math.round((1 - t * t) * 255).toString(16).padStart(2, '0')}`}
+                ringMaxRadius={7} ringPropagationSpeed={3.5} ringRepeatPeriod={600} ringAltitude={0.001}
+                htmlElementsData={markersData}
+                htmlElement={(d: any) => {
+                  const el = document.createElement('div');
+                  el.style.cssText = `width:9px;height:9px;border-radius:50%;background:${d.color};box-shadow:0 0 8px 4px ${d.color}cc,0 0 18px 7px ${d.color}44;border:1.5px solid rgba(255,255,255,0.7);cursor:pointer;pointer-events:auto;`;
+                  el.addEventListener('click', (e) => { e.stopPropagation(); });
+                  return el;
+                }}
+                htmlAltitude={(d: any) => d.alt + 0.005}
+                onHtmlElementClick={(d: any) => setSelectedBusiness({ id: d.business.id, color: d.color })}
               />
             </GlobeErrorBoundary>
           )}
