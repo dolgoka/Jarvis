@@ -7,6 +7,8 @@ import managersRouter from "./managers";
 import aiRouter from "./ai";
 import eventsRouter from "./events";
 import voiceRouter from "./voice";
+import peopleRouter from "./people";
+import tasksRouter from "./tasks";
 
 const router: IRouter = Router();
 
@@ -18,5 +20,7 @@ router.use(managersRouter);
 router.use(aiRouter);
 router.use(eventsRouter);
 router.use(voiceRouter);
+router.use(peopleRouter);
+router.use(tasksRouter);
 
 export default router;

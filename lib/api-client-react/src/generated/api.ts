@@ -37,8 +37,13 @@ import type {
   GetTopBusinessesParams,
   HealthStatus,
   ListReportsParams,
+  Person,
   Report,
-  ReportInput
+  ReportInput,
+  Task,
+  TaskDraft,
+  TaskDraftInput,
+  TaskInput
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -1205,6 +1210,302 @@ export const useDismissAllEvents = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDismissAllEventsMutationOptions(options));
+    }
+
+export const getListPeopleUrl = () => {
+
+
+
+
+  return `/api/people`
+}
+
+/**
+ * @summary List all people (inner circle)
+ */
+export const listPeople = async ( options?: RequestInit): Promise<Person[]> => {
+
+  return customFetch<Person[]>(getListPeopleUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPeopleQueryKey = () => {
+    return [
+    `/api/people`
+    ] as const;
+    }
+
+
+export const getListPeopleQueryOptions = <TData = Awaited<ReturnType<typeof listPeople>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPeople>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPeopleQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPeople>>> = ({ signal }) => listPeople({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPeople>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListPeopleQueryResult = NonNullable<Awaited<ReturnType<typeof listPeople>>>
+export type ListPeopleQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all people (inner circle)
+ */
+
+export function useListPeople<TData = Awaited<ReturnType<typeof listPeople>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listPeople>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListPeopleQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getDraftTaskUrl = () => {
+
+
+
+
+  return `/api/tasks/draft`
+}
+
+/**
+ * @summary Parse free text into a task draft via AI (does not save)
+ */
+export const draftTask = async (taskDraftInput: TaskDraftInput, options?: RequestInit): Promise<TaskDraft> => {
+
+  return customFetch<TaskDraft>(getDraftTaskUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      taskDraftInput,)
+  }
+);}
+
+
+
+
+export const getDraftTaskMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof draftTask>>, TError,{data: BodyType<TaskDraftInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof draftTask>>, TError,{data: BodyType<TaskDraftInput>}, TContext> => {
+
+const mutationKey = ['draftTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof draftTask>>, {data: BodyType<TaskDraftInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  draftTask(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DraftTaskMutationResult = NonNullable<Awaited<ReturnType<typeof draftTask>>>
+    export type DraftTaskMutationBody = BodyType<TaskDraftInput>
+    export type DraftTaskMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Parse free text into a task draft via AI (does not save)
+ */
+export const useDraftTask = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof draftTask>>, TError,{data: BodyType<TaskDraftInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof draftTask>>,
+        TError,
+        {data: BodyType<TaskDraftInput>},
+        TContext
+      > => {
+      return useMutation(getDraftTaskMutationOptions(options));
+    }
+
+export const getListTasksUrl = () => {
+
+
+
+
+  return `/api/tasks`
+}
+
+/**
+ * @summary List all tasks with assignee info
+ */
+export const listTasks = async ( options?: RequestInit): Promise<Task[]> => {
+
+  return customFetch<Task[]>(getListTasksUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListTasksQueryKey = () => {
+    return [
+    `/api/tasks`
+    ] as const;
+    }
+
+
+export const getListTasksQueryOptions = <TData = Awaited<ReturnType<typeof listTasks>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTasks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListTasksQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTasks>>> = ({ signal }) => listTasks({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listTasks>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListTasksQueryResult = NonNullable<Awaited<ReturnType<typeof listTasks>>>
+export type ListTasksQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List all tasks with assignee info
+ */
+
+export function useListTasks<TData = Awaited<ReturnType<typeof listTasks>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTasks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListTasksQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getCreateTaskUrl = () => {
+
+
+
+
+  return `/api/tasks`
+}
+
+/**
+ * @summary Save a confirmed task
+ */
+export const createTask = async (taskInput: TaskInput, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getCreateTaskUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      taskInput,)
+  }
+);}
+
+
+
+
+export const getCreateTaskMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTask>>, TError,{data: BodyType<TaskInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createTask>>, TError,{data: BodyType<TaskInput>}, TContext> => {
+
+const mutationKey = ['createTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createTask>>, {data: BodyType<TaskInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createTask(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateTaskMutationResult = NonNullable<Awaited<ReturnType<typeof createTask>>>
+    export type CreateTaskMutationBody = BodyType<TaskInput>
+    export type CreateTaskMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Save a confirmed task
+ */
+export const useCreateTask = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createTask>>, TError,{data: BodyType<TaskInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof createTask>>,
+        TError,
+        {data: BodyType<TaskInput>},
+        TContext
+      > => {
+      return useMutation(getCreateTaskMutationOptions(options));
     }
 
 export const getDismissEventUrl = (id: number,) => {

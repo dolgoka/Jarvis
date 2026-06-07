@@ -204,6 +204,61 @@ export interface DismissResult {
   dismissed: number;
 }
 
+export interface Person {
+  id: number;
+  name: string;
+  role: string;
+  /** @nullable */
+  email?: string | null;
+}
+
+export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
+
+
+export const TaskStatus = {
+  waiting: 'waiting',
+  accepted: 'accepted',
+  stuck: 'stuck',
+} as const;
+
+export interface Task {
+  id: number;
+  title: string;
+  description: string;
+  assigneeId: number;
+  assigneeName: string;
+  assigneeRole: string;
+  linkedPeopleIds: number[];
+  linkedPeople: Person[];
+  status: TaskStatus;
+  createdAt: string;
+  /** @nullable */
+  acceptedAt?: string | null;
+  /** @nullable */
+  stuckDays?: number | null;
+}
+
+export interface TaskInput {
+  title: string;
+  description: string;
+  assigneeId: number;
+  linkedPeopleIds?: number[];
+}
+
+export interface TaskDraftInput {
+  text: string;
+}
+
+export interface TaskDraft {
+  title: string;
+  description: string;
+  assigneeId: number;
+  assigneeName: string;
+  assigneeRole: string;
+  linkedPeopleIds: number[];
+  linkedPeople: Person[];
+}
+
 export type ListReportsParams = {
 businessId: number;
 period?: ListReportsPeriod;

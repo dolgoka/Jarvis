@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from 
 import Globe from "react-globe.gl";
 import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
 import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
-import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, User, Mail, Zap, ChevronDown } from "lucide-react";
+import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, User, Mail, Zap, ChevronDown, ClipboardList } from "lucide-react";
 import { EventsFeed } from "./EventsFeed";
 import { ChatWidget } from "./ChatWidget";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -486,6 +486,15 @@ export default function GlobeDashboard() {
           <Activity className="w-4 h-4 md:w-5 md:h-5 text-primary animate-pulse" />
           <h1 className="text-base md:text-xl font-mono font-bold text-white tracking-widest">ГЛОБАЛЬНЫЙ ЦЕНТР</h1>
         </div>
+
+        {/* Quick task button */}
+        <a
+          href="/tasks"
+          className="hidden md:flex absolute top-6 left-1/2 -translate-x-1/2 z-10 items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-[10px] uppercase tracking-widest transition-all hover:scale-105"
+          style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.2)", color: "rgba(0,212,255,0.65)" }}
+        >
+          <ClipboardList className="w-3 h-3" /> Новая задача
+        </a>
 
         {/* ── Desktop stats panel ── */}
         <div

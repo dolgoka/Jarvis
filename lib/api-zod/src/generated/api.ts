@@ -287,6 +287,77 @@ export const DismissAllEventsResponse = zod.object({
 
 
 /**
+ * @summary List all people (inner circle)
+ */
+export const ListPeopleResponseItem = zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "email": zod.string().nullish()
+})
+export const ListPeopleResponse = zod.array(ListPeopleResponseItem)
+
+
+/**
+ * @summary Parse free text into a task draft via AI (does not save)
+ */
+export const DraftTaskBody = zod.object({
+  "text": zod.string()
+})
+
+export const DraftTaskResponse = zod.object({
+  "title": zod.string(),
+  "description": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "linkedPeopleIds": zod.array(zod.number()),
+  "linkedPeople": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "email": zod.string().nullish()
+}))
+})
+
+
+/**
+ * @summary List all tasks with assignee info
+ */
+export const ListTasksResponseItem = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "description": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "linkedPeopleIds": zod.array(zod.number()),
+  "linkedPeople": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "email": zod.string().nullish()
+})),
+  "status": zod.enum(['waiting', 'accepted', 'stuck']),
+  "createdAt": zod.string(),
+  "acceptedAt": zod.string().nullish(),
+  "stuckDays": zod.number().nullish()
+})
+export const ListTasksResponse = zod.array(ListTasksResponseItem)
+
+
+/**
+ * @summary Save a confirmed task
+ */
+export const CreateTaskBody = zod.object({
+  "title": zod.string(),
+  "description": zod.string(),
+  "assigneeId": zod.number(),
+  "linkedPeopleIds": zod.array(zod.number()).optional()
+})
+
+
+/**
  * @summary Dismiss a single event
  */
 export const DismissEventParams = zod.object({

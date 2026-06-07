@@ -317,6 +317,72 @@ paths:
               schema:
                 $ref: "#/components/schemas/DismissResult"
 
+  /people:
+    get:
+      operationId: listPeople
+      tags: [tasks]
+      summary: List all people (inner circle)
+      responses:
+        "200":
+          description: List of people
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Person"
+
+  /tasks/draft:
+    post:
+      operationId: draftTask
+      tags: [tasks]
+      summary: Parse free text into a task draft via AI (does not save)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskDraftInput"
+      responses:
+        "200":
+          description: Task draft
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskDraft"
+
+  /tasks:
+    get:
+      operationId: listTasks
+      tags: [tasks]
+      summary: List all tasks with assignee info
+      responses:
+        "200":
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Task"
+    post:
+      operationId: createTask
+      tags: [tasks]
+      summary: Save a confirmed task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "201":
+          description: Created task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+
   /events/{id}/dismiss:
     patch:
       operationId: dismissEvent
@@ -601,3 +667,95 @@ components:
       properties:
         dismissed:
           type: integer
+
+    Person:
+      type: object
+      required: [id, name, role]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+        email:
+          type: ["string", "null"]
+
+    Task:
+      type: object
+      required: [id, title, description, assigneeId, assigneeName, assigneeRole, linkedPeopleIds, linkedPeople, status, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        assigneeId:
+          type: integer
+        assigneeName:
+          type: string
+        assigneeRole:
+          type: string
+        linkedPeopleIds:
+          type: array
+          items:
+            type: integer
+        linkedPeople:
+          type: array
+          items:
+            $ref: "#/components/schemas/Person"
+        status:
+          type: string
+          enum: [waiting, accepted, stuck]
+        createdAt:
+          type: string
+        acceptedAt:
+          type: ["string", "null"]
+        stuckDays:
+          type: ["integer", "null"]
+
+    TaskInput:
+      type: object
+      required: [title, description, assigneeId]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        assigneeId:
+          type: integer
+        linkedPeopleIds:
+          type: array
+          items:
+            type: integer
+
+    TaskDraftInput:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+
+    TaskDraft:
+      type: object
+      required: [title, description, assigneeId, assigneeName, assigneeRole, linkedPeopleIds, linkedPeople]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        assigneeId:
+          type: integer
+        assigneeName:
+          type: string
+        assigneeRole:
+          type: string
+        linkedPeopleIds:
+          type: array
+          items:
+            type: integer
+        linkedPeople:
+          type: array
+          items:
+            $ref: "#/components/schemas/Person"

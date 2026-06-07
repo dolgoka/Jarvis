@@ -10,6 +10,7 @@ import BusinessDetail from "./pages/businesses/BusinessDetail";
 import AiSummary from "./pages/ai-summary/AiSummary";
 import ConnectBusiness from "./pages/connect/ConnectBusiness";
 import AiChat from "./pages/chat/AiChat";
+import TasksPage from "./pages/tasks/TasksPage";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +20,7 @@ function Router() {
       <Route path="/" component={GlobeDashboard} />
       <Route path="/businesses" component={BusinessList} />
       <Route path="/businesses/:id" component={BusinessDetail} />
+      <Route path="/tasks" component={TasksPage} />
       <Route path="/ai-summary" component={AiSummary} />
       <Route path="/chat" component={AiChat} />
       <Route path="/connect" component={ConnectBusiness} />
