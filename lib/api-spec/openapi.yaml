@@ -606,6 +606,17 @@ components:
       properties:
         message:
           type: string
+        history:
+          type: array
+          items:
+            type: object
+            required: [role, content]
+            properties:
+              role:
+                type: string
+                enum: [user, assistant]
+              content:
+                type: string
 
     AiChatReply:
       type: object

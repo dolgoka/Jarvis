@@ -5,7 +5,9 @@
  * Business Jarvis API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { AiChatInputHistoryItem } from './aiChatInputHistoryItem';
 
 export interface AiChatInput {
   message: string;
+  history?: AiChatInputHistoryItem[];
 }

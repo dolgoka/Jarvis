@@ -237,7 +237,11 @@ export const GetAiSummaryResponse = zod.object({
  * @summary Chat with AI about your businesses
  */
 export const AiChatBody = zod.object({
-  "message": zod.string()
+  "message": zod.string(),
+  "history": zod.array(zod.object({
+  "role": zod.enum(['user', 'assistant']),
+  "content": zod.string()
+})).optional()
 })
 
 export const AiChatResponse = zod.object({

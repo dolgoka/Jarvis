@@ -156,8 +156,22 @@ export interface AiSummary {
   generatedAt: string;
 }
 
+export type AiChatInputHistoryItemRole = typeof AiChatInputHistoryItemRole[keyof typeof AiChatInputHistoryItemRole];
+
+
+export const AiChatInputHistoryItemRole = {
+  user: 'user',
+  assistant: 'assistant',
+} as const;
+
+export type AiChatInputHistoryItem = {
+  role: AiChatInputHistoryItemRole;
+  content: string;
+};
+
 export interface AiChatInput {
   message: string;
+  history?: AiChatInputHistoryItem[];
 }
 
 export interface AiChatReply {

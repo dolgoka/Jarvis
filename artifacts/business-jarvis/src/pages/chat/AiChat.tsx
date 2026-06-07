@@ -73,8 +73,11 @@ export default function AiChat() {
     const msg = (text ?? input).trim();
     if (!msg || isPending) return;
     setInput("");
-    setMessages(prev => [...prev, { role: "user", content: msg, timestamp: new Date().toISOString() }]);
-    sendMessage({ data: { message: msg } });
+    setMessages(prev => {
+      const history = prev.map(m => ({ role: m.role, content: m.content }));
+      sendMessage({ data: { message: msg, history } });
+      return [...prev, { role: "user" as const, content: msg, timestamp: new Date().toISOString() }];
+    });
   }
 
   function handleKey(e: React.KeyboardEvent<HTMLInputElement>) {

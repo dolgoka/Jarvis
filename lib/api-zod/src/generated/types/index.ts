@@ -7,6 +7,8 @@
  */
 
 export * from './aiChatInput';
+export * from './aiChatInputHistoryItem';
+export * from './aiChatInputHistoryItemRole';
 export * from './aiChatReply';
 export * from './aiSummary';
 export * from './business';

@@ -1,23 +1,52 @@
 import { Router, type IRouter } from "express";
 import { eq, isNull } from "drizzle-orm";
-import { db, businessesTable, reportsTable, eventsTable } from "@workspace/db";
+import { db, businessesTable, reportsTable, eventsTable, tasksTable, peopleTable } from "@workspace/db";
 import { GetAiSummaryQueryParams, GetAiSummaryResponse, AiChatBody, AiChatResponse } from "@workspace/api-zod";
 import OpenAI from "openai";
 
 const router: IRouter = Router();
 
 function makeClient() {
-  // Replit AI Integrations proxy takes priority; falls back to standard OPENAI_API_KEY for Railway/self-hosted
   const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
   const apiKey = process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? process.env.OPENAI_API_KEY;
   if (!apiKey) throw new Error("No OpenAI API key configured (set OPENAI_API_KEY)");
   return new OpenAI({ ...(baseURL ? { baseURL } : {}), apiKey });
 }
 
+// ── Number formatting ────────────────────────────────────────────────────────
+
+function fmtNum(n: number, unit: string): string {
+  const isRub = unit === "₽" || unit === "RUB";
+  const sym = isRub ? "₽" : "$";
+  const abs = Math.abs(n);
+  if (isRub) {
+    if (abs >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(2).replace(".", ",")} млрд ${sym}`;
+    if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace(".", ",")} млн ${sym}`;
+    return `${n.toLocaleString("ru-RU")} ${sym}`;
+  } else {
+    if (abs >= 1_000_000_000) return `${sym}${(n / 1_000_000_000).toFixed(1)}B`;
+    if (abs >= 1_000_000) return `${sym}${(n / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000) return `${sym}${(n / 1_000).toFixed(0)}K`;
+    return `${sym}${n}`;
+  }
+}
+
+function fmtDelta(plan: number, actual: number, lowerIsBetter = false): string {
+  if (plan === 0) return "";
+  const pct = ((actual - plan) / Math.abs(plan)) * 100;
+  const better = lowerIsBetter ? pct < 0 : pct > 0;
+  const sign = pct > 0 ? "+" : "";
+  return `${sign}${pct.toFixed(0)}% ${better ? "✅" : "🔴"}`;
+}
+
+// ── Data builders ────────────────────────────────────────────────────────────
+
 async function buildBusinessContext(period = "month") {
-  const businesses = await db.select().from(businessesTable);
-  const reports = await db.select().from(reportsTable).where(eq(reportsTable.period, period));
-  const events = await db.select().from(eventsTable).where(isNull(eventsTable.dismissedAt));
+  const [businesses, reports, events] = await Promise.all([
+    db.select().from(businessesTable),
+    db.select().from(reportsTable).where(eq(reportsTable.period, period)),
+    db.select().from(eventsTable).where(isNull(eventsTable.dismissedAt)),
+  ]);
 
   return businesses.map(b => {
     const bReports = reports.filter(r => r.businessId === b.id);
@@ -25,6 +54,15 @@ async function buildBusinessContext(period = "month") {
     const bEvents = events
       .filter(e => e.businessId === b.id)
       .map(e => ({ severity: e.severity, text: e.text }));
+
+    const analytics = b.analytics as {
+      stage?: string;
+      contour?: string;
+      responsible?: { name: string; role: string } | null;
+      whyColor?: string;
+      planFact?: Array<{ metric: string; plan: number; actual: number; unit: string; lowerIsBetter?: boolean }>;
+    } | null;
+
     return {
       id: b.id,
       name: b.name,
@@ -40,9 +78,109 @@ async function buildBusinessContext(period = "month") {
       profit: latest?.profit ?? 0,
       orders: latest?.orders ?? 0,
       events: bEvents,
+      analytics,
     };
   });
 }
+
+async function buildTasksContext() {
+  const [tasks, allPeople] = await Promise.all([
+    db.select().from(tasksTable),
+    db.select().from(peopleTable),
+  ]);
+
+  return tasks.map(t => {
+    const assignee = allPeople.find(p => p.id === t.assigneeId);
+    return {
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      assigneeName: assignee?.name ?? "—",
+      assigneeRole: assignee?.role ?? "—",
+      status: t.status,
+      stuckDays: t.stuckDays ?? null,
+      createdAt: t.createdAt.toISOString().slice(0, 10),
+    };
+  });
+}
+
+// ── Build system prompt ──────────────────────────────────────────────────────
+
+function buildSystemPrompt(
+  businesses: Awaited<ReturnType<typeof buildBusinessContext>>,
+  tasks: Awaited<ReturnType<typeof buildTasksContext>>,
+): string {
+  const healthIcon = (h: string) => h === "green" ? "🟢" : h === "yellow" ? "🟡" : "🔴";
+
+  const bizLines = businesses.map(b => {
+    const a = b.analytics;
+    const cur = b.currency;
+
+    const planFactLines = a?.planFact?.map(pf => {
+      const planFmt = fmtNum(pf.plan, pf.unit);
+      const actualFmt = fmtNum(pf.actual, pf.unit);
+      const delta = fmtDelta(pf.plan, pf.actual, pf.lowerIsBetter);
+      return `    ${pf.metric}: план ${planFmt} → факт ${actualFmt} ${delta}`;
+    }).join("\n") ?? "    нет данных";
+
+    const responsibleLine = a?.responsible
+      ? `${a.responsible.name} (${a.responsible.role})`
+      : "НЕ НАЗНАЧЕН — слепая зона";
+
+    const eventsLine = b.events.length > 0
+      ? b.events.map(e => `[${e.severity}] ${e.text}`).join("; ")
+      : "нет";
+
+    return `
+── ${b.name} ──
+  Статус: ${healthIcon(b.health)} | Причина: ${a?.whyColor ?? "нет данных"}
+  Ответственный: ${responsibleLine}
+  Стадия: ${a?.stage ?? "—"} | Контур: ${a?.contour ?? "—"} | Сектор: ${b.sector}
+  Локация: ${b.city}, ${b.country}
+  Финансы (${cur}): Выручка ${fmtNum(b.revenue, cur === "RUB" ? "₽" : "$")} | Прибыль ${fmtNum(b.profit, cur === "RUB" ? "₽" : "$")} | Заказы ${b.orders}
+  Отклонения план-факт:
+${planFactLines}
+  События: ${eventsLine}`.trim();
+  }).join("\n\n");
+
+  const taskStatusLabel = (s: string, stuck: number | null) => {
+    if (s === "stuck") return `🔴 застряла${stuck ? ` (${stuck} дн)` : ""}`;
+    if (s === "accepted") return "🟡 принята";
+    return "⬜ ожидает";
+  };
+
+  const taskLines = tasks.length > 0
+    ? tasks.map(t =>
+        `  • [${taskStatusLabel(t.status, t.stuckDays)}] "${t.title}" — исполнитель: ${t.assigneeName} (${t.assigneeRole}), создана: ${t.createdAt}`
+      ).join("\n")
+    : "  нет активных задач";
+
+  return `Ты — JARVIS, бизнес-ассистент командного центра. У тебя полный доступ к данным портфеля.
+
+═══════════════════ ПОРТФЕЛЬ КОМПАНИЙ ═══════════════════
+${bizLines}
+
+═══════════════════ ЗАДАЧИ ВНУТРЕННЕГО КРУГА ═══════════════════
+${taskLines}
+
+═══════════════════ ПРАВИЛА ═══════════════════
+ФОРМАТ ОТВЕТА НА ВОПРОС О КОМПАНИИ (обязательный briefing):
+1. Статус светофора + причина (используй поле "Причина" дословно или кратко)
+2. Ответственный (или "ответственный не назначен — слепая зона")
+3. Стадия и контур
+4. Ключевые отклонения план-факт (выдели 🔴 позиции — где хуже плана)
+5. Задачи — ТОЛЬКО если в названии или описании задачи явно упоминается название компании. Не притягивай задачи к компании без явного совпадения.
+
+ОБЩИЕ ПРАВИЛА:
+- Отвечай ТОЛЬКО по-русски, уверенно и профессионально
+- Числа форматируй красиво: «5,46 млрд ₽», «$34,7M», не сырые числа
+- Ответы краткие (3–5 предложений), если пользователь не просит подробностей
+- Помни контекст диалога — отвечай на уточнения без повторных вопросов
+- Если данных нет — честно скажи, не выдумывай цифры
+- Финансы Profimonsters в рублях (₽), остальные в долларах ($)`;
+}
+
+// ── Routes ───────────────────────────────────────────────────────────────────
 
 router.get("/ai/summary", async (req, res): Promise<void> => {
   const query = GetAiSummaryQueryParams.safeParse(req.query);
@@ -103,46 +241,31 @@ router.post("/ai/chat", async (req, res): Promise<void> => {
     return;
   }
 
-  const { message } = body.data;
-  const context = await buildBusinessContext("month");
+  const { message, history = [] } = body.data;
 
-  const healthLabel = (h: string) => h === "green" ? "норма" : h === "yellow" ? "внимание" : "критично";
-  const currencyFmt = (val: number, cur: string) => {
-    if (cur === "RUB") return `${(val).toLocaleString("ru-RU")} ₽`;
-    return `$${(val).toLocaleString("en-US")}`;
-  };
+  const [businesses, tasks] = await Promise.all([
+    buildBusinessContext("month"),
+    buildTasksContext(),
+  ]);
 
-  const contextLines = context.map(b => {
-    const evStr = b.events.length > 0
-      ? b.events.map(e => `[${e.severity}] ${e.text}`).join("; ")
-      : "нет активных событий";
-    return `• ${b.name} (${b.city}, ${b.country}) | сектор: ${b.sector} | статус: ${healthLabel(b.health)} | валюта: ${b.currency} | выручка за мес: ${currencyFmt(b.revenue, b.currency)} | прибыль: ${currencyFmt(b.profit, b.currency)} | заказов: ${b.orders} | менеджер: ${b.managerName} (${b.managerEmail}) | события: ${evStr}`;
-  }).join("\n");
+  const systemPrompt = buildSystemPrompt(businesses, tasks);
 
-  const systemPrompt = `Ты — JARVIS, бизнес-ассистент командного центра. У тебя полный доступ к данным портфеля из 14 компаний.
-
-Данные портфеля (30-дневный период):
-${contextLines}
-
-Правила ответа:
-- Отвечай ТОЛЬКО на русском языке.
-- Отвечай кратко и по делу — не более 150 слов, если не просят подробностей.
-- Используй только данные из портфеля выше, не выдумывай цифры.
-- Если спрашивают про конкретную компанию — цитируй точные цифры из данных.
-- Статус: «критично» = красный светофор, «внимание» = жёлтый, «норма» = зелёный.
-- Финансы Profimonsters — в рублях (₽), остальные — в долларах ($).
-- Говори уверенно и профессионально, без воды.`;
+  // Trim history to last 20 messages (10 exchanges) to stay within token budget
+  const trimmedHistory = (history as Array<{ role: "user" | "assistant"; content: string }>)
+    .slice(-20)
+    .map(m => ({ role: m.role, content: m.content }));
 
   const client = makeClient();
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: systemPrompt },
+      ...trimmedHistory,
       { role: "user", content: message },
     ],
   });
 
-  const reply = completion.choices[0]?.message?.content ?? "Unable to process request.";
+  const reply = completion.choices[0]?.message?.content ?? "Нет ответа.";
 
   res.json(AiChatResponse.parse({
     reply,

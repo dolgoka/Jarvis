@@ -62,9 +62,12 @@ export function ChatWidget() {
     const msg = (text ?? input).trim();
     if (!msg || isPending) return;
     setInput("");
-    setMessages(prev => [...prev, { role: "user", text: msg }]);
     if (!open) setOpen(true);
-    sendMessage({ data: { message: msg } });
+    setMessages(prev => {
+      const history = prev.map(m => ({ role: m.role, content: m.text }));
+      sendMessage({ data: { message: msg, history } });
+      return [...prev, { role: "user" as const, text: msg }];
+    });
   }
 
   function handleKey(e: React.KeyboardEvent<HTMLInputElement>) {
