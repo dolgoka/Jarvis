@@ -298,7 +298,7 @@ components:
 
     Business:
       type: object
-      required: [id, name, city, country, lat, lng, industry, status, managerId, managerName, managerEmail, createdAt]
+      required: [id, name, city, country, lat, lng, industry, status, health, managerId, managerName, managerEmail, createdAt]
       properties:
         id:
           type: integer
@@ -317,6 +317,9 @@ components:
         status:
           type: string
           enum: [active, inactive, pending]
+        health:
+          type: string
+          enum: [green, yellow, red]
         managerId:
           type: integer
         managerName:

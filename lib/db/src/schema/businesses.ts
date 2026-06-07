@@ -3,6 +3,7 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
 export const businessStatusEnum = pgEnum("business_status", ["active", "inactive", "pending"]);
+export const businessHealthEnum = pgEnum("business_health", ["green", "yellow", "red"]);
 
 export const businessesTable = pgTable("businesses", {
   id: serial("id").primaryKey(),
@@ -17,6 +18,7 @@ export const businessesTable = pgTable("businesses", {
   managerName: text("manager_name").notNull(),
   managerEmail: text("manager_email").notNull(),
   description: text("description"),
+  health: businessHealthEnum("health").notNull().default("green"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -176,6 +176,26 @@
     inset 0 0 40px rgba(0, 212, 255, 0.02);
 }
 
+/* Beacon health animations — only when user allows motion */
+@media (prefers-reduced-motion: no-preference) {
+  .beacon-red {
+    animation: beacon-pulse-red 0.9s ease-in-out infinite;
+  }
+  .beacon-yellow {
+    animation: beacon-pulse-yellow 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes beacon-pulse-red {
+  0%, 100% { box-shadow: 0 0 8px 4px #ef4444cc, 0 0 18px 7px #ef444444; }
+  50%       { box-shadow: 0 0 18px 9px #ef4444cc, 0 0 36px 16px #ef444477; }
+}
+
+@keyframes beacon-pulse-yellow {
+  0%, 100% { box-shadow: 0 0 8px 4px #eab308cc, 0 0 18px 7px #eab30844; }
+  50%       { box-shadow: 0 0 16px 8px #eab308cc, 0 0 30px 12px #eab30877; }
+}
+
 @layer utilities {
   input[type="search"]::-webkit-search-cancel-button { @apply hidden; }
 

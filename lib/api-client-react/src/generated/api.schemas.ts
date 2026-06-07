@@ -18,6 +18,15 @@ export const BusinessStatus = {
   pending: 'pending',
 } as const;
 
+export type BusinessHealth = typeof BusinessHealth[keyof typeof BusinessHealth];
+
+
+export const BusinessHealth = {
+  green: 'green',
+  yellow: 'yellow',
+  red: 'red',
+} as const;
+
 export interface Business {
   id: number;
   name: string;
@@ -27,6 +36,7 @@ export interface Business {
   lng: number;
   industry: string;
   status: BusinessStatus;
+  health: BusinessHealth;
   managerId: number;
   managerName: string;
   managerEmail: string;
