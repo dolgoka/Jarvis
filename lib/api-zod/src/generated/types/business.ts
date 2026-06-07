@@ -18,6 +18,7 @@ export interface Business {
   industry: string;
   status: BusinessStatus;
   health: BusinessHealth;
+  currency: string;
   managerId: number;
   managerName: string;
   managerEmail: string;

@@ -37,6 +37,7 @@ export interface Business {
   industry: string;
   status: BusinessStatus;
   health: BusinessHealth;
+  currency: string;
   managerId: number;
   managerName: string;
   managerEmail: string;
@@ -55,6 +56,7 @@ export interface BusinessInput {
   managerName: string;
   managerEmail: string;
   description?: string;
+  currency?: string;
 }
 
 export type BusinessUpdateStatus = typeof BusinessUpdateStatus[keyof typeof BusinessUpdateStatus];
@@ -137,6 +139,7 @@ export interface BusinessMetric {
   revenue: number;
   orders: number;
   profit: number;
+  currency: string;
 }
 
 export interface AiSummary {
@@ -166,6 +169,32 @@ export interface ConnectInput {
   managerEmail: string;
   accessCode: string;
   description?: string;
+}
+
+export type EventSeverity = typeof EventSeverity[keyof typeof EventSeverity];
+
+
+export const EventSeverity = {
+  critical: 'critical',
+  warning: 'warning',
+  info: 'info',
+} as const;
+
+export interface Event {
+  id: number;
+  /** @nullable */
+  businessId?: number | null;
+  /** @nullable */
+  businessName?: string | null;
+  text: string;
+  severity: EventSeverity;
+  occurredAt: string;
+  /** @nullable */
+  dismissedAt?: string | null;
+}
+
+export interface DismissResult {
+  dismissed: number;
 }
 
 export type ListReportsParams = {

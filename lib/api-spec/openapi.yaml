@@ -20,6 +20,8 @@ tags:
     description: Dashboard and aggregates
   - name: ai
     description: AI summaries
+  - name: events
+    description: Event feed
 
 paths:
   /healthz:
@@ -287,6 +289,55 @@ paths:
               schema:
                 $ref: "#/components/schemas/Business"
 
+  /events:
+    get:
+      operationId: listEvents
+      tags: [events]
+      summary: List active (non-dismissed) events sorted by severity
+      responses:
+        "200":
+          description: List of active events
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Event"
+
+  /events/dismiss-all:
+    post:
+      operationId: dismissAllEvents
+      tags: [events]
+      summary: Dismiss all active events
+      responses:
+        "200":
+          description: All events dismissed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DismissResult"
+
+  /events/{id}/dismiss:
+    patch:
+      operationId: dismissEvent
+      tags: [events]
+      summary: Dismiss a single event
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Event dismissed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          description: Not found
+
 components:
   schemas:
     HealthStatus:
@@ -298,7 +349,7 @@ components:
 
     Business:
       type: object
-      required: [id, name, city, country, lat, lng, industry, status, health, managerId, managerName, managerEmail, createdAt]
+      required: [id, name, city, country, lat, lng, industry, status, health, currency, managerId, managerName, managerEmail, createdAt]
       properties:
         id:
           type: integer
@@ -320,6 +371,8 @@ components:
         health:
           type: string
           enum: [green, yellow, red]
+        currency:
+          type: string
         managerId:
           type: integer
         managerName:
@@ -352,6 +405,8 @@ components:
         managerEmail:
           type: string
         description:
+          type: string
+        currency:
           type: string
 
     BusinessUpdate:
@@ -436,7 +491,7 @@ components:
 
     BusinessMetric:
       type: object
-      required: [id, name, city, country, lat, lng, industry, revenue, orders, profit]
+      required: [id, name, city, country, lat, lng, industry, revenue, orders, profit, currency]
       properties:
         id:
           type: integer
@@ -458,6 +513,8 @@ components:
           type: integer
         profit:
           type: number
+        currency:
+          type: string
 
     AiSummary:
       type: object
@@ -514,3 +571,30 @@ components:
           type: string
         description:
           type: string
+
+    Event:
+      type: object
+      required: [id, text, severity, occurredAt]
+      properties:
+        id:
+          type: integer
+        businessId:
+          type: ["integer", "null"]
+        businessName:
+          type: ["string", "null"]
+        text:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        occurredAt:
+          type: string
+        dismissedAt:
+          type: ["string", "null"]
+
+    DismissResult:
+      type: object
+      required: [dismissed]
+      properties:
+        dismissed:
+          type: integer

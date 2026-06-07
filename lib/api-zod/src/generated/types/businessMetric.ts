@@ -17,4 +17,5 @@ export interface BusinessMetric {
   revenue: number;
   orders: number;
   profit: number;
+  currency: string;
 }

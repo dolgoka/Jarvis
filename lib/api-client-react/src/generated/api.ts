@@ -29,6 +29,8 @@ import type {
   BusinessUpdate,
   ConnectInput,
   DashboardStats,
+  DismissResult,
+  Event,
   FetchLatestReportParams,
   GetAiSummaryParams,
   GetDashboardStatsParams,
@@ -1056,5 +1058,222 @@ export const useConnectBusiness = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getConnectBusinessMutationOptions(options));
+    }
+
+export const getListEventsUrl = () => {
+
+
+
+
+  return `/api/events`
+}
+
+/**
+ * @summary List active (non-dismissed) events sorted by severity
+ */
+export const listEvents = async ( options?: RequestInit): Promise<Event[]> => {
+
+  return customFetch<Event[]>(getListEventsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListEventsQueryKey = () => {
+    return [
+    `/api/events`
+    ] as const;
+    }
+
+
+export const getListEventsQueryOptions = <TData = Awaited<ReturnType<typeof listEvents>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEvents>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListEventsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listEvents>>> = ({ signal }) => listEvents({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listEvents>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type ListEventsQueryResult = NonNullable<Awaited<ReturnType<typeof listEvents>>>
+export type ListEventsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary List active (non-dismissed) events sorted by severity
+ */
+
+export function useListEvents<TData = Awaited<ReturnType<typeof listEvents>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listEvents>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getListEventsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getDismissAllEventsUrl = () => {
+
+
+
+
+  return `/api/events/dismiss-all`
+}
+
+/**
+ * @summary Dismiss all active events
+ */
+export const dismissAllEvents = async ( options?: RequestInit): Promise<DismissResult> => {
+
+  return customFetch<DismissResult>(getDismissAllEventsUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getDismissAllEventsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof dismissAllEvents>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof dismissAllEvents>>, TError,void, TContext> => {
+
+const mutationKey = ['dismissAllEvents'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof dismissAllEvents>>, void> = () => {
+
+
+          return  dismissAllEvents(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DismissAllEventsMutationResult = NonNullable<Awaited<ReturnType<typeof dismissAllEvents>>>
+
+    export type DismissAllEventsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Dismiss all active events
+ */
+export const useDismissAllEvents = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof dismissAllEvents>>, TError,void, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof dismissAllEvents>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getDismissAllEventsMutationOptions(options));
+    }
+
+export const getDismissEventUrl = (id: number,) => {
+
+
+
+
+  return `/api/events/${id}/dismiss`
+}
+
+/**
+ * @summary Dismiss a single event
+ */
+export const dismissEvent = async (id: number, options?: RequestInit): Promise<Event> => {
+
+  return customFetch<Event>(getDismissEventUrl(id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+
+export const getDismissEventMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof dismissEvent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof dismissEvent>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['dismissEvent'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof dismissEvent>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  dismissEvent(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DismissEventMutationResult = NonNullable<Awaited<ReturnType<typeof dismissEvent>>>
+
+    export type DismissEventMutationError = ErrorType<void>
+
+    /**
+ * @summary Dismiss a single event
+ */
+export const useDismissEvent = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof dismissEvent>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof dismissEvent>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDismissEventMutationOptions(options));
     }
 

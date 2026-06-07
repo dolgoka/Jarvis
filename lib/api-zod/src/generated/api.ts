@@ -29,6 +29,7 @@ export const ListBusinessesResponseItem = zod.object({
   "industry": zod.string(),
   "status": zod.enum(['active', 'inactive', 'pending']),
   "health": zod.enum(['green', 'yellow', 'red']),
+  "currency": zod.string(),
   "managerId": zod.number(),
   "managerName": zod.string(),
   "managerEmail": zod.string(),
@@ -50,7 +51,8 @@ export const CreateBusinessBody = zod.object({
   "industry": zod.string(),
   "managerName": zod.string(),
   "managerEmail": zod.string(),
-  "description": zod.string().optional()
+  "description": zod.string().optional(),
+  "currency": zod.string().optional()
 })
 
 
@@ -71,6 +73,7 @@ export const GetBusinessResponse = zod.object({
   "industry": zod.string(),
   "status": zod.enum(['active', 'inactive', 'pending']),
   "health": zod.enum(['green', 'yellow', 'red']),
+  "currency": zod.string(),
   "managerId": zod.number(),
   "managerName": zod.string(),
   "managerEmail": zod.string(),
@@ -107,6 +110,7 @@ export const UpdateBusinessResponse = zod.object({
   "industry": zod.string(),
   "status": zod.enum(['active', 'inactive', 'pending']),
   "health": zod.enum(['green', 'yellow', 'red']),
+  "currency": zod.string(),
   "managerId": zod.number(),
   "managerName": zod.string(),
   "managerEmail": zod.string(),
@@ -205,7 +209,8 @@ export const GetTopBusinessesResponseItem = zod.object({
   "industry": zod.string(),
   "revenue": zod.number(),
   "orders": zod.number(),
-  "profit": zod.number()
+  "profit": zod.number(),
+  "currency": zod.string()
 })
 export const GetTopBusinessesResponse = zod.array(GetTopBusinessesResponseItem)
 
@@ -252,6 +257,47 @@ export const ConnectBusinessBody = zod.object({
   "managerEmail": zod.string(),
   "accessCode": zod.string(),
   "description": zod.string().optional()
+})
+
+
+/**
+ * @summary List active (non-dismissed) events sorted by severity
+ */
+export const ListEventsResponseItem = zod.object({
+  "id": zod.number(),
+  "businessId": zod.number().nullish(),
+  "businessName": zod.string().nullish(),
+  "text": zod.string(),
+  "severity": zod.enum(['critical', 'warning', 'info']),
+  "occurredAt": zod.string(),
+  "dismissedAt": zod.string().nullish()
+})
+export const ListEventsResponse = zod.array(ListEventsResponseItem)
+
+
+/**
+ * @summary Dismiss all active events
+ */
+export const DismissAllEventsResponse = zod.object({
+  "dismissed": zod.number()
+})
+
+
+/**
+ * @summary Dismiss a single event
+ */
+export const DismissEventParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DismissEventResponse = zod.object({
+  "id": zod.number(),
+  "businessId": zod.number().nullish(),
+  "businessName": zod.string().nullish(),
+  "text": zod.string(),
+  "severity": zod.enum(['critical', 'warning', 'info']),
+  "occurredAt": zod.string(),
+  "dismissedAt": zod.string().nullish()
 })
 
 

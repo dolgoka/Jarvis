@@ -19,6 +19,7 @@ export const businessesTable = pgTable("businesses", {
   managerEmail: text("manager_email").notNull(),
   description: text("description"),
   health: businessHealthEnum("health").notNull().default("green"),
+  currency: text("currency").notNull().default("USD"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

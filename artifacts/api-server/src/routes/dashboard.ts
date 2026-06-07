@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, sum, count } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { db, businessesTable, reportsTable } from "@workspace/db";
 import {
   GetDashboardStatsQueryParams,
@@ -9,6 +9,12 @@ import {
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+const RUB_TO_USD = 90;
+
+function toUsd(amount: number, currency: string): number {
+  return currency === "RUB" ? amount / RUB_TO_USD : amount;
+}
 
 router.get("/dashboard/stats", async (req, res): Promise<void> => {
   const query = GetDashboardStatsQueryParams.safeParse(req.query);
@@ -21,17 +27,33 @@ router.get("/dashboard/stats", async (req, res): Promise<void> => {
   const allBusinesses = await db.select().from(businessesTable);
   const activeCount = allBusinesses.filter(b => b.status === "active").length;
 
-  const reportRows = await db.select({
-    revenue: sum(reportsTable.revenue),
-    orders: sum(reportsTable.orders),
-    profit: sum(reportsTable.profit),
-  }).from(reportsTable).where(eq(reportsTable.period, period));
+  const currencyMap = new Map(allBusinesses.map(b => [b.id, b.currency]));
 
-  const row = reportRows[0];
+  const reportRows = await db
+    .select({
+      businessId: reportsTable.businessId,
+      revenue: reportsTable.revenue,
+      orders: reportsTable.orders,
+      profit: reportsTable.profit,
+    })
+    .from(reportsTable)
+    .where(eq(reportsTable.period, period));
+
+  let totalRevenue = 0;
+  let totalOrders = 0;
+  let totalProfit = 0;
+
+  for (const row of reportRows) {
+    const currency = currencyMap.get(row.businessId) ?? "USD";
+    totalRevenue += toUsd(row.revenue, currency);
+    totalOrders += row.orders;
+    totalProfit += toUsd(row.profit, currency);
+  }
+
   res.json(GetDashboardStatsResponse.parse({
-    totalRevenue: parseFloat(row?.revenue ?? "0"),
-    totalOrders: parseInt(String(row?.orders ?? "0"), 10),
-    totalProfit: parseFloat(row?.profit ?? "0"),
+    totalRevenue,
+    totalOrders,
+    totalProfit,
     activeBusinesses: activeCount,
     totalBusinesses: allBusinesses.length,
     period,
@@ -66,9 +88,11 @@ router.get("/dashboard/top-businesses", async (req, res): Promise<void> => {
         lat: b.lat,
         lng: b.lng,
         industry: b.industry,
+        currency: b.currency,
         revenue: r.revenue,
         orders: r.orders,
         profit: r.profit,
+        _revenueUsd: toUsd(r.revenue, b.currency),
       });
     } else {
       result.push({
@@ -79,15 +103,18 @@ router.get("/dashboard/top-businesses", async (req, res): Promise<void> => {
         lat: b.lat,
         lng: b.lng,
         industry: b.industry,
+        currency: b.currency,
         revenue: 0,
         orders: 0,
         profit: 0,
+        _revenueUsd: 0,
       });
     }
   }
 
-  result.sort((a, b) => b.revenue - a.revenue);
-  res.json(GetTopBusinessesResponse.parse(result.slice(0, limit)));
+  result.sort((a, b) => b._revenueUsd - a._revenueUsd);
+  const sliced = result.slice(0, limit).map(({ _revenueUsd, ...rest }) => rest);
+  res.json(GetTopBusinessesResponse.parse(sliced));
 });
 
 export default router;

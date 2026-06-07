@@ -16,4 +16,5 @@ export interface BusinessInput {
   managerName: string;
   managerEmail: string;
   description?: string;
+  currency?: string;
 }

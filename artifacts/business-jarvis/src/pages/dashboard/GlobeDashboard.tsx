@@ -3,6 +3,7 @@ import Globe from "react-globe.gl";
 import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, DollarSign, User, Mail, Zap, ChevronDown } from "lucide-react";
+import { EventsFeed } from "./EventsFeed";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 import { Shell } from "@/components/layout/Shell";
@@ -455,6 +456,9 @@ export default function GlobeDashboard() {
             </GlobeErrorBoundary>
           )}
         </div>
+
+        {/* Events feed */}
+        <EventsFeed />
 
         {/* Country tooltip */}
         {hoveredPolygon && !hoveredPoint && !selectedBusiness && (
