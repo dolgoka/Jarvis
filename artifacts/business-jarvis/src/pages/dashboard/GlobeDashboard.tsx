@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from 
 import Globe from "react-globe.gl";
 import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
 import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
-import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, DollarSign, User, Mail, Zap, ChevronDown } from "lucide-react";
+import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, User, Mail, Zap, ChevronDown } from "lucide-react";
 import { EventsFeed } from "./EventsFeed";
 import { ChatWidget } from "./ChatWidget";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -140,7 +140,7 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
               <>
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: "Выручка", value: formatMoney(report.revenue, business?.currency ?? "USD"), icon: DollarSign },
+                    { label: "Выручка", value: formatMoney(report.revenue, business?.currency ?? "USD"), icon: Activity },
                     { label: "Прибыль", value: formatMoney(report.profit, business?.currency ?? "USD"), icon: TrendingUp },
                     { label: "Заказы", value: formatNumber(report.orders), icon: ShoppingCart },
                   ].map(({ label, value, icon: Icon }) => (
@@ -264,7 +264,7 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
           ) : report ? (
             <>
               {[
-                { label: "Выручка", value: formatMoney(report.revenue, business?.currency ?? "USD"), icon: DollarSign, sub: null },
+                { label: "Выручка", value: formatMoney(report.revenue, business?.currency ?? "USD"), icon: Activity, sub: null },
                 { label: "Прибыль", value: formatMoney(report.profit, business?.currency ?? "USD"), icon: TrendingUp, sub: margin !== null ? `${parseFloat(margin) >= 0 ? "+" : ""}${margin}% маржа` : null },
                 { label: "Заказы", value: formatNumber(report.orders), icon: ShoppingCart, sub: null },
               ].map(({ label, value, icon: Icon, sub }) => (
