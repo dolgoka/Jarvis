@@ -1,27 +1,309 @@
 import { useState } from "react";
-import { useRoute } from "wouter";
+import { useRoute, useLocation } from "wouter";
 import { Shell } from "@/components/layout/Shell";
-import { useGetBusiness, getGetBusinessQueryKey, useListReports, getListReportsQueryKey, ListReportsPeriod } from "@workspace/api-client-react";
+import {
+  useGetBusiness,
+  getGetBusinessQueryKey,
+  useListReports,
+  getListReportsQueryKey,
+  type ListReportsPeriod,
+} from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Activity, User, MapPin, Building2, Star, Globe2, Brain, Users, ChevronDown, ChevronUp, TrendingUp, Award } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { formatCurrency, formatNumber } from "@/lib/utils";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
-import { companies } from "@/data/companies";
-import { employees, type Employee } from "@/data/employees";
+import {
+  Loader2, ArrowLeft, ChevronDown, ChevronUp,
+  TrendingUp, TrendingDown, Minus, Users, Briefcase, Building2,
+  MapPin, Flag,
+} from "lucide-react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  Tooltip as RechartsTooltip, ResponsiveContainer,
+} from "recharts";
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+type PlanFactItem = {
+  metric: string;
+  plan: number;
+  actual: number;
+  unit: string;
+  lowerIsBetter?: boolean;
+};
+
+type Analytics = {
+  stage: "investment" | "operational";
+  contour: "internal" | "external";
+  responsible: { name: string; role: string } | null;
+  whyColor: string;
+  planFact: PlanFactItem[];
+  forms: {
+    bdr: Record<string, number>;
+    odds: Record<string, number>;
+    balance: Record<string, number>;
+  };
+  structure?: {
+    partners: Array<{ name: string; share: number }>;
+    employees: number;
+    projects: Array<{ name: string; status: string }>;
+  };
+};
+
+// ── Money helpers ─────────────────────────────────────────────────────────────
+
+function formatMoney(value: number, currency: string, compact = false): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "−" : "";
+  if (currency === "RUB") {
+    if (compact) {
+      if (abs >= 1_000_000_000) return `${sign}${(abs / 1_000_000_000).toFixed(2)} млрд ₽`;
+      if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(1)} млн ₽`;
+      if (abs >= 1_000) return `${sign}${(abs / 1_000).toFixed(0)} тыс ₽`;
+      return `${sign}${abs.toLocaleString("ru-RU")} ₽`;
+    }
+    return `${sign}${abs.toLocaleString("ru-RU")} ₽`;
+  }
+  if (compact) {
+    if (abs >= 1_000_000_000) return `${sign}$${(abs / 1_000_000_000).toFixed(1)}B`;
+    if (abs >= 1_000_000) return `${sign}$${(abs / 1_000_000).toFixed(1)}M`;
+    if (abs >= 1_000) return `${sign}$${(abs / 1_000).toFixed(0)}K`;
+    return `${sign}$${abs.toLocaleString("en-US")}`;
+  }
+  return `${sign}$${abs.toLocaleString("en-US")}`;
+}
+
+function formatUnit(value: number, unit: string, currency: string, compact = false): string {
+  if (unit === "%" || unit === "МВт" || unit === "шт") {
+    return `${value % 1 === 0 ? value : value.toFixed(1)} ${unit}`;
+  }
+  if (unit === "€") {
+    const abs = Math.abs(value);
+    const sign = value < 0 ? "−" : "";
+    if (compact) {
+      if (abs >= 1_000_000) return `${sign}€${(abs / 1_000_000).toFixed(1)}M`;
+      if (abs >= 1_000) return `${sign}€${(abs / 1_000).toFixed(0)}K`;
+    }
+    return `${sign}€${abs.toLocaleString("de-DE")}`;
+  }
+  return formatMoney(value, currency, compact);
+}
+
+// ── Health dot ───────────────────────────────────────────────────────────────
+
+function HealthDot({ health, size = "md" }: { health: string; size?: "sm" | "md" | "lg" }) {
+  const color =
+    health === "green"
+      ? "bg-green-500 shadow-[0_0_12px_rgba(34,197,94,0.7)]"
+      : health === "yellow"
+      ? "bg-yellow-500 shadow-[0_0_12px_rgba(234,179,8,0.7)]"
+      : "bg-red-500 shadow-[0_0_12px_rgba(239,68,68,0.7)]";
+  const sz = size === "lg" ? "w-4 h-4" : size === "sm" ? "w-2 h-2" : "w-3 h-3";
+  return <span className={`${sz} rounded-full flex-shrink-0 animate-pulse ${color}`} />;
+}
+
+// ── Plan vs Fact card ─────────────────────────────────────────────────────────
+
+function PlanFactCard({ item, currency }: { item: PlanFactItem; currency: string }) {
+  const { metric, plan, actual, unit, lowerIsBetter = false } = item;
+  const delta = actual - plan;
+  const deltaPercent = plan !== 0 ? (delta / Math.abs(plan)) * 100 : 0;
+
+  // Traffic light logic:
+  // Default (lowerIsBetter=false): green when fact >= plan (more = better)
+  // Inverted (lowerIsBetter=true): green when fact <= plan (stayed within budget = better)
+  const isGood = lowerIsBetter ? actual <= plan : actual >= plan;
+  const isBad = lowerIsBetter ? actual > plan * 1.05 : actual < plan * 0.95;
+
+  const borderClass = isGood
+    ? "border-green-500/30 bg-green-500/5"
+    : isBad
+    ? "border-red-500/30 bg-red-500/5"
+    : "border-yellow-500/30 bg-yellow-500/5";
+
+  const dotClass = isGood
+    ? "bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]"
+    : isBad
+    ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+    : "bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.6)]";
+
+  const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
+  const deltaColor = isGood ? "text-green-400" : isBad ? "text-red-400" : "text-yellow-400";
+  const absDelta = Math.abs(delta);
+
+  return (
+    <div className={`rounded-xl border p-4 flex flex-col gap-3 ${borderClass}`}>
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-[10px] font-mono uppercase tracking-wider text-white/50 leading-tight">{metric}</span>
+        <span className={`w-2 h-2 rounded-full flex-shrink-0 mt-0.5 animate-pulse ${dotClass}`} />
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <div className="text-[9px] font-mono uppercase text-white/25 mb-0.5">план</div>
+          <div className="text-xs font-mono text-white/50">{formatUnit(plan, unit, currency, true)}</div>
+        </div>
+        <div>
+          <div className="text-[9px] font-mono uppercase text-white/25 mb-0.5">факт</div>
+          <div className="text-sm font-mono text-white font-medium">{formatUnit(actual, unit, currency, true)}</div>
+        </div>
+      </div>
+
+      <div className={`flex items-center gap-1 text-[10px] font-mono ${deltaColor}`}>
+        <DeltaIcon className="w-3 h-3 flex-shrink-0" />
+        <span>
+          {delta > 0 ? "+" : delta < 0 ? "−" : ""}{Math.abs(deltaPercent).toFixed(1)}%
+          {" · "}
+          {delta > 0 ? "+" : delta < 0 ? "−" : ""}{formatUnit(absDelta, unit, currency, true)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ── Form accordion ────────────────────────────────────────────────────────────
+
+function FormAccordion({
+  title, data, currency,
+}: { title: string; data: Record<string, number>; currency: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-primary/15 bg-black/30 overflow-hidden">
+      <button
+        className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-primary/5 transition-colors"
+        onClick={() => setOpen(o => !o)}
+      >
+        <span className="text-xs font-mono uppercase tracking-widest text-primary/70">{title}</span>
+        {open
+          ? <ChevronUp className="w-4 h-4 text-primary/40 flex-shrink-0" />
+          : <ChevronDown className="w-4 h-4 text-primary/40 flex-shrink-0" />}
+      </button>
+      {open && (
+        <div className="px-5 pb-4 divide-y divide-primary/10">
+          {Object.entries(data).map(([key, val]) => (
+            <div key={key} className="flex justify-between items-center py-2.5 gap-4">
+              <span className="text-xs text-white/40 font-mono">{key}</span>
+              <span className={`text-sm font-mono font-medium tabular-nums ${val < 0 ? "text-red-400" : "text-white"}`}>
+                {formatMoney(val, currency, true)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Structure block ───────────────────────────────────────────────────────────
+
+function StructureBlock({ analytics }: { analytics: Analytics }) {
+  const { contour, structure } = analytics;
+
+  if (contour === "internal" && structure) {
+    return (
+      <section className="space-y-4">
+        <h2 className="text-xs font-mono uppercase tracking-widest text-primary/60">Структура</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="bg-black/40 border-primary/15 md:col-span-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-[10px] font-mono uppercase tracking-widest text-primary/50 flex items-center gap-1.5">
+                <Briefcase className="w-3 h-3" /> Партнёры и доли
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {structure.partners.map((p, i) => (
+                <div key={i} className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-white/70 font-mono truncate pr-2">{p.name}</span>
+                    <span className="text-xs font-mono text-primary flex-shrink-0">{p.share}%</span>
+                  </div>
+                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-primary/70 to-primary/40 rounded-full"
+                      style={{ width: `${p.share}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <div className="space-y-4">
+            <Card className="bg-black/40 border-primary/15">
+              <CardContent className="p-4 flex items-center gap-3">
+                <Users className="w-5 h-5 text-primary/50 flex-shrink-0" />
+                <div>
+                  <div className="text-[9px] font-mono uppercase text-white/25 mb-0.5">Сотрудники</div>
+                  <div className="text-2xl font-light font-mono text-white">
+                    {structure.employees.toLocaleString()}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-black/40 border-primary/15">
+              <CardHeader className="pb-1 pt-3 px-4">
+                <CardTitle className="text-[10px] font-mono uppercase tracking-widest text-primary/50 flex items-center gap-1.5">
+                  <Building2 className="w-3 h-3" /> Проекты ({structure.projects.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-1.5 px-4 pb-3 pt-0">
+                {structure.projects.map((proj, i) => (
+                  <div key={i} className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] text-white/60 font-mono truncate">{proj.name}</span>
+                    <Badge
+                      variant="outline"
+                      className={`text-[9px] px-1.5 flex-shrink-0 ${
+                        proj.status === "active"
+                          ? "border-green-500/30 text-green-400"
+                          : "border-white/10 text-white/25"
+                      }`}
+                    >
+                      {proj.status === "active" ? "активен" : proj.status}
+                    </Badge>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // External contour
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xs font-mono uppercase tracking-widest text-primary/60">Контур: Внешний</h2>
+      <div className="rounded-xl border border-white/5 bg-black/20 px-5 py-4">
+        <p className="text-xs text-white/40 font-mono leading-relaxed">
+          Компания работает во внешнем контуре холдинга. Детальная структура партнёров и
+          проектов доступна в квартальном отчёте управляющего.
+        </p>
+        <div className="mt-3 flex items-center gap-2 text-[10px] font-mono text-primary/30 uppercase tracking-wider">
+          <span className="w-1.5 h-1.5 rounded-full bg-primary/25" />
+          Данные из квартального отчёта
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function BusinessDetail() {
   const [, params] = useRoute("/businesses/:id");
+  const [, setLocation] = useLocation();
   const businessId = parseInt(params?.id || "0");
-  const [period, setPeriod] = useState<ListReportsPeriod>('week');
-  const [expandedEmployee, setExpandedEmployee] = useState<string | null>(null);
-  const [deptFilter, setDeptFilter] = useState<string>("all");
 
-  const { data: business, isLoading: isLoadingBusiness } = useGetBusiness(businessId, { query: { enabled: !!businessId, queryKey: getGetBusinessQueryKey(businessId) } });
-  const { data: reports, isLoading: isLoadingReports } = useListReports({ businessId, period }, { query: { enabled: !!businessId, queryKey: getListReportsQueryKey({ businessId, period }) } });
+  const { data: business, isLoading } = useGetBusiness(businessId, {
+    query: { enabled: !!businessId, queryKey: getGetBusinessQueryKey(businessId) },
+  });
 
-  if (isLoadingBusiness) {
+  const { data: reports } = useListReports(
+    { businessId, period: "month" as ListReportsPeriod },
+    { query: { enabled: !!businessId, queryKey: getListReportsQueryKey({ businessId, period: "month" }) } },
+  );
+
+  if (isLoading) {
     return (
       <Shell>
         <div className="flex h-full items-center justify-center">
@@ -34,387 +316,233 @@ export default function BusinessDetail() {
   if (!business) {
     return (
       <Shell>
-        <div className="p-8 text-center text-muted-foreground font-mono">Node Not Found</div>
+        <div className="p-8 text-center text-muted-foreground font-mono">Узел не найден</div>
       </Shell>
     );
   }
 
-  const staticCompany = companies.find(c =>
-    business.name.toLowerCase().includes(c.name.split(' ')[0].toLowerCase()) ||
-    c.name.toLowerCase().includes(business.name.split(' ')[0].toLowerCase())
-  );
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const analytics = (business as any).analytics as Analytics | null;
+  const currency = business.currency ?? "USD";
 
-  const companyEmployees = staticCompany ? employees.filter(e => e.company_id === staticCompany.id) : [];
-  const departments = companyEmployees.length > 0
-    ? ["all", ...Array.from(new Set(companyEmployees.map(e => e.department)))]
-    : [];
-  const filteredEmployees = deptFilter === "all" ? companyEmployees : companyEmployees.filter(e => e.department === deptFilter);
-  const highPotential = companyEmployees.filter(e => e.potential === "high").length;
-  const relocationReady = companyEmployees.filter(e => e.relocation_ready).length;
+  const healthLabel =
+    business.health === "green" ? "Норма" :
+    business.health === "yellow" ? "Внимание" : "Критично";
+
+  const stageLabel = analytics?.stage === "investment" ? "Инвестиционная" : "Операционная";
+  const contourLabel = analytics?.contour === "internal" ? "Внутренний" : "Внешний";
+
+  const whyBgClass =
+    business.health === "red"
+      ? "border-red-500/30 bg-red-500/8 text-red-200"
+      : business.health === "yellow"
+      ? "border-yellow-500/30 bg-yellow-500/8 text-yellow-200"
+      : "border-green-500/20 bg-green-500/5 text-green-200";
 
   return (
     <Shell>
-      <div className="p-4 md:p-8 space-y-4 md:space-y-6">
+      <div className="p-4 md:p-8 space-y-6 md:space-y-8 max-w-6xl mx-auto">
 
-        {/* ── Header ── */}
-        <div className="border-b border-primary/20 pb-4 md:pb-6">
-          <div className="flex items-start justify-between gap-3 mb-2">
-            <div className="flex items-start gap-2 min-w-0">
-              <span className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${
-                business.status === 'active' ? 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]' :
-                business.status === 'pending' ? 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]' : 'bg-red-500'
-              } animate-pulse`} />
-              <h1 className="text-2xl md:text-4xl font-light text-white tracking-tight uppercase leading-tight">{business.name}</h1>
+        {/* Back */}
+        <button
+          onClick={() => setLocation("/businesses")}
+          className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-white/25 hover:text-primary transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" /> Назад к сети
+        </button>
+
+        {/* Header */}
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <HealthDot health={business.health} size="lg" />
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl md:text-4xl font-light text-white tracking-tight leading-tight">
+                {business.name}
+              </h1>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <Badge
+                  variant="outline"
+                  className={`text-xs font-mono ${
+                    business.health === "green"
+                      ? "border-green-500/40 text-green-400"
+                      : business.health === "yellow"
+                      ? "border-yellow-500/40 text-yellow-400"
+                      : "border-red-500/40 text-red-400"
+                  }`}
+                >
+                  {healthLabel}
+                </Badge>
+                {analytics && (
+                  <>
+                    <Badge variant="outline" className="text-xs font-mono border-primary/30 text-primary/70">
+                      {stageLabel}
+                    </Badge>
+                    <Badge variant="outline" className="text-xs font-mono border-white/10 text-white/35">
+                      {contourLabel} контур
+                    </Badge>
+                  </>
+                )}
+              </div>
             </div>
-            <Select value={period} onValueChange={(val: ListReportsPeriod) => setPeriod(val)}>
-              <SelectTrigger className="w-24 md:w-32 bg-black/40 border-primary/20 text-white font-mono uppercase text-xs flex-shrink-0">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="day">Daily</SelectItem>
-                <SelectItem value="week">Weekly</SelectItem>
-                <SelectItem value="month">Monthly</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
-          <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground font-mono text-xs md:text-sm pl-4 md:pl-0">
-            <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> {business.city}, {business.country}</span>
-            <span className="flex items-center gap-1.5"><Building2 className="w-3.5 h-3.5" /> {business.industry}</span>
-            <span className="flex items-center gap-1.5"><User className="w-3.5 h-3.5" /> {business.managerName}</span>
+          <div className="flex flex-wrap gap-x-5 gap-y-1 text-xs font-mono text-white/35 pl-7">
+            <span className="flex items-center gap-1.5">
+              <MapPin className="w-3 h-3" /> {business.city}, {business.country}
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Building2 className="w-3 h-3" /> {business.industry}
+            </span>
           </div>
 
-          {business.description && (
-            <p className="text-muted-foreground text-xs md:text-sm mt-2 pl-4 md:pl-0 max-w-2xl">{business.description}</p>
+          {analytics && (
+            analytics.responsible ? (
+              <div className="pl-7 flex items-center gap-2 text-xs font-mono">
+                <span className="text-white/25">Ответственный:</span>
+                <span className="text-white/70">{analytics.responsible.name}</span>
+                <span className="text-white/20">·</span>
+                <span className="text-white/40">{analytics.responsible.role}</span>
+              </div>
+            ) : (
+              <div className="pl-7">
+                <div className="inline-flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-2">
+                  <Flag className="w-3.5 h-3.5 text-red-400 flex-shrink-0" />
+                  <span className="text-xs font-mono text-red-300 uppercase tracking-wide">
+                    Нет ответственного — слепая зона
+                  </span>
+                </div>
+              </div>
+            )
           )}
         </div>
 
-        {/* ── Metrics ── */}
-        <div className="grid grid-cols-3 gap-2 md:gap-6">
-          <MetricCard title="Revenue" value={reports?.length ? formatCurrency(reports[0].revenue) : "$0"} icon={Activity} />
-          <MetricCard title="Profit" value={reports?.length ? formatCurrency(reports[0].profit) : "$0"} icon={TrendingUp} />
-          <MetricCard title="Volume" value={reports?.length ? formatNumber(reports[0].orders) : "0"} icon={Activity} />
-        </div>
-
-        {/* ── Static company data ── */}
-        {staticCompany && (
-          <>
-            {/* AI Summary + Company Profile */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-              <Card className="md:col-span-2 bg-black/40 border-primary/20 backdrop-blur-sm">
-                <CardHeader className="pb-2 md:pb-4">
-                  <CardTitle className="text-primary font-mono text-xs tracking-widest uppercase flex items-center gap-2">
-                    <Brain className="w-3.5 h-3.5" /> AI Intelligence Brief
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-white/70 text-xs md:text-sm leading-relaxed">
-                  {staticCompany.ai_summary}
-                </CardContent>
-              </Card>
-
-              <Card className="bg-black/40 border-primary/20 backdrop-blur-sm">
-                <CardHeader className="pb-2 md:pb-4">
-                  <CardTitle className="text-primary font-mono text-xs tracking-widest uppercase flex items-center gap-2">
-                    <Award className="w-3.5 h-3.5" /> Company Profile
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 md:space-y-3 text-xs md:text-sm">
-                  <StatRow label="Founded" value={staticCompany.metrics.founded} />
-                  <StatRow label="Headcount" value={staticCompany.metrics.employees_total.toLocaleString()} />
-                  <StatRow label="Status" value={
-                    <Badge variant="outline" className={`text-xs ${staticCompany.status === 'profit' ? 'border-green-500/50 text-green-400' : staticCompany.status === 'warning' ? 'border-yellow-500/50 text-yellow-400' : 'border-red-500/50 text-red-400'}`}>
-                      {staticCompany.status.toUpperCase()}
-                    </Badge>
-                  } />
-                  {staticCompany.metrics.revenue && <StatRow label="Revenue" value={staticCompany.metrics.revenue} />}
-                  {staticCompany.metrics.margin && <StatRow label="Margin" value={staticCompany.metrics.margin} />}
-                  {companyEmployees.length > 0 && (
-                    <div className="border-t border-primary/10 pt-2 md:pt-3 space-y-2">
-                      <StatRow label="High Potential" value={<span className="text-yellow-400">{highPotential} / {companyEmployees.length}</span>} />
-                      <StatRow label="Relocation Ready" value={<span className="text-cyan-400">{relocationReady}</span>} />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* KPIs */}
-            {staticCompany.kpis && staticCompany.kpis.length > 0 && (
-              <Card className="bg-black/40 border-primary/20 backdrop-blur-sm">
-                <CardHeader className="pb-2 md:pb-4">
-                  <CardTitle className="text-primary font-mono text-xs tracking-widest uppercase">Key Performance Indicators</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
-                    {staticCompany.kpis.map((kpi, i) => (
-                      <div key={i} className="bg-black/30 border border-primary/10 rounded-lg p-3 md:p-4">
-                        <p className="text-[10px] md:text-xs font-mono text-primary/60 uppercase tracking-wider mb-1">{kpi.label}</p>
-                        <p className="text-lg md:text-xl font-light text-white">{kpi.value}</p>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Leadership */}
-            {staticCompany.leadership && staticCompany.leadership.length > 0 && (
-              <Card className="bg-black/40 border-primary/20 backdrop-blur-sm">
-                <CardHeader className="pb-2 md:pb-4">
-                  <CardTitle className="text-primary font-mono text-xs tracking-widest uppercase flex items-center gap-2">
-                    <Globe2 className="w-3.5 h-3.5" /> Leadership
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
-                    {staticCompany.leadership.map((leader, i) => (
-                      <div key={i} className="flex items-center gap-3 bg-black/30 border border-primary/10 rounded-lg p-3">
-                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-mono font-bold text-xs md:text-sm flex-shrink-0">
-                          {leader.name.charAt(0)}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-white text-xs md:text-sm font-medium truncate">{leader.name}</p>
-                          <p className="text-muted-foreground text-[11px] truncate">{leader.role}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Key Clients + Tech Stack */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-              {staticCompany.key_clients && staticCompany.key_clients.length > 0 && (
-                <Card className="bg-black/40 border-primary/20 backdrop-blur-sm">
-                  <CardHeader className="pb-2 md:pb-4">
-                    <CardTitle className="text-primary font-mono text-xs tracking-widest uppercase">Key Clients</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-1.5 md:gap-2">
-                      {staticCompany.key_clients.map((client, i) => (
-                        <Badge key={i} variant="outline" className="border-primary/20 text-white/60 text-[10px] md:text-xs">{client}</Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-              {staticCompany.technology_stack && staticCompany.technology_stack.length > 0 && (
-                <Card className="bg-black/40 border-primary/20 backdrop-blur-sm">
-                  <CardHeader className="pb-2 md:pb-4">
-                    <CardTitle className="text-primary font-mono text-xs tracking-widest uppercase">Technology Stack</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-1.5 md:gap-2">
-                      {staticCompany.technology_stack.map((tech, i) => (
-                        <Badge key={i} variant="outline" className="border-cyan-500/20 text-cyan-400/70 text-[10px] md:text-xs">{tech}</Badge>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* ── Telemetry Chart ── */}
-        <Card className="bg-black/40 border-primary/20 backdrop-blur-sm">
-          <CardHeader className="pb-2 md:pb-4">
-            <CardTitle className="text-primary font-mono text-xs tracking-widest uppercase">Telemetry Stream: Revenue & Profit</CardTitle>
-          </CardHeader>
-          <CardContent className="h-[220px] md:h-[320px] px-2 md:px-6">
-            {isLoadingReports ? (
-              <div className="w-full h-full flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              </div>
-            ) : reports?.length ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={[...reports].reverse()} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,212,255,0.1)" vertical={false} />
-                  <XAxis dataKey="date" stroke="rgba(255,255,255,0.3)" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10, fontFamily: 'monospace' }}
-                    tickFormatter={(val) => new Date(val).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} />
-                  <YAxis stroke="rgba(255,255,255,0.3)" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10, fontFamily: 'monospace' }}
-                    tickFormatter={(val) => `$${val / 1000}k`} width={42} />
-                  <RechartsTooltip
-                    contentStyle={{ backgroundColor: 'rgba(0,0,0,0.85)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '4px', fontSize: 12 }}
-                    itemStyle={{ fontFamily: 'monospace' }}
-                    labelStyle={{ color: 'rgba(255,255,255,0.7)', marginBottom: '4px', fontFamily: 'monospace' }}
-                    formatter={(value: number) => [formatCurrency(value), '']}
-                  />
-                  <Line type="monotone" dataKey="revenue" stroke="#00d4ff" strokeWidth={2} dot={{ fill: '#00d4ff', r: 3 }} activeDot={{ r: 5 }} />
-                  <Line type="monotone" dataKey="profit" stroke="#22c55e" strokeWidth={2} dot={{ fill: '#22c55e', r: 3 }} activeDot={{ r: 5 }} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground font-mono text-xs">NO TELEMETRY RECORDED</div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* ── Employee Roster ── */}
-        {companyEmployees.length > 0 && (
-          <Card className="bg-black/40 border-primary/20 backdrop-blur-sm">
-            <CardHeader className="pb-2 md:pb-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <CardTitle className="text-primary font-mono text-xs tracking-widest uppercase flex items-center gap-2">
-                  <Users className="w-3.5 h-3.5" /> Personnel Roster — {companyEmployees.length} Agents
-                </CardTitle>
-                <Select value={deptFilter} onValueChange={setDeptFilter}>
-                  <SelectTrigger className="w-full sm:w-44 bg-black/40 border-primary/20 text-white font-mono text-xs">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map(d => (
-                      <SelectItem key={d} value={d}>{d === "all" ? "All Departments" : d}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="divide-y divide-primary/10">
-                {filteredEmployees.map((emp) => (
-                  <EmployeeRow
-                    key={emp.id}
-                    employee={emp}
-                    isExpanded={expandedEmployee === emp.id}
-                    onToggle={() => setExpandedEmployee(expandedEmployee === emp.id ? null : emp.id)}
-                  />
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
-    </Shell>
-  );
-}
-
-function StatRow({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="flex justify-between items-center gap-2">
-      <span className="text-muted-foreground font-mono uppercase text-[10px] md:text-xs">{label}</span>
-      <span className="text-white font-mono text-xs md:text-sm text-right">{value}</span>
-    </div>
-  );
-}
-
-function EmployeeRow({ employee: emp, isExpanded, onToggle }: { employee: Employee; isExpanded: boolean; onToggle: () => void }) {
-  return (
-    <div className="cursor-pointer hover:bg-primary/5 active:bg-primary/8 transition-colors" onClick={onToggle}>
-      <div className="px-3 md:px-6 py-3 md:py-4 flex items-center gap-3">
-        {/* Avatar */}
-        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold flex-shrink-0 font-mono ${
-          emp.potential === 'high' ? 'bg-yellow-500/20 border border-yellow-500/40 text-yellow-400' :
-          emp.potential === 'medium' ? 'bg-primary/10 border border-primary/20 text-primary' :
-          'bg-white/5 border border-white/10 text-white/40'
-        }`}>
-          {emp.photo_initials}
-        </div>
-
-        {/* Name & role */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-white font-medium text-xs md:text-sm">{emp.name}</span>
-            {emp.is_department_head && (
-              <Badge variant="outline" className="border-primary/30 text-primary text-[9px] md:text-[10px] px-1 py-0">HEAD</Badge>
-            )}
-            {emp.potential === 'high' && (
-              <Badge variant="outline" className="border-yellow-500/30 text-yellow-400 text-[9px] md:text-[10px] px-1 py-0">
-                <Star className="w-2 h-2 mr-0.5" />HIGH
-              </Badge>
-            )}
+        {/* Why this color */}
+        {analytics?.whyColor && (
+          <div className={`rounded-xl border px-5 py-3.5 text-sm font-mono leading-relaxed ${whyBgClass}`}>
+            <span className="text-white/25 mr-2 text-[10px] uppercase tracking-wider">Причина статуса:</span>
+            {analytics.whyColor}
           </div>
-          <div className="text-muted-foreground text-[10px] md:text-xs mt-0.5 font-mono truncate">{emp.role} · {emp.department}</div>
-        </div>
+        )}
 
-        {/* Desktop-only rating + band */}
-        <div className="hidden md:flex items-center gap-6 text-xs font-mono text-muted-foreground flex-shrink-0">
-          <span className="text-center">
-            <div className="text-white/30 uppercase text-[10px] mb-0.5">Since</div>
-            <div>{emp.since}</div>
-          </span>
-          <span className="text-center">
-            <div className="text-white/30 uppercase text-[10px] mb-0.5">Rating</div>
-            <div className="flex gap-0.5">
-              {[1,2,3,4,5].map(s => (
-                <div key={s} className={`w-1.5 h-1.5 rounded-full ${s <= emp.performance_rating ? 'bg-primary' : 'bg-white/10'}`} />
+        {/* Plan vs Fact */}
+        {analytics?.planFact && analytics.planFact.length > 0 && (
+          <section className="space-y-4">
+            <h2 className="text-xs font-mono uppercase tracking-widest text-primary/60">
+              {analytics.stage === "investment" ? "Инвестиционные показатели" : "План vs Факт"}
+            </h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+              {analytics.planFact.map((item, i) => (
+                <PlanFactCard key={i} item={item} currency={currency} />
               ))}
             </div>
-          </span>
-          <span className="text-center">
-            <div className="text-white/30 uppercase text-[10px] mb-0.5">Band</div>
-            <div className="text-white">{emp.salary_band}</div>
-          </span>
-        </div>
+          </section>
+        )}
 
-        {/* Mobile: performance dots only */}
-        <div className="md:hidden flex gap-0.5 flex-shrink-0">
-          {[1,2,3,4,5].map(s => (
-            <div key={s} className={`w-1.5 h-1.5 rounded-full ${s <= emp.performance_rating ? 'bg-primary' : 'bg-white/10'}`} />
-          ))}
-        </div>
+        {/* Financial forms */}
+        {analytics?.forms && (
+          <section className="space-y-3">
+            <h2 className="text-xs font-mono uppercase tracking-widest text-primary/60">Финансовые формы</h2>
+            <div className="space-y-2">
+              <FormAccordion
+                title="БДР — Бюджет доходов и расходов"
+                data={analytics.forms.bdr}
+                currency={currency}
+              />
+              <FormAccordion
+                title="ОДДС — Отчёт о движении денежных средств"
+                data={analytics.forms.odds}
+                currency={currency}
+              />
+              <FormAccordion title="Баланс" data={analytics.forms.balance} currency={currency} />
+            </div>
+          </section>
+        )}
 
-        <div className="text-muted-foreground flex-shrink-0 ml-1">
-          {isExpanded ? <ChevronUp className="w-3.5 h-3.5 md:w-4 md:h-4" /> : <ChevronDown className="w-3.5 h-3.5 md:w-4 md:h-4" />}
-        </div>
+        {/* Structure */}
+        {analytics && <StructureBlock analytics={analytics} />}
+
+        {/* Description */}
+        {business.description && (
+          <div className="rounded-xl border border-primary/10 bg-black/20 px-5 py-4">
+            <div className="text-[9px] font-mono uppercase tracking-widest text-primary/30 mb-2">Описание узла</div>
+            <p className="text-sm text-white/50 leading-relaxed">{business.description}</p>
+          </div>
+        )}
+
+        {/* Telemetry chart */}
+        <section className="space-y-3">
+          <h2 className="text-xs font-mono uppercase tracking-widest text-primary/60">
+            Телеметрия: Выручка и Прибыль
+          </h2>
+          <Card className="bg-black/40 border-primary/15">
+            <CardContent className="h-[220px] md:h-[280px] px-2 md:px-6 pt-4">
+              {reports?.length ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={[...reports].reverse()} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="rgba(0,212,255,0.07)"
+                      vertical={false}
+                    />
+                    <XAxis
+                      dataKey="date"
+                      stroke="rgba(255,255,255,0.1)"
+                      tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "monospace" }}
+                      tickFormatter={(v) =>
+                        new Date(v).toLocaleDateString("ru-RU", { month: "short", day: "numeric" })
+                      }
+                    />
+                    <YAxis
+                      stroke="rgba(255,255,255,0.1)"
+                      tick={{ fill: "rgba(255,255,255,0.3)", fontSize: 10, fontFamily: "monospace" }}
+                      tickFormatter={(v) => formatMoney(v, currency, true)}
+                      width={80}
+                    />
+                    <RechartsTooltip
+                      contentStyle={{
+                        backgroundColor: "rgba(0,0,0,0.9)",
+                        border: "1px solid rgba(0,212,255,0.2)",
+                        borderRadius: "8px",
+                        fontSize: 12,
+                      }}
+                      itemStyle={{ fontFamily: "monospace" }}
+                      labelStyle={{
+                        color: "rgba(255,255,255,0.4)",
+                        marginBottom: 4,
+                        fontFamily: "monospace",
+                      }}
+                      formatter={(v: number) => [formatMoney(v, currency, true), ""]}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="revenue"
+                      stroke="#00d4ff"
+                      strokeWidth={2}
+                      dot={{ fill: "#00d4ff", r: 3 }}
+                      activeDot={{ r: 5 }}
+                      name="Выручка"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="profit"
+                      stroke="#22c55e"
+                      strokeWidth={2}
+                      dot={{ fill: "#22c55e", r: 3 }}
+                      activeDot={{ r: 5 }}
+                      name="Прибыль"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white/15 font-mono text-xs">
+                  НЕТ ДАННЫХ ТЕЛЕМЕТРИИ
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </section>
+
       </div>
-
-      {/* Expanded */}
-      {isExpanded && (
-        <div className="px-3 md:px-6 pb-4 space-y-3 md:space-y-4 border-t border-primary/10 bg-black/20" onClick={e => e.stopPropagation()}>
-          <div className="pt-3 md:pt-4">
-            <div className="text-[10px] font-mono uppercase tracking-widest text-primary/60 mb-1.5 flex items-center gap-1.5">
-              <Brain className="w-3 h-3" /> AI Profile
-            </div>
-            <p className="text-white/70 text-xs md:text-sm leading-relaxed">{emp.ai_profile}</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 text-xs">
-            <div>
-              <div className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-1.5">Languages</div>
-              <div className="flex flex-wrap gap-1">
-                {emp.languages.map((lang, i) => (
-                  <Badge key={i} variant="outline" className="border-white/10 text-white/50 text-[10px] px-1.5 py-0">{lang}</Badge>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-1.5">Skills</div>
-              <div className="flex flex-wrap gap-1">
-                {emp.skills.map((skill, i) => (
-                  <Badge key={i} variant="outline" className="border-primary/15 text-primary/60 text-[10px] px-1.5 py-0">{skill}</Badge>
-                ))}
-              </div>
-            </div>
-            <div>
-              <div className="text-[10px] font-mono uppercase tracking-widest text-white/30 mb-1.5">Education</div>
-              <p className="text-white/60 text-[11px]">{emp.education}</p>
-              <div className="mt-1.5 flex gap-3 text-[10px] font-mono text-white/40">
-                <span>Since {emp.since}</span>
-                <span>Band {emp.salary_band}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function MetricCard({ title, value, icon: Icon }: { title: string; value: string; icon: any }) {
-  return (
-    <Card className="bg-black/60 border-primary/30 backdrop-blur-md relative overflow-hidden group">
-      <div className="absolute top-0 left-0 w-1 h-full bg-primary/50 group-hover:bg-primary transition-colors" style={{ boxShadow: '0 0 10px rgba(0,212,255,0.6)' }} />
-      <CardContent className="p-3 md:p-6">
-        <div className="flex justify-between items-start">
-          <div className="space-y-1 md:space-y-2 min-w-0">
-            <p className="text-[10px] md:text-xs font-mono text-primary/70 uppercase tracking-wider">{title}</p>
-            <p className="text-lg md:text-3xl font-light text-white tracking-tight truncate">{value}</p>
-          </div>
-          <Icon className="w-4 h-4 md:w-5 md:h-5 text-primary/50 flex-shrink-0 mt-0.5 ml-1" />
-        </div>
-      </CardContent>
-    </Card>
+    </Shell>
   );
 }

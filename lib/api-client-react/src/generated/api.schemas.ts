@@ -27,6 +27,11 @@ export const BusinessHealth = {
   red: 'red',
 } as const;
 
+/**
+ * @nullable
+ */
+export type BusinessAnalytics = { [key: string]: unknown } | null;
+
 export interface Business {
   id: number;
   name: string;
@@ -44,6 +49,8 @@ export interface Business {
   createdAt: string;
   /** @nullable */
   description?: string | null;
+  /** @nullable */
+  analytics?: BusinessAnalytics;
 }
 
 export interface BusinessInput {

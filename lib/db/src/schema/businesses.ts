@@ -1,4 +1,4 @@
-import { pgTable, serial, text, real, integer, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, real, integer, timestamp, pgEnum, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -20,6 +20,7 @@ export const businessesTable = pgTable("businesses", {
   description: text("description"),
   health: businessHealthEnum("health").notNull().default("green"),
   currency: text("currency").notNull().default("USD"),
+  analytics: json("analytics"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

@@ -10,6 +10,7 @@ export * from './aiChatInput';
 export * from './aiChatReply';
 export * from './aiSummary';
 export * from './business';
+export * from './businessAnalytics';
 export * from './businessHealth';
 export * from './businessInput';
 export * from './businessMetric';

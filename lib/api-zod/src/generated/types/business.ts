@@ -5,6 +5,7 @@
  * Business Jarvis API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { BusinessAnalytics } from './businessAnalytics';
 import type { BusinessHealth } from './businessHealth';
 import type { BusinessStatus } from './businessStatus';
 
@@ -25,4 +26,6 @@ export interface Business {
   createdAt: string;
   /** @nullable */
   description?: string | null;
+  /** @nullable */
+  analytics?: BusinessAnalytics;
 }

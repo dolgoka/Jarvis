@@ -34,7 +34,8 @@ export const ListBusinessesResponseItem = zod.object({
   "managerName": zod.string(),
   "managerEmail": zod.string(),
   "createdAt": zod.string(),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "analytics": zod.record(zod.string(), zod.unknown()).nullish()
 })
 export const ListBusinessesResponse = zod.array(ListBusinessesResponseItem)
 
@@ -78,7 +79,8 @@ export const GetBusinessResponse = zod.object({
   "managerName": zod.string(),
   "managerEmail": zod.string(),
   "createdAt": zod.string(),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "analytics": zod.record(zod.string(), zod.unknown()).nullish()
 })
 
 
@@ -115,7 +117,8 @@ export const UpdateBusinessResponse = zod.object({
   "managerName": zod.string(),
   "managerEmail": zod.string(),
   "createdAt": zod.string(),
-  "description": zod.string().nullish()
+  "description": zod.string().nullish(),
+  "analytics": zod.record(zod.string(), zod.unknown()).nullish()
 })
 
 

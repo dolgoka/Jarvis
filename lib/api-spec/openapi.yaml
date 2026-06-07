@@ -383,6 +383,9 @@ components:
           type: string
         description:
           type: ["string", "null"]
+        analytics:
+          type: ["object", "null"]
+          additionalProperties: true
 
     BusinessInput:
       type: object

@@ -15,11 +15,14 @@ const router: IRouter = Router();
 
 router.get("/businesses", async (_req, res): Promise<void> => {
   const businesses = await db.select().from(businessesTable).orderBy(businessesTable.name);
-  res.json(ListBusinessesResponse.parse(businesses.map(b => ({
-    ...b,
-    createdAt: b.createdAt.toISOString(),
-    description: b.description ?? null,
-  }))));
+  res.json(businesses.map(b => ({
+    ...ListBusinessesResponse.parse([{
+      ...b,
+      createdAt: b.createdAt.toISOString(),
+      description: b.description ?? null,
+    }])[0],
+    analytics: b.analytics ?? null,
+  })));
 });
 
 router.post("/businesses", async (req, res): Promise<void> => {
@@ -59,11 +62,14 @@ router.get("/businesses/:id", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Business not found" });
     return;
   }
-  res.json(GetBusinessResponse.parse({
-    ...business,
-    createdAt: business.createdAt.toISOString(),
-    description: business.description ?? null,
-  }));
+  res.json({
+    ...GetBusinessResponse.parse({
+      ...business,
+      createdAt: business.createdAt.toISOString(),
+      description: business.description ?? null,
+    }),
+    analytics: business.analytics ?? null,
+  });
 });
 
 router.patch("/businesses/:id", async (req, res): Promise<void> => {
