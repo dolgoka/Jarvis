@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Globe, LayoutGrid, Brain, Link as LinkIcon, MessageSquare, ClipboardList } from "lucide-react";
+import { Globe, LayoutGrid, Brain, Link as LinkIcon, MessageSquare, ClipboardList, LogOut } from "lucide-react";
+import { useAuthContext } from "@/hooks/AuthContext";
 
 const NAV = [
   { href: "/", label: "Центр", fullLabel: "Глобальный центр", icon: Globe },
@@ -13,6 +14,7 @@ const NAV = [
 
 export function Shell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
+  const { logout } = useAuthContext();
 
   const isActive = (href: string) =>
     location === href || (href !== "/" && location.startsWith(href));
@@ -37,6 +39,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <span className="font-mono font-bold tracking-widest text-lg">JARVIS</span>
           </div>
         </div>
+
         <nav className="flex-1 px-4 py-6 flex flex-col gap-1.5">
           <div className="text-[10px] font-mono text-primary/40 uppercase tracking-widest mb-3 px-2">Навигация</div>
           {NAV.map((item) => {
@@ -56,7 +59,8 @@ export function Shell({ children }: { children: ReactNode }) {
             );
           })}
         </nav>
-        <div className="p-4" style={{ borderTop: '1px solid rgba(0,212,255,0.08)' }}>
+
+        <div className="p-4 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(0,212,255,0.08)' }}>
           <div className="rounded-xl p-4 text-xs font-mono" style={{ background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.1)' }}>
             <div className="text-primary/50 mb-2 uppercase tracking-widest text-[10px]">Статус системы</div>
             <div className="flex items-center justify-between">
@@ -64,10 +68,27 @@ export function Shell({ children }: { children: ReactNode }) {
               <span className="text-green-400">SECURE</span>
             </div>
           </div>
+
+          <button
+            onClick={logout}
+            className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl font-mono text-sm text-white/30 hover:text-red-400/80 transition-all duration-200 group"
+            style={{ background: 'transparent', border: '1px solid transparent' }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(239,68,68,0.06)';
+              e.currentTarget.style.border = '1px solid rgba(239,68,68,0.15)';
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.border = '1px solid transparent';
+            }}
+          >
+            <LogOut className="w-4 h-4 opacity-50 group-hover:opacity-80" />
+            Выход
+          </button>
         </div>
       </aside>
 
-      {/* ── Content column (shared mobile + desktop) ── */}
+      {/* ── Content column ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
         {/* Mobile top bar */}
@@ -79,9 +100,19 @@ export function Shell({ children }: { children: ReactNode }) {
             <Globe className="w-5 h-5 animate-pulse" />
             <span className="font-mono font-bold tracking-widest text-base">JARVIS</span>
           </div>
-          <div className="flex items-center gap-1.5 text-xs font-mono text-green-400">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-            SECURE
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 text-xs font-mono text-green-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+              SECURE
+            </div>
+            <button
+              onClick={logout}
+              className="flex items-center justify-center w-8 h-8 rounded-lg text-white/30 hover:text-red-400/70 transition-colors"
+              style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.1)' }}
+              title="Выход"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           </div>
         </div>
 

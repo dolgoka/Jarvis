@@ -11,6 +11,9 @@ import AiSummary from "./pages/ai-summary/AiSummary";
 import ConnectBusiness from "./pages/connect/ConnectBusiness";
 import AiChat from "./pages/chat/AiChat";
 import TasksPage from "./pages/tasks/TasksPage";
+import LoginScreen from "./pages/login/LoginScreen";
+import { useAuth } from "./hooks/useAuth";
+import { AuthContext } from "./hooks/AuthContext";
 
 const queryClient = new QueryClient();
 
@@ -29,13 +32,27 @@ function Router() {
   );
 }
 
+function AppInner() {
+  const { isAuthenticated, login, logout } = useAuth();
+
+  if (!isAuthenticated) {
+    return <LoginScreen onLogin={login} />;
+  }
+
+  return (
+    <AuthContext.Provider value={{ logout }}>
+      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+        <Router />
+      </WouterRouter>
+    </AuthContext.Provider>
+  );
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
+        <AppInner />
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>
