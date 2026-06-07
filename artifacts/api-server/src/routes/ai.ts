@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
-import { db, businessesTable, reportsTable } from "@workspace/db";
+import { eq, isNull } from "drizzle-orm";
+import { db, businessesTable, reportsTable, eventsTable } from "@workspace/db";
 import { GetAiSummaryQueryParams, GetAiSummaryResponse, AiChatBody, AiChatResponse } from "@workspace/api-zod";
 import OpenAI from "openai";
 
@@ -17,10 +17,14 @@ function makeClient() {
 async function buildBusinessContext(period = "month") {
   const businesses = await db.select().from(businessesTable);
   const reports = await db.select().from(reportsTable).where(eq(reportsTable.period, period));
+  const events = await db.select().from(eventsTable).where(isNull(eventsTable.dismissedAt));
 
   return businesses.map(b => {
     const bReports = reports.filter(r => r.businessId === b.id);
     const latest = bReports.sort((a, z) => z.date.localeCompare(a.date))[0];
+    const bEvents = events
+      .filter(e => e.businessId === b.id)
+      .map(e => ({ severity: e.severity, text: e.text }));
     return {
       id: b.id,
       name: b.name,
@@ -28,11 +32,14 @@ async function buildBusinessContext(period = "month") {
       country: b.country,
       sector: b.industry,
       status: b.status,
+      health: b.health,
+      currency: b.currency ?? "USD",
       managerName: b.managerName,
+      managerEmail: b.managerEmail,
       revenue: latest?.revenue ?? 0,
       profit: latest?.profit ?? 0,
       orders: latest?.orders ?? 0,
-      notes: latest?.notes ?? null,
+      events: bEvents,
     };
   });
 }
@@ -99,12 +106,32 @@ router.post("/ai/chat", async (req, res): Promise<void> => {
   const { message } = body.data;
   const context = await buildBusinessContext("month");
 
-  const systemPrompt = `You are JARVIS, an elite AI business intelligence officer with full access to the owner's global portfolio. You have deep knowledge of every business node, its financials, location, and performance.
+  const healthLabel = (h: string) => h === "green" ? "норма" : h === "yellow" ? "внимание" : "критично";
+  const currencyFmt = (val: number, cur: string) => {
+    if (cur === "RUB") return `${(val).toLocaleString("ru-RU")} ₽`;
+    return `$${(val).toLocaleString("en-US")}`;
+  };
 
-Current portfolio snapshot (30-day data):
-${JSON.stringify(context, null, 2)}
+  const contextLines = context.map(b => {
+    const evStr = b.events.length > 0
+      ? b.events.map(e => `[${e.severity}] ${e.text}`).join("; ")
+      : "нет активных событий";
+    return `• ${b.name} (${b.city}, ${b.country}) | сектор: ${b.sector} | статус: ${healthLabel(b.health)} | валюта: ${b.currency} | выручка за мес: ${currencyFmt(b.revenue, b.currency)} | прибыль: ${currencyFmt(b.profit, b.currency)} | заказов: ${b.orders} | менеджер: ${b.managerName} (${b.managerEmail}) | события: ${evStr}`;
+  }).join("\n");
 
-Answer questions concisely and precisely. Use data from the portfolio when relevant. Speak as a confident executive briefing officer — no hedging, no filler. If asked about a specific business, quote exact numbers. Keep responses under 200 words unless detailed analysis is requested.`;
+  const systemPrompt = `Ты — JARVIS, бизнес-ассистент командного центра. У тебя полный доступ к данным портфеля из 14 компаний.
+
+Данные портфеля (30-дневный период):
+${contextLines}
+
+Правила ответа:
+- Отвечай ТОЛЬКО на русском языке.
+- Отвечай кратко и по делу — не более 150 слов, если не просят подробностей.
+- Используй только данные из портфеля выше, не выдумывай цифры.
+- Если спрашивают про конкретную компанию — цитируй точные цифры из данных.
+- Статус: «критично» = красный светофор, «внимание» = жёлтый, «норма» = зелёный.
+- Финансы Profimonsters — в рублях (₽), остальные — в долларах ($).
+- Говори уверенно и профессионально, без воды.`;
 
   const client = makeClient();
   const completion = await client.chat.completions.create({

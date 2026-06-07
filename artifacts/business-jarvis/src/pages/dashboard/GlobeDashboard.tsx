@@ -4,6 +4,7 @@ import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, get
 import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
 import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, DollarSign, User, Mail, Zap, ChevronDown } from "lucide-react";
 import { EventsFeed } from "./EventsFeed";
+import { ChatWidget } from "./ChatWidget";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 import { Shell } from "@/components/layout/Shell";
@@ -590,6 +591,9 @@ export default function GlobeDashboard() {
             </div>
           </div>
         )}
+
+        {/* Chat widget */}
+        <ChatWidget />
 
         {/* Slide-over / bottom sheet */}
         {selectedBusiness && (
