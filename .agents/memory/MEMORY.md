@@ -1,0 +1,2 @@
+- [Voice routes OpenAI key](voice-openai-key.md) — voice.ts uses OPENAI_API_KEY fallback; Replit AI Integrations proxy does NOT support speech API (TTS tts-1), only gpt-audio via chat completions
+- [Two API server workflows](two-api-workflows.md) — "API Server" workflow always fails with EADDRINUSE; always restart "artifacts/api-server: API Server" instead
