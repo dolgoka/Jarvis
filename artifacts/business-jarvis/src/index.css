@@ -138,52 +138,65 @@
   body { @apply font-sans antialiased bg-background text-foreground overflow-x-hidden; }
 }
 
-/* Liquid Glass Effect */
+/* ─────────────────────────────────────────────
+   Liquid Glass System
+   SVG filters #liquid / #liquid-strong must be
+   present in DOM (see LiquidFilters.tsx).
+   url() in backdrop-filter = Chrome/Edge only;
+   -webkit-backdrop-filter fallback has no url().
+───────────────────────────────────────────── */
+
+/* Base glass — деликатное преломление scale~20 */
 .glass {
-  background: rgba(6, 14, 30, 0.55);
-  backdrop-filter: blur(24px) saturate(160%);
-  -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
-}
-
-.glass-cyan {
-  background: rgba(0, 212, 255, 0.04);
-  backdrop-filter: blur(24px) saturate(180%);
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.055) 0%, transparent 52%),
+    rgba(6, 14, 30, 0.56);
+  backdrop-filter: blur(24px) saturate(180%) url(#liquid);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(0, 212, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.09);
   box-shadow:
     0 8px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(0, 212, 255, 0.08),
-    0 0 20px rgba(0, 212, 255, 0.04);
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
 }
 
-.glass-panel {
-  background: linear-gradient(
-    135deg,
-    rgba(8, 18, 38, 0.72) 0%,
-    rgba(4, 10, 22, 0.82) 100%
-  );
-  backdrop-filter: blur(32px) saturate(160%) brightness(1.05);
-  -webkit-backdrop-filter: blur(32px) saturate(160%) brightness(1.05);
-  border: 1px solid rgba(255, 255, 255, 0.055);
+/* Strong glass — витринное преломление scale~40 */
+.glass.strong {
+  background:
+    linear-gradient(160deg, rgba(255,255,255,0.075) 0%, transparent 52%),
+    rgba(8, 18, 40, 0.62);
+  backdrop-filter: blur(32px) saturate(200%) url(#liquid-strong);
+  -webkit-backdrop-filter: blur(32px) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.11);
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 0 40px rgba(0, 212, 255, 0.02);
+    0 12px 48px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.13),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
 }
 
-/* Beacon health animations — only when user allows motion */
+/* Pill variant */
+.glass.pill {
+  border-radius: 999px;
+}
+
+/* Cyan-tinted accent glass — для выручки / KPI */
+.glass-cyan {
+  background:
+    linear-gradient(160deg, rgba(0,212,255,0.09) 0%, transparent 52%),
+    rgba(0, 212, 255, 0.05);
+  backdrop-filter: blur(24px) saturate(200%) url(#liquid);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  border: 1px solid rgba(0, 212, 255, 0.16);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(0, 212, 255, 0.12),
+    0 0 24px rgba(0, 212, 255, 0.05);
+}
+
+/* ─── Beacon health animations ─── */
 @media (prefers-reduced-motion: no-preference) {
-  .beacon-red {
-    animation: beacon-pulse-red 0.9s ease-in-out infinite;
-  }
-  .beacon-yellow {
-    animation: beacon-pulse-yellow 1.8s ease-in-out infinite;
-  }
+  .beacon-red    { animation: beacon-pulse-red    0.9s ease-in-out infinite; }
+  .beacon-yellow { animation: beacon-pulse-yellow 1.8s ease-in-out infinite; }
 }
 
 @keyframes beacon-pulse-red {

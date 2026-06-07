@@ -23,66 +23,59 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="flex h-[100dvh] bg-[#020810] text-foreground overflow-hidden">
 
       {/* ── Desktop sidebar ── */}
+      {/* No SVG filter here — full-height = iPad perf hit */}
       <aside
         className="hidden md:flex w-64 flex-shrink-0 flex-col z-20"
         style={{
-          background: 'linear-gradient(180deg, rgba(4,10,22,0.88) 0%, rgba(2,6,14,0.92) 100%)',
-          backdropFilter: 'blur(32px) saturate(160%)',
-          WebkitBackdropFilter: 'blur(32px) saturate(160%)',
-          borderRight: '1px solid rgba(0,212,255,0.1)',
-          boxShadow: 'inset -1px 0 0 rgba(255,255,255,0.04), 4px 0 24px rgba(0,0,0,0.4)',
+          background: "rgba(3, 8, 20, 0.94)",
+          borderRight: "1px solid rgba(0,212,255,0.08)",
         }}
       >
-        <div className="h-16 flex items-center px-6" style={{ borderBottom: '1px solid rgba(0,212,255,0.1)' }}>
+        {/* Logo */}
+        <div
+          className="h-16 flex items-center px-6"
+          style={{ borderBottom: "1px solid rgba(0,212,255,0.08)" }}
+        >
           <div className="flex items-center gap-3 text-primary">
-            <Globe className="w-6 h-6 animate-pulse" />
+            <Globe className="w-5 h-5" />
             <span className="font-mono font-bold tracking-widest text-lg">JARVIS</span>
           </div>
         </div>
 
-        <nav className="flex-1 px-4 py-6 flex flex-col gap-1.5">
-          <div className="text-[10px] font-mono text-primary/40 uppercase tracking-widest mb-3 px-2">Навигация</div>
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-5 flex flex-col gap-0.5">
+          <div className="text-[10px] font-mono text-primary/30 uppercase tracking-widest mb-3 px-3">
+            Навигация
+          </div>
           {NAV.map((item) => {
             const active = isActive(item.href);
             return (
-              <Link key={item.href} href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl font-mono text-sm transition-all duration-200 ${active ? 'text-primary' : 'text-white/40 hover:text-white/80'}`}
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex items-center gap-3 px-3 rounded-xl font-mono text-sm transition-colors duration-150 min-h-[48px] ${
+                  active ? "text-primary" : "text-white/40 hover:text-white/75"
+                }`}
                 style={active ? {
-                  background: 'rgba(0,212,255,0.08)', backdropFilter: 'blur(8px)',
-                  border: '1px solid rgba(0,212,255,0.18)',
-                  boxShadow: 'inset 0 1px 0 rgba(0,212,255,0.08), 0 0 12px rgba(0,212,255,0.06)',
-                } : { background: 'transparent', border: '1px solid transparent' }}
+                  background: "rgba(0,212,255,0.09)",
+                  borderLeft: "3px solid rgba(0,212,255,0.65)",
+                  paddingLeft: "calc(0.75rem - 1px)",
+                } : {}}
               >
-                <item.icon className={`w-4 h-4 ${active ? 'text-primary' : 'opacity-50'}`} />
+                <item.icon className={`w-4 h-4 flex-shrink-0 ${active ? "text-primary" : "opacity-40"}`} />
                 {item.fullLabel}
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-4 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(0,212,255,0.08)' }}>
-          <div className="rounded-xl p-4 text-xs font-mono" style={{ background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.1)' }}>
-            <div className="text-primary/50 mb-2 uppercase tracking-widest text-[10px]">Статус системы</div>
-            <div className="flex items-center justify-between">
-              <span className="text-white/60">Канал связи</span>
-              <span className="text-green-400">SECURE</span>
-            </div>
-          </div>
-
+        {/* Logout */}
+        <div className="p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
           <button
             onClick={logout}
-            className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl font-mono text-sm text-white/30 hover:text-red-400/80 transition-all duration-200 group"
-            style={{ background: 'transparent', border: '1px solid transparent' }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(239,68,68,0.06)';
-              e.currentTarget.style.border = '1px solid rgba(239,68,68,0.15)';
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.border = '1px solid transparent';
-            }}
+            className="flex items-center gap-3 w-full px-3 rounded-xl font-mono text-sm text-white/25 hover:text-red-400/70 transition-colors duration-150 min-h-[48px] group"
           >
-            <LogOut className="w-4 h-4 opacity-50 group-hover:opacity-80" />
+            <LogOut className="w-4 h-4 flex-shrink-0 opacity-40 group-hover:opacity-70" />
             Выход
           </button>
         </div>
@@ -91,24 +84,28 @@ export function Shell({ children }: { children: ReactNode }) {
       {/* ── Content column ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
-        {/* Mobile top bar */}
+        {/* Mobile top bar — no SVG filter, full-width */}
         <div
           className="md:hidden h-14 flex items-center justify-between px-4 flex-shrink-0"
-          style={{ background: 'rgba(2,8,16,0.97)', borderBottom: '1px solid rgba(0,212,255,0.12)', backdropFilter: 'blur(24px)' }}
+          style={{
+            background: "rgba(2,8,16,0.97)",
+            borderBottom: "1px solid rgba(0,212,255,0.08)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+          }}
         >
           <div className="flex items-center gap-2 text-primary">
-            <Globe className="w-5 h-5 animate-pulse" />
+            <Globe className="w-5 h-5" />
             <span className="font-mono font-bold tracking-widest text-base">JARVIS</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-xs font-mono text-green-400">
               <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-              SECURE
+              LIVE
             </div>
             <button
               onClick={logout}
-              className="flex items-center justify-center w-8 h-8 rounded-lg text-white/30 hover:text-red-400/70 transition-colors"
-              style={{ background: 'rgba(239,68,68,0.04)', border: '1px solid rgba(239,68,68,0.1)' }}
+              className="flex items-center justify-center w-9 h-9 rounded-xl text-white/25 hover:text-red-400/60 transition-colors"
               title="Выход"
             >
               <LogOut className="w-4 h-4" />
@@ -116,38 +113,43 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        {/* Main scrollable content */}
+        {/* Main */}
         <main className="flex-1 overflow-auto relative z-10">
           {children}
         </main>
 
-        {/* Mobile bottom nav */}
+        {/* Mobile bottom nav — no SVG filter, full-width */}
         <div
           className="md:hidden flex-shrink-0"
           style={{
-            background: 'rgba(2,8,16,0.97)',
-            backdropFilter: 'blur(32px)',
-            borderTop: '1px solid rgba(0,212,255,0.12)',
-            paddingBottom: 'env(safe-area-inset-bottom)',
+            background: "rgba(2,8,16,0.97)",
+            backdropFilter: "blur(24px)",
+            WebkitBackdropFilter: "blur(24px)",
+            borderTop: "1px solid rgba(0,212,255,0.08)",
+            paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
           <div className="flex items-center justify-around h-16 relative">
             {NAV.map((item) => {
               const active = isActive(item.href);
               return (
-                <Link key={item.href} href={item.href}
-                  className="flex flex-col items-center justify-center gap-1 w-full h-full relative transition-all duration-200"
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex flex-col items-center justify-center gap-1 w-full h-full relative transition-all duration-150"
                 >
                   <item.icon
-                    className={`w-5 h-5 transition-colors ${active ? 'text-primary' : 'text-white/30'}`}
-                    style={active ? { filter: 'drop-shadow(0 0 6px rgba(0,212,255,0.8))' } : {}}
+                    className={`w-5 h-5 transition-colors ${active ? "text-primary" : "text-white/25"}`}
+                    style={active ? { filter: "drop-shadow(0 0 5px rgba(0,212,255,0.7))" } : {}}
                   />
-                  <span className={`text-[10px] font-mono tracking-wide ${active ? 'text-primary' : 'text-white/25'}`}>
+                  <span className={`text-[10px] font-mono tracking-wide ${active ? "text-primary" : "text-white/20"}`}>
                     {item.label}
                   </span>
                   {active && (
-                    <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-primary rounded-full"
-                      style={{ boxShadow: '0 0 8px rgba(0,212,255,0.8)' }} />
+                    <span
+                      className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-primary rounded-full"
+                      style={{ boxShadow: "0 0 8px rgba(0,212,255,0.8)" }}
+                    />
                   )}
                 </Link>
               );

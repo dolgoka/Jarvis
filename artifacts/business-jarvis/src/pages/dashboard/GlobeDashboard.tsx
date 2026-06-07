@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from 
 import Globe from "react-globe.gl";
 import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
 import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
-import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, User, Mail, Zap, ChevronDown, ClipboardList } from "lucide-react";
+import { Loader2, X, MapPin, TrendingUp, ShoppingCart, User, Mail, Zap, ChevronDown, ClipboardList } from "lucide-react";
 import { EventsFeed } from "./EventsFeed";
 import { ChatWidget } from "./ChatWidget";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -482,18 +482,18 @@ export default function GlobeDashboard() {
         )}
 
         {/* Header */}
-        <div className="absolute top-3 md:top-6 left-3 md:left-6 z-10 flex items-center gap-2 md:gap-3 pointer-events-none">
-          <Activity className="w-4 h-4 md:w-5 md:h-5 text-primary animate-pulse" />
-          <h1 className="text-base md:text-xl font-mono font-bold text-white tracking-widest">ГЛОБАЛЬНЫЙ ЦЕНТР</h1>
+        <div className="absolute top-4 md:top-6 left-4 md:left-6 z-10 pointer-events-none">
+          <h1 className="text-base md:text-xl font-mono font-bold text-white tracking-widest leading-none">ГЛОБАЛЬНЫЙ ЦЕНТР</h1>
+          <div className="text-[10px] font-mono text-white/28 tracking-widest uppercase mt-1">Командный центр</div>
         </div>
 
         {/* Quick task button */}
         <a
           href="/tasks"
-          className="hidden md:flex absolute top-6 left-1/2 -translate-x-1/2 z-10 items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-[10px] uppercase tracking-widest transition-all hover:scale-105"
-          style={{ background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.2)", color: "rgba(0,212,255,0.65)" }}
+          className="hidden md:flex absolute top-6 left-1/2 -translate-x-1/2 z-10 items-center gap-2 px-4 glass pill font-mono text-[11px] uppercase tracking-widest transition-all hover:scale-105"
+          style={{ color: "rgba(0,212,255,0.7)", minHeight: 36 }}
         >
-          <ClipboardList className="w-3 h-3" /> Новая задача
+          <ClipboardList className="w-3.5 h-3.5" /> Новая задача
         </a>
 
         {/* ── Desktop stats panel ── */}
@@ -502,47 +502,47 @@ export default function GlobeDashboard() {
           style={{ transform: selectedBusiness ? "translateX(130%)" : "translateX(0)", opacity: selectedBusiness ? 0 : 1 }}
         >
           {/* Revenue */}
-          <div className="glass-cyan rounded-xl p-5">
-            <div className="text-[10px] text-primary/50 uppercase tracking-widest font-mono mb-2">Глобальная выручка (30Д)</div>
+          <div className="glass-cyan rounded-2xl p-6">
+            <div className="text-[11px] text-primary/50 uppercase tracking-widest font-mono mb-3">Глобальная выручка · 30 дн</div>
             {isLoadingStats
               ? <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              : <div className="text-3xl font-light text-white font-mono tabular-nums">{formatCurrency(stats?.totalRevenue || 0)}</div>
+              : <div className="text-4xl font-light text-white font-mono tabular-nums">{formatCurrency(stats?.totalRevenue || 0)}</div>
             }
           </div>
 
           {/* Traffic light legend */}
-          <div className="glass rounded-xl p-5">
-            <div className="text-[10px] text-white/30 uppercase tracking-widest font-mono mb-3">Статус узлов</div>
-            <div className="space-y-2.5">
+          <div className="glass rounded-2xl p-6">
+            <div className="text-[11px] text-white/30 uppercase tracking-widest font-mono mb-4">Статус узлов</div>
+            <div className="space-y-4">
               {(["green", "yellow", "red"] as const).map(h => (
                 <div key={h} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 rounded-full flex-shrink-0"
                       style={{ background: HEALTH_COLORS[h], boxShadow: `0 0 8px 3px ${HEALTH_COLORS[h]}88` }} />
-                    <span className="text-white/65 text-sm font-mono">{HEALTH_LABELS[h]}</span>
+                    <span className="text-white/70 text-base font-mono">{HEALTH_LABELS[h]}</span>
                   </div>
-                  <span className="text-white/35 font-mono text-sm tabular-nums">{healthCounts[h]}</span>
+                  <span className="text-white/50 font-mono text-base tabular-nums font-medium">{healthCounts[h]}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Top nodes */}
-          <div className="glass rounded-xl p-5">
-            <div className="text-[10px] text-white/30 uppercase tracking-widest font-mono mb-3">Топ узлов</div>
+          <div className="glass rounded-2xl p-6">
+            <div className="text-[11px] text-white/30 uppercase tracking-widest font-mono mb-4">Топ узлов</div>
             {isLoadingTop ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : (
-              <div className="space-y-3">
+              <div className="space-y-1">
                 {topBusinesses?.map((b) => {
                   const bColor = colorMap.get(b.id) ?? "#22c55e";
                   return (
-                    <div key={b.id} className="flex justify-between items-center cursor-pointer group min-h-[44px]"
+                    <div key={b.id} className="flex justify-between items-center cursor-pointer group min-h-[48px] rounded-xl px-2 -mx-2 transition-colors hover:bg-white/[0.03]"
                       onClick={() => setSelectedBusiness({ id: b.id, color: bColor })}>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                          style={{ background: bColor, boxShadow: `0 0 8px 2px ${bColor}88` }} />
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-3 h-3 rounded-full flex-shrink-0"
+                          style={{ background: bColor, boxShadow: `0 0 8px 3px ${bColor}88` }} />
                         <span className="text-white/65 text-sm group-hover:text-white transition-colors truncate">{b.name}</span>
                       </div>
-                      <span className="text-white/30 font-mono text-xs ml-2 flex-shrink-0 tabular-nums">{formatCurrency(b.revenue)}</span>
+                      <span className="text-white/40 font-mono text-xs ml-2 flex-shrink-0 tabular-nums">{formatCurrency(b.revenue)}</span>
                     </div>
                   );
                 })}
@@ -555,20 +555,20 @@ export default function GlobeDashboard() {
         {!selectedBusiness && (
           <div className="md:hidden absolute top-10 right-3 z-10 pointer-events-auto flex flex-col items-end gap-2">
             {/* Revenue pill */}
-            <div className="rounded-xl px-3 py-2 glass-cyan text-right">
-              <div className="text-[9px] font-mono text-primary/60 uppercase tracking-widest">Выручка 30Д</div>
-              <div className="text-sm font-mono font-light text-white tabular-nums">
+            <div className="rounded-2xl px-4 py-3 glass-cyan text-right">
+              <div className="text-[9px] font-mono text-primary/55 uppercase tracking-widest">Выручка 30Д</div>
+              <div className="text-sm font-mono font-light text-white tabular-nums mt-0.5">
                 {isLoadingStats ? "…" : formatCurrency(stats?.totalRevenue || 0)}
               </div>
             </div>
 
             {/* Traffic light legend (mobile) */}
-            <div className="glass rounded-xl px-3 py-2 flex items-center gap-3">
+            <div className="glass rounded-xl px-3 py-2.5 flex items-center gap-3">
               {(["green", "yellow", "red"] as const).map(h => (
                 <div key={h} className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0"
+                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                     style={{ background: HEALTH_COLORS[h], boxShadow: `0 0 6px 2px ${HEALTH_COLORS[h]}88` }} />
-                  <span className="text-white/50 text-[11px] font-mono tabular-nums">{healthCounts[h]}</span>
+                  <span className="text-white/55 text-[12px] font-mono tabular-nums">{healthCounts[h]}</span>
                 </div>
               ))}
             </div>
@@ -576,22 +576,22 @@ export default function GlobeDashboard() {
             {/* Collapsible node list */}
             <div className="glass rounded-xl overflow-hidden w-44">
               <button
-                className="w-full flex items-center justify-between px-3 min-h-[44px] text-left"
+                className="w-full flex items-center justify-between px-3 min-h-[48px] text-left"
                 onClick={() => setStatsOpen(v => !v)}
               >
                 <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Узлы</span>
                 <ChevronDown className={`w-3.5 h-3.5 text-white/30 transition-transform ${statsOpen ? "rotate-180" : ""}`} />
               </button>
               {statsOpen && (
-                <div className="px-3 pb-2 space-y-2 border-t border-white/5">
+                <div className="px-3 pb-2 space-y-1 border-t border-white/5">
                   {businesses?.slice(0, 8).map(b => {
                     const bColor = getHealthColor(b.health);
                     return (
-                      <div key={b.id} className="flex items-center gap-1.5 cursor-pointer min-h-[44px]"
+                      <div key={b.id} className="flex items-center gap-2 cursor-pointer min-h-[44px]"
                         onClick={() => { setSelectedBusiness({ id: b.id, color: bColor }); setStatsOpen(false); }}>
-                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+                        <div className="w-2 h-2 rounded-full flex-shrink-0"
                           style={{ background: bColor, boxShadow: `0 0 5px ${bColor}` }} />
-                        <span className="text-white/50 text-[11px] font-mono truncate">{b.name.split(" ").slice(0, 2).join(" ")}</span>
+                        <span className="text-white/55 text-[12px] font-mono truncate">{b.name.split(" ").slice(0, 2).join(" ")}</span>
                       </div>
                     );
                   })}

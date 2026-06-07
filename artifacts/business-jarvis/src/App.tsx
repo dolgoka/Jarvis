@@ -14,6 +14,7 @@ import TasksPage from "./pages/tasks/TasksPage";
 import LoginScreen from "./pages/login/LoginScreen";
 import { useAuth } from "./hooks/useAuth";
 import { AuthContext } from "./hooks/AuthContext";
+import { LiquidFilters } from "./components/liquid/LiquidFilters";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +53,8 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
+        {/* SVG liquid-glass filters — must be in DOM, NOT display:none */}
+        <LiquidFilters />
         <AppInner />
         <Toaster />
       </TooltipProvider>
