@@ -3,11 +3,11 @@ import { Link, useLocation } from "wouter";
 import { Globe, LayoutGrid, Brain, Link as LinkIcon, MessageSquare } from "lucide-react";
 
 const NAV = [
-  { href: "/", label: "Globe", fullLabel: "Globe Command", icon: Globe },
-  { href: "/businesses", label: "Network", fullLabel: "Network", icon: LayoutGrid },
-  { href: "/ai-summary", label: "AI Brief", fullLabel: "AI Briefing", icon: Brain },
-  { href: "/chat", label: "Chat", fullLabel: "AI Chat", icon: MessageSquare },
-  { href: "/connect", label: "Link", fullLabel: "Establish Link", icon: LinkIcon },
+  { href: "/", label: "Центр", fullLabel: "Глобальный центр", icon: Globe },
+  { href: "/businesses", label: "Сеть", fullLabel: "Сеть", icon: LayoutGrid },
+  { href: "/ai-summary", label: "Сводка", fullLabel: "Сводка ИИ", icon: Brain },
+  { href: "/chat", label: "Чат", fullLabel: "Чат с ИИ", icon: MessageSquare },
+  { href: "/connect", label: "Связь", fullLabel: "Подключения", icon: LinkIcon },
 ];
 
 export function Shell({ children }: { children: ReactNode }) {
@@ -37,7 +37,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
         <nav className="flex-1 px-4 py-6 flex flex-col gap-1.5">
-          <div className="text-[10px] font-mono text-primary/40 uppercase tracking-widest mb-3 px-2">Navigation</div>
+          <div className="text-[10px] font-mono text-primary/40 uppercase tracking-widest mb-3 px-2">Навигация</div>
           {NAV.map((item) => {
             const active = isActive(item.href);
             return (
@@ -57,9 +57,9 @@ export function Shell({ children }: { children: ReactNode }) {
         </nav>
         <div className="p-4" style={{ borderTop: '1px solid rgba(0,212,255,0.08)' }}>
           <div className="rounded-xl p-4 text-xs font-mono" style={{ background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.1)' }}>
-            <div className="text-primary/50 mb-2 uppercase tracking-widest text-[10px]">System Status</div>
+            <div className="text-primary/50 mb-2 uppercase tracking-widest text-[10px]">Статус системы</div>
             <div className="flex items-center justify-between">
-              <span className="text-white/60">Uplink</span>
+              <span className="text-white/60">Канал связи</span>
               <span className="text-green-400">SECURE</span>
             </div>
           </div>
