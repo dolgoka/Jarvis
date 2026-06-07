@@ -33,7 +33,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=8080 pnpm --filter @workspace/api-server run start"
+args = "pnpm --filter @workspace/api-server run build && PORT=8080 pnpm --filter @workspace/api-server run start"
 waitForPort = 8080
 
 [[workflows.workflow]]
@@ -68,10 +68,6 @@ externalPort = 80
 [[ports]]
 localPort = 8080
 externalPort = 8080
-
-[[ports]]
-localPort = 8081
-externalPort = 80
 
 [[ports]]
 localPort = 24644
