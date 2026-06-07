@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Shell } from "@/components/layout/Shell";
 import { useAiChat } from "@workspace/api-client-react";
-import { Send, Bot, User, Loader2, Zap } from "lucide-react";
+import { Send, Bot, User, Loader2, Zap, Mic, MicOff, Volume2, Square } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -16,6 +16,14 @@ const SUGGESTED = [
   "Give me a one-line status on each business",
 ];
 
+function getMimeType(): string {
+  const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
+  for (const t of types) {
+    if (MediaRecorder.isTypeSupported(t)) return t;
+  }
+  return "";
+}
+
 export default function AiChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -27,6 +35,16 @@ export default function AiChat() {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [recordSeconds, setRecordSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [playingIdx, setPlayingIdx] = useState<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const { mutate: sendMessage, isPending } = useAiChat({
     mutation: {
@@ -66,6 +84,92 @@ export default function AiChat() {
     }
   }
 
+  const stopRecording = useCallback(() => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setRecordSeconds(0);
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+  }, []);
+
+  async function startRecording() {
+    if (isRecording) { stopRecording(); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = getMimeType();
+      const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+      chunksRef.current = [];
+      mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
+      mr.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/mp4" });
+        if (blob.size < 1000) return;
+        setIsTranscribing(true);
+        try {
+          const buf = await blob.arrayBuffer();
+          const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+          const resp = await fetch("/api/voice/transcribe", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ audio: b64 }),
+          });
+          const data = await resp.json();
+          if (data.text?.trim()) handleSend(data.text.trim());
+        } catch {
+          console.error("transcribe error");
+        } finally {
+          setIsTranscribing(false);
+        }
+      };
+      mr.start(200);
+      mediaRecorderRef.current = mr;
+      setIsRecording(true);
+      setRecordSeconds(0);
+      timerRef.current = setInterval(() => setRecordSeconds(s => {
+        if (s >= 59) { stopRecording(); return 0; }
+        return s + 1;
+      }), 1000);
+    } catch {
+      console.error("mic access denied");
+    }
+  }
+
+  async function playMessage(idx: number, text: string) {
+    if (playingIdx === idx) {
+      audioRef.current?.pause();
+      audioRef.current = null;
+      setPlayingIdx(null);
+      return;
+    }
+    audioRef.current?.pause();
+    audioRef.current = null;
+    setPlayingIdx(idx);
+    try {
+      const resp = await fetch("/api/voice/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const data = await resp.json();
+      if (!data.audio) { setPlayingIdx(null); return; }
+      const binary = atob(data.audio);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const blob = new Blob([bytes], { type: "audio/mp3" });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onended = () => { setPlayingIdx(null); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setPlayingIdx(null); URL.revokeObjectURL(url); };
+      await audio.play();
+    } catch {
+      setPlayingIdx(null);
+    }
+  }
+
+  const micBusy = isTranscribing || isPending;
+
   return (
     <Shell>
       <div className="h-full flex flex-col bg-[#020810]">
@@ -102,7 +206,6 @@ export default function AiChat() {
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
-              {/* Avatar */}
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-1"
                 style={msg.role === "assistant" ? {
@@ -120,7 +223,6 @@ export default function AiChat() {
                 }
               </div>
 
-              {/* Bubble */}
               <div
                 className="max-w-[75%] rounded-2xl px-4 py-3"
                 style={msg.role === "assistant" ? {
@@ -136,14 +238,28 @@ export default function AiChat() {
                 }}
               >
                 <p className="text-sm text-white/85 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                <div className={`text-[10px] font-mono mt-2 ${msg.role === "assistant" ? "text-primary/30" : "text-primary/40 text-right"}`}>
-                  {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                <div className={`flex items-center mt-2 gap-2 ${msg.role === "assistant" ? "" : "flex-row-reverse"}`}>
+                  <span className={`text-[10px] font-mono ${msg.role === "assistant" ? "text-primary/30" : "text-primary/40"}`}>
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  {msg.role === "assistant" && (
+                    <button
+                      onClick={() => playMessage(i, msg.content)}
+                      className="transition-colors"
+                      style={{ color: playingIdx === i ? "rgba(0,212,255,0.9)" : "rgba(0,212,255,0.2)" }}
+                      title={playingIdx === i ? "Остановить" : "Прослушать"}
+                    >
+                      {playingIdx === i
+                        ? <Square className="w-3 h-3" />
+                        : <Volume2 className="w-3 h-3" />
+                      }
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
           ))}
 
-          {/* Typing indicator */}
           {isPending && (
             <div className="flex gap-3">
               <div
@@ -168,7 +284,7 @@ export default function AiChat() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Suggested prompts (only when no user messages yet) */}
+        {/* Suggested prompts */}
         {messages.length === 1 && (
           <div className="px-6 pb-3 flex gap-2 flex-wrap">
             {SUGGESTED.map((s, i) => (
@@ -199,28 +315,57 @@ export default function AiChat() {
             style={{
               background: 'linear-gradient(135deg, rgba(8,18,38,0.8) 0%, rgba(4,10,22,0.9) 100%)',
               backdropFilter: 'blur(24px)',
-              border: '1px solid rgba(0,212,255,0.15)',
-              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.3)',
+              border: `1px solid ${isRecording ? "rgba(239,68,68,0.5)" : "rgba(0,212,255,0.15)"}`,
+              boxShadow: isRecording
+                ? "inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(239,68,68,0.1)"
+                : "inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.3)",
+              transition: "border-color 0.2s, box-shadow 0.2s",
             }}
           >
             <Zap className="w-4 h-4 text-primary/40 flex-shrink-0" />
-            <input
-              ref={inputRef}
-              type="text"
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKey}
-              placeholder="Ask about your businesses..."
-              disabled={isPending}
-              className="flex-1 bg-transparent text-sm text-white placeholder:text-white/25 outline-none font-mono py-2"
-            />
+
+            {isRecording ? (
+              <span className="flex-1 text-sm font-mono text-red-400/80 animate-pulse py-2">
+                Запись… {recordSeconds}с
+              </span>
+            ) : (
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKey}
+                placeholder={isTranscribing ? "Распознаю речь…" : "Ask about your businesses..."}
+                disabled={isPending || isTranscribing}
+                className="flex-1 bg-transparent text-sm text-white placeholder:text-white/25 outline-none font-mono py-2"
+              />
+            )}
+
             <button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isPending}
+              onClick={startRecording}
+              disabled={micBusy}
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 disabled:opacity-30"
               style={{
-                background: input.trim() && !isPending ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${input.trim() && !isPending ? 'rgba(0,212,255,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                background: isRecording ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.05)',
+                border: `1px solid ${isRecording ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}`,
+              }}
+              title={isRecording ? `Остановить (${recordSeconds}с)` : "Голосовой ввод"}
+            >
+              {isTranscribing
+                ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                : isRecording
+                ? <MicOff className="w-3.5 h-3.5 text-red-400 animate-pulse" />
+                : <Mic className="w-3.5 h-3.5 text-primary/50" />
+              }
+            </button>
+
+            <button
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isPending || isRecording}
+              className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 disabled:opacity-30"
+              style={{
+                background: input.trim() && !isPending && !isRecording ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.05)',
+                border: `1px solid ${input.trim() && !isPending && !isRecording ? 'rgba(0,212,255,0.4)' : 'rgba(255,255,255,0.08)'}`,
               }}
             >
               <Send className="w-3.5 h-3.5 text-primary" />

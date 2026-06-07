@@ -6,6 +6,7 @@ import dashboardRouter from "./dashboard";
 import managersRouter from "./managers";
 import aiRouter from "./ai";
 import eventsRouter from "./events";
+import voiceRouter from "./voice";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(dashboardRouter);
 router.use(managersRouter);
 router.use(aiRouter);
 router.use(eventsRouter);
+router.use(voiceRouter);
 
 export default router;
