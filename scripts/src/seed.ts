@@ -128,7 +128,7 @@ const BUSINESSES = [
     lng: 55.2708,
     industry: "Construction",
     status: "active" as const,
-    health: "red" as const,
+    health: "green" as const,
     currency: "USD",
     managerName: "Abdullah Al-Maktoum",
     managerEmail: "a.almaktoum@skylineconstruction.ae",
@@ -162,7 +162,7 @@ const BUSINESSES = [
     lng: 150.8082,
     industry: "Mining",
     status: "active" as const,
-    health: "red" as const,
+    health: "yellow" as const,
     currency: "USD",
     managerName: "Виктор Колымцев",
     managerEmail: "v.kolymtsev@kn-ao.ru",
@@ -179,7 +179,7 @@ const BUSINESSES = [
     lng: 100.5018,
     industry: "Food & Agriculture",
     status: "active" as const,
-    health: "yellow" as const,
+    health: "green" as const,
     currency: "USD",
     managerName: "Somchai Wattanaprapa",
     managerEmail: "s.wattanaprapa@siampacific.th",
@@ -248,23 +248,23 @@ const EVENT_SEEDS: Array<{
   severity: "critical" | "warning" | "info";
   hoursAgo: number;
 }> = [
-  // critical — red health companies
-  { businessName: "SkyLine Construction LLC",  text: "Статус SkyLine Construction изменился на критичный: сбой в цепочке поставок", severity: "critical", hoursAgo: 1 },
-  { businessName: "Колымские Недра АО",        text: "Колымские Недра: задержка поставки оборудования, добыча приостановлена", severity: "critical", hoursAgo: 3 },
-  { businessName: "TajEnergo JSC",             text: "TajEnergo не присылал отчёт 3 недели — связь с узлом потеряна", severity: "critical", hoursAgo: 5 },
-  // warning — yellow health companies + others with issues
+  // critical — red health: AutoDrive, TajEnergo, SilkRoad
+  { businessName: "AutoDrive Systems GmbH",    text: "AutoDrive Systems: runway 14 мес, burn €650K/мес — узел на критическом уровне", severity: "critical", hoursAgo: 1 },
+  { businessName: "TajEnergo JSC",             text: "TajEnergo не присылал отчёт 3 недели — связь с узлом потеряна", severity: "critical", hoursAgo: 3 },
+  { businessName: "SilkRoad Logistics LLC",    text: "SilkRoad Logistics: ключевые контракты под угрозой — критическая задержка", severity: "critical", hoursAgo: 5 },
+  // warning — yellow health: Pacific Trade, Северный Капитал, Колымские Недра, Profimonsters
   { businessName: "Profimonsters",             text: "Profimonsters: оборот растёт (+111%), но рентабельность низкая — 0,3%", severity: "warning", hoursAgo: 2 },
-  { businessName: "Siam Pacific Foods Co Ltd", text: "Siam Pacific Foods: выручка ниже плана на 18% второй месяц подряд", severity: "warning", hoursAgo: 4 },
-  { businessName: "SilkRoad Logistics LLC",    text: "SilkRoad Logistics: сменился руководитель операционного направления", severity: "warning", hoursAgo: 6 },
+  { businessName: "Колымские Недра АО",        text: "Колымские Недра: задержка поставки оборудования, добыча замедлена", severity: "warning", hoursAgo: 4 },
   { businessName: "Pacific Trade Partners Pte Ltd", text: "Pacific Trade Partners: маржа сжалась до 3.2% — ниже порогового значения", severity: "warning", hoursAgo: 8 },
-  { businessName: "AutoDrive Systems GmbH",    text: "AutoDrive Systems: просрочена ключевая веха по контракту Series A", severity: "warning", hoursAgo: 10 },
-  { businessName: "Helios Real Estate Ltd",    text: "Helios Real Estate: сделка по крупному объекту приостановлена", severity: "warning", hoursAgo: 12 },
   { businessName: "Северный Капитал АО",       text: "Северный Капитал: задержка регуляторного одобрения нового фонда", severity: "warning", hoursAgo: 14 },
-  // info — green health companies
-  { businessName: "Meridian Capital Group",    text: "Meridian Capital: успешно закрыт квартальный аудит — всё в норме", severity: "info", hoursAgo: 7 },
+  // info — green health: Meridian, NovaTech, Azure, Helios, Atlas, SkyLine, Siam Pacific
+  { businessName: "Meridian Capital Group",    text: "Meridian Capital: успешно закрыт квартальный аудит — всё в норме", severity: "info", hoursAgo: 6 },
   { businessName: "NovaTech Solutions Ltd",    text: "NovaTech Solutions: подписан новый контракт с enterprise-клиентом", severity: "info", hoursAgo: 9 },
-  { businessName: "Atlas Digital Agency",      text: "Atlas Digital Agency: запущена рекламная кампания для нового клиента", severity: "info", hoursAgo: 16 },
-  { businessName: "Azure Hospitality Group",   text: "Azure Hospitality: загрузка отелей достигла 84.3% — рекорд квартала", severity: "info", hoursAgo: 20 },
+  { businessName: "Azure Hospitality Group",   text: "Azure Hospitality: загрузка отелей достигла 84.3% — рекорд квартала", severity: "info", hoursAgo: 11 },
+  { businessName: "Helios Real Estate Ltd",    text: "Helios Real Estate: сделка по объекту закрыта, маржа 28%", severity: "info", hoursAgo: 13 },
+  { businessName: "Atlas Digital Agency",      text: "Atlas Digital Agency: ROAS 4.2x — клиент продлил контракт на год", severity: "info", hoursAgo: 15 },
+  { businessName: "SkyLine Construction LLC",  text: "SkyLine Construction: сданы 3 объекта в срок, backlog $780M", severity: "info", hoursAgo: 18 },
+  { businessName: "Siam Pacific Foods Co Ltd", text: "Siam Pacific Foods: экспорт +12% — открыт новый рынок в Европе", severity: "info", hoursAgo: 22 },
 ];
 
 async function seed() {
