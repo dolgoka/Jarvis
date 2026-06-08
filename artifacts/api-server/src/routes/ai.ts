@@ -248,15 +248,17 @@ router.get("/ai/summary", async (req, res): Promise<void> => {
   const totalOrders = businessSummaries.reduce((s, b) => s + b.orders, 0);
 
   const client = makeClient();
-  const prompt = `You are a chief intelligence officer for a global enterprise. Analyze this ${period} business performance data.
+  const prompt = `Ты — директор по разведке глобального холдинга. Проанализируй данные о результатах бизнесов за период: ${period}.
 
-${businessSummaries.length} businesses. Revenue: $${totalRevenue.toLocaleString()}, Profit: $${totalProfit.toLocaleString()}, Orders: ${totalOrders.toLocaleString()}
+Количество бизнесов: ${businessSummaries.length}. Выручка: $${totalRevenue.toLocaleString()}, Прибыль: $${totalProfit.toLocaleString()}, Заказы: ${totalOrders.toLocaleString()}
 
-Data:
+Данные:
 ${JSON.stringify(businessSummaries, null, 2)}
 
-Respond in JSON: {"summary":"2-3 sentence executive summary","highlights":["bullet 1","bullet 2","bullet 3","bullet 4","bullet 5"]}
-Be direct, data-driven. Identify top performers, underperformers, and recommend focus areas.`;
+ВАЖНО: Отвечай СТРОГО на русском языке. Никакого английского — ни в summary, ни в highlights.
+
+Верни JSON: {"summary":"2-3 предложения — краткое резюме для собственника","highlights":["пункт 1","пункт 2","пункт 3","пункт 4","пункт 5"]}
+Будь конкретен, опирайся на цифры. Выдели лидеров, отстающих и ключевые зоны внимания.`;
 
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
