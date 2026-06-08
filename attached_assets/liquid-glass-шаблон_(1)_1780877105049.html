@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Liquid Glass — образец материала</title>
+<style>
+/* =====================================================================
+   LIQUID GLASS — ЭТАЛОННЫЙ РЕЦЕПТ МАТЕРИАЛА (копировать буквально)
+   Самодостаточный файл: только HTML + CSS, без библиотек.
+   Вся «магия» стекла — в трёх местах:
+     (1) яркий цветной фон  — .bg
+     (2) сам материал       — .glass  (+ ::after блик)
+     (3) преломление фона   — SVG-фильтр #liquid (см. внизу <body>)
+   ===================================================================== */
+
+*{ box-sizing:border-box; margin:0; padding:0; }
+
+:root{
+  /* ——— ТОКЕНЫ СТЕКЛА (светлая тема по умолчанию) ——— */
+  --glass-tint:  rgba(255,255,255,0.42); /* тонировка панели */
+  --glass-edge:  rgba(255,255,255,0.70); /* тонкая светлая рамка 1px */
+  --glass-blur:  16px;                   /* размытие фона */
+  --glass-sat:   185%;                   /* насыщенность фона под стеклом */
+  /* блик по верхней кромке + мягкая внешняя тень */
+  --glass-shadow:
+      0 12px 38px rgba(40,46,120,0.16),
+      inset 0 1px 1.5px rgba(255,255,255,0.95),
+      inset 0 -1px 1px  rgba(255,255,255,0.50);
+  /* диагональный зеркальный отблик (слой ::after) */
+  --glass-sheen: linear-gradient(135deg,
+      rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.12) 40%,
+      rgba(255,255,255,0) 66%,  rgba(255,255,255,0.40) 100%);
+
+  --text:#0b1020;
+  --text-sub:rgba(20,24,40,0.62);
+  --accent:#5b54ff;
+  --pos:#0a8f5b;
+  --font:"Helvetica Neue",Helvetica,Arial,system-ui,sans-serif;
+}
+
+/* ——— ТЁМНАЯ ТЕМА: те же роли, другие значения ——— */
+body.dark{
+  --glass-tint:  rgba(140,146,180,0.16);
+  --glass-edge:  rgba(255,255,255,0.16);
+  --glass-sat:   165%;
+  --glass-shadow:
+      0 12px 40px rgba(0,0,0,0.45),
+      inset 0 1px 1px rgba(255,255,255,0.26),
+      inset 0 -1px 1px rgba(255,255,255,0.05);
+  --glass-sheen: linear-gradient(135deg,
+      rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 38%,
+      rgba(255,255,255,0) 70%, rgba(255,255,255,0.06) 100%);
+  --text:#f4f6ff;
+  --text-sub:rgba(228,232,255,0.66);
+  --accent:#9d97ff;
+  --pos:#37e2a0;
+}
+
+body{ font-family:var(--font); min-height:100vh; -webkit-font-smoothing:antialiased; }
+
+/* (1) ЯРКИЙ ЦВЕТНОЙ ФОН — без него стекло «не звучит».
+   4 размытых цветовых пятна + лёгкая анимация дрейфа. */
+.bg{
+  position:fixed; inset:0; z-index:-2; overflow:hidden;
+  background:#eef1ff;
+}
+.bg::before{
+  content:''; position:absolute; inset:-20%;
+  background:
+    radial-gradient(38% 42% at 22% 26%, #cdd6ff 0%, transparent 62%),
+    radial-gradient(44% 46% at 80% 20%, #ffd6ec 0%, transparent 60%),
+    radial-gradient(46% 50% at 72% 82%, #cfeffd 0%, transparent 60%),
+    radial-gradient(40% 44% at 24% 84%, #e7d9ff 0%, transparent 62%);
+  animation:drift 22s ease-in-out infinite alternate;
+}
+body.dark .bg{ background:#080814; }
+body.dark .bg::before{
+  background:
+    radial-gradient(38% 42% at 22% 26%, #1a1140 0%, transparent 62%),
+    radial-gradient(44% 46% at 80% 20%, #3a1a6e 0%, transparent 60%),
+    radial-gradient(46% 50% at 72% 82%, #0a2a4a 0%, transparent 60%),
+    radial-gradient(40% 44% at 24% 84%, #2a0e3e 0%, transparent 62%);
+}
+@keyframes drift{
+  from{ transform:translate(0,0) scale(1.05) rotate(0deg); }
+  to  { transform:translate(2%,-2%) scale(1.12) rotate(4deg); }
+}
+
+/* =====================================================================
+   (2)+(3) САМ МАТЕРИАЛ — главный класс. Скопируйте его целиком.
+   ВАЖНО: url(#liquid) искажает ТОЛЬКО фон под стеклом (backdrop),
+   текст и иконки внутри остаются чёткими — это и есть «жидкое стекло».
+   -webkit-… без url(): запас для Safari (там фильтр в backdrop не работает).
+   ===================================================================== */
+.glass{
+  position:relative;
+  border-radius:24px;
+  background:var(--glass-tint);
+  backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat)) url(#liquid);
+  -webkit-backdrop-filter:blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border:1px solid var(--glass-edge);
+  box-shadow:var(--glass-shadow);
+  isolation:isolate;
+}
+.glass::after{                 /* зеркальный отблик поверх */
+  content:''; position:absolute; inset:0; border-radius:inherit;
+  background:var(--glass-sheen); pointer-events:none;
+}
+.glass > *{ position:relative; z-index:1; }  /* контент над бликом */
+
+/* «сильное» преломление для крупных/витринных панелей */
+.glass.strong{
+  backdrop-filter:blur(7px) saturate(var(--glass-sat)) url(#liquid-strong);
+}
+
+/* пилюля / кнопка из того же материала */
+.glass.pill{ border-radius:999px; }
+
+/* ——— ДЕМО-РАСКЛАДКА (можно удалить, к материалу не относится) ——— */
+.stage{ min-height:100vh; display:flex; flex-direction:column; align-items:center;
+        justify-content:center; gap:22px; padding:40px 20px; }
+.row{ display:flex; gap:18px; flex-wrap:wrap; justify-content:center; align-items:stretch; }
+.card{ width:300px; padding:24px; }
+.card h3{ font-size:19px; color:var(--text); letter-spacing:-.3px; margin-bottom:8px; }
+.card p{ font-size:14.5px; color:var(--text-sub); line-height:1.5; }
+.metric{ font-size:40px; font-weight:700; color:var(--text); letter-spacing:-1.5px; }
+.delta{ display:inline-flex; align-items:center; gap:5px; margin-top:10px;
+        font-size:14px; font-weight:700; color:var(--pos); }
+.btn{ height:48px; padding:0 24px; display:inline-flex; align-items:center;
+      font-size:15px; font-weight:700; color:var(--text); cursor:pointer; }
+.btn.solid{ border:none; color:#fff; background:var(--accent);
+            box-shadow:0 6px 20px color-mix(in srgb, var(--accent) 45%, transparent); }
+body.dark .btn.solid{ color:#0a0a16; }
+.nav{ display:flex; align-items:center; gap:22px; padding:10px 12px 10px 22px; }
+.brand{ font-size:19px; font-weight:700; color:var(--text); margin-right:auto; }
+.nav a{ font-size:14.5px; font-weight:600; color:var(--text-sub); cursor:pointer; }
+.dot{ width:9px; height:9px; border-radius:999px; background:var(--pos); display:inline-block; }
+
+/* переключатель темы (демо-контрол, к материалу не относится) */
+.toggle{ position:fixed; top:18px; right:18px; z-index:10; height:42px; padding:0 18px;
+         border-radius:999px; border:none; cursor:pointer; font:inherit; font-weight:700;
+         font-size:14px; color:var(--text); }
+</style>
+</head>
+<body class="dark">
+
+  <div class="bg"></div>
+
+  <div class="stage">
+
+    <!-- навбар-пилюля из стекла -->
+    <div class="glass pill nav" style="width:min(680px,92vw)">
+      <span class="brand">Бренд</span>
+      <a>Возможности</a><a>Цены</a><a>О нас</a>
+      <button class="btn solid" style="border-radius:999px;height:38px">Начать</button>
+    </div>
+
+    <div class="row">
+      <!-- карточка-метрика -->
+      <div class="glass card">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span class="dot"></span>
+          <span style="font-size:13px;font-weight:600;color:var(--text-sub)">Онлайн · сейчас</span>
+        </div>
+        <div class="metric">428 600 ₽</div>
+        <span class="delta">↑ +12,4% к вчера</span>
+      </div>
+
+      <!-- текстовая карточка с СИЛЬНЫМ преломлением -->
+      <div class="glass strong card">
+        <h3>Жидкое стекло</h3>
+        <p>Фон под панелью размывается, насыщается и слегка <b>преломляется</b> SVG-фильтром.
+           Текст и иконки сверху остаются абсолютно чёткими.</p>
+        <div style="display:flex;gap:10px;margin-top:18px">
+          <button class="btn glass pill">Подробнее</button>
+          <button class="btn solid" style="border-radius:999px">Купить</button>
+        </div>
+      </div>
+
+      <!-- стопка мини-пилюль -->
+      <div class="glass card" style="display:flex;flex-direction:column;gap:12px;justify-content:center">
+        <div class="glass pill" style="padding:12px 16px;font-weight:700;color:var(--text)">＋ Создать</div>
+        <div class="glass pill" style="padding:12px 16px;font-weight:700;color:var(--text)">⚙ Настройки</div>
+        <div class="glass pill" style="padding:12px 16px;font-weight:700;color:var(--text)">☆ Избранное</div>
+      </div>
+    </div>
+  </div>
+
+  <button class="toggle glass" onclick="document.body.classList.toggle('dark')">☀ / ☾ тема</button>
+
+  <!-- =====================================================================
+       (3) SVG-ФИЛЬТРЫ ПРЕЛОМЛЕНИЯ — обязательная часть рецепта.
+       feTurbulence создаёт шум, feDisplacementMap им искажает backdrop.
+       scale = сила преломления (26 — деликатно, 44 — витринно).
+       Держите этот <svg> в DOM (скрытый), на него ссылается url(#liquid).
+       ===================================================================== -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <filter id="liquid" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.011 0.013" numOctaves="2" seed="7" result="n"/>
+        <feGaussianBlur in="n" stdDeviation="1.1" result="nb"/>
+        <feDisplacementMap in="SourceGraphic" in2="nb" scale="26" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <filter id="liquid-strong" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.008 0.01" numOctaves="2" seed="4" result="n"/>
+        <feGaussianBlur in="n" stdDeviation="1.4" result="nb"/>
+        <feDisplacementMap in="SourceGraphic" in2="nb" scale="44" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+</body>
+</html>
