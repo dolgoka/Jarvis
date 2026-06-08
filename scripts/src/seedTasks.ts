@@ -1,5 +1,4 @@
 import { db, peopleTable, tasksTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
 
 const PEOPLE = [
   { name: "Аня",        role: "Ассистент",                    email: null },
@@ -13,43 +12,32 @@ const PEOPLE = [
 ];
 
 async function seed() {
-  console.log("Seeding people...");
+  // Always clear and re-seed so running the script repeatedly is safe
+  console.log("Clearing tasks and people...");
+  await db.delete(tasksTable);
+  await db.delete(peopleTable);
+  console.log("  Cleared.");
 
-  const existing = await db.select().from(peopleTable);
-  if (existing.length > 0) {
-    console.log(`  People already seeded (${existing.length} records) — skipping insert.`);
-  } else {
-    for (const p of PEOPLE) {
-      const [ins] = await db.insert(peopleTable).values(p).returning();
-      console.log(`  Person: ${ins!.name} — ${ins!.role} (id=${ins!.id})`);
-    }
+  console.log("Seeding people...");
+  for (const p of PEOPLE) {
+    const [ins] = await db.insert(peopleTable).values(p).returning();
+    console.log(`  Person: ${ins!.name} — ${ins!.role} (id=${ins!.id})`);
   }
 
   const people = await db.select().from(peopleTable);
-  const byName = (n: string) => people.find(p => p.name === n)!;
-
-  const existingTasks = await db.select().from(tasksTable);
-  if (existingTasks.length > 0) {
-    console.log(`  Tasks already seeded (${existingTasks.length} records) — skipping insert.`);
-    process.exit(0);
-  }
+  const byName = (n: string) => {
+    const p = people.find(p => p.name === n);
+    if (!p) throw new Error(`Person not found: ${n}`);
+    return p;
+  };
 
   console.log("Seeding demo tasks...");
 
   const now = new Date();
   const daysAgo = (d: number) => new Date(now.getTime() - d * 86400000);
 
-  const demos: Parameters<typeof db.insert<typeof tasksTable>>[0] extends infer _R ? any[] : any[] = [
-    {
-      title: "Аналитика по Q2 для инвесторов",
-      description: "Подготовить сводку ключевых показателей за второй квартал: выручка, EBITDA, ТОП-компании. Формат — 1 слайд + таблица.",
-      assigneeId: byName("Саша Батов").id,
-      linkedPeopleIds: [byName("Николай").id],
-      status: "accepted" as const,
-      createdAt: daysAgo(5),
-      acceptedAt: daysAgo(4),
-      stuckDays: null,
-    },
+  const demos = [
+    // ── WAITING ─────────────────────────────────────────────────────────────
     {
       title: "Оформить NDA с новым контрагентом",
       description: "Проверить и подписать соглашение о неразглашении с партнёром из Сингапура. Срок — до конца недели.",
@@ -61,8 +49,40 @@ async function seed() {
       stuckDays: null,
     },
     {
+      title: "Уточнить статус лицензии TajEnergo",
+      description: "Запросить у Фируза Рахимова актуальный статус регуляторной лицензии. Последний отчёт — 3 недели назад. Нужен письменный ответ.",
+      assigneeId: byName("Аня").id,
+      linkedPeopleIds: [],
+      status: "waiting" as const,
+      createdAt: daysAgo(2),
+      acceptedAt: null,
+      stuckDays: null,
+    },
+    // ── ACCEPTED ─────────────────────────────────────────────────────────────
+    {
+      title: "Аналитика по Q2 для инвесторов",
+      description: "Подготовить сводку ключевых показателей за второй квартал: выручка, EBITDA, ТОП-компании. Формат — 1 слайд + таблица.",
+      assigneeId: byName("Саша Батов").id,
+      linkedPeopleIds: [byName("Николай").id],
+      status: "accepted" as const,
+      createdAt: daysAgo(5),
+      acceptedAt: daysAgo(4),
+      stuckDays: null,
+    },
+    {
+      title: "Подготовить отчёт по SilkRoad для совещания",
+      description: "Собрать оперативные данные по SilkRoad Logistics: статус контрактов, динамика выручки, риски. Слайд + короткий брифинг к понедельнику.",
+      assigneeId: byName("Даша").id,
+      linkedPeopleIds: [byName("Виктор").id, byName("Николай").id],
+      status: "accepted" as const,
+      createdAt: daysAgo(3),
+      acceptedAt: daysAgo(2),
+      stuckDays: null,
+    },
+    // ── STUCK ─────────────────────────────────────────────────────────────────
+    {
       title: "Настроить дашборд KPI по операциям",
-      description: "Добавить метрики по SilkRoad и TajEnergo в оперативный дашборд. Показатели: выручка, маржа, кол-во заказов — помесячно.",
+      description: "Добавить метрики по SilkRoad и TajEnergo в оперативный дашборд (выручка, маржа, заказы помесячно). Блокер: нет доступа к prod-БД — Николай ждёт токен от Никиты уже 3 дня.",
       assigneeId: byName("Николай").id,
       linkedPeopleIds: [],
       status: "stuck" as const,
@@ -72,7 +92,7 @@ async function seed() {
     },
     {
       title: "Согласовать условия пролонгации аренды офиса",
-      description: "Переговорить с арендодателем о новых условиях: ставка, срок, индексация. Зафиксировать итог письмом.",
+      description: "Переговорить с арендодателем о новых условиях: ставка, срок, индексация. Зафиксировать итог письмом. Блокер: арендодатель не выходит на связь 7 дней — нужно подключить юридическое давление через Алексея.",
       assigneeId: byName("Татьяна").id,
       linkedPeopleIds: [byName("Аня").id],
       status: "stuck" as const,
