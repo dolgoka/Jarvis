@@ -44,7 +44,7 @@ const prefersReducedMotion =
   typeof window !== "undefined" &&
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-function BusinessSlideOver({ businessId, color, onClose }: { businessId: number; color: string; onClose: () => void }) {
+function BusinessSlideOver({ businessId, color: _color, onClose }: { businessId: number; color: string; onClose: () => void }) {
   const [period, setPeriod] = useState<FetchLatestReportPeriod>("month");
   const { data: report, isLoading } = useFetchLatestReport(
     { businessId, period },
@@ -56,185 +56,131 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
   const periodLabel: Record<FetchLatestReportPeriod, string> = { day: "24 ч", week: "7 дней", month: "30 дней" };
   const health = business?.health ?? "green";
   const healthLabel = HEALTH_LABELS[health] ?? "Норма";
+  const healthColor = HEALTH_COLORS[health] ?? "#3ed9a0";
   const statusLabel = STATUS_LABELS[business?.status ?? ""] ?? (business?.status ?? "—");
+  const statusColor = business?.status === "active" ? "#3ed9a0" : "#f0625a";
+  const HF = "'Hanken Grotesk', system-ui, sans-serif";
+  const DIVIDER = "rgba(255,255,255,0.07)";
+  const PANEL_BG = "rgba(11,11,18,0.88)";
+  const PANEL_BLUR = "blur(22px) saturate(165%)";
+
+  const marginNum = margin !== null ? parseFloat(margin) : null;
+
+  const Badges = () => (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }}>
+      <span style={{ padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: HF, background: "rgba(255,255,255,0.07)", color: "rgba(228,232,255,0.55)", border: "1px solid rgba(255,255,255,0.11)" }}>
+        {business?.industry || "—"}
+      </span>
+      <span style={{ padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: HF, background: `${healthColor}18`, color: healthColor, border: `1px solid ${healthColor}44` }}>
+        {healthLabel}
+      </span>
+      <span style={{ padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: HF, background: `${statusColor}15`, color: statusColor, border: `1px solid ${statusColor}40` }}>
+        {statusLabel}
+      </span>
+    </div>
+  );
+
+  const StatCard = ({ label, value, showMargin }: { label: string; value: string; showMargin?: boolean }) => (
+    <div className="glass" style={{ borderRadius: 16, padding: "14px 16px" }}>
+      <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(228,232,255,0.45)", fontFamily: HF, marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 20, fontWeight: 800, color: "rgba(228,232,255,0.95)", fontFamily: HF, lineHeight: 1 }}>{value}</div>
+      {showMargin && marginNum !== null && (
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 4, marginTop: 8, padding: "2px 8px", borderRadius: 999, background: marginNum >= 0 ? "rgba(62,217,160,0.15)" : "rgba(240,98,90,0.15)", color: marginNum >= 0 ? "#3ed9a0" : "#f0625a", fontSize: 11, fontWeight: 600, fontFamily: HF }}>
+          {marginNum >= 0 ? "↑" : "↓"} {margin}% маржа
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <>
-      {/* Mobile: bottom sheet overlay */}
-      <div
-        className="md:hidden absolute inset-0 z-20 flex flex-col justify-end"
-        style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }}
-        onClick={onClose}
-      >
-        <div
-          className="flex flex-col rounded-t-2xl overflow-hidden max-h-[85vh]"
-          style={{
-            background: "linear-gradient(180deg, rgba(4,10,22,0.98) 0%, rgba(2,6,14,1) 100%)",
-            borderTop: `1px solid ${color}44`,
-            boxShadow: `0 -16px 48px ${color}18`,
-          }}
-          onClick={e => e.stopPropagation()}
-        >
-          {/* Handle */}
-          <div className="flex justify-center pt-3 pb-1">
-            <div className="w-10 h-1 rounded-full bg-white/20" />
+      {/* ── Mobile: bottom sheet ── */}
+      <div className="md:hidden absolute inset-0 z-20 flex flex-col justify-end" style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)" }} onClick={onClose}>
+        <div className="flex flex-col rounded-t-2xl overflow-hidden max-h-[85vh]"
+          style={{ background: PANEL_BG, backdropFilter: PANEL_BLUR, WebkitBackdropFilter: PANEL_BLUR, borderTop: "1px solid rgba(255,255,255,0.10)" }}
+          onClick={e => e.stopPropagation()}>
+
+          <div style={{ display: "flex", justifyContent: "center", padding: "12px 0 4px" }}>
+            <div style={{ width: 40, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.18)" }} />
           </div>
 
-          {/* Header */}
-          <div className="px-5 py-3 flex items-start justify-between" style={{ borderBottom: `1px solid ${color}22` }}>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest font-semibold"
-                  style={{ background: `${color}18`, color, border: `1px solid ${color}38` }}>
-                  {business?.industry || "—"}
-                </span>
-                {/* Health badge */}
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest font-semibold"
-                  style={{ background: `${color}22`, color, border: `1px solid ${color}55` }}>
-                  {healthLabel}
-                </span>
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest"
-                  style={{
-                    background: business?.status === "active" ? "#22c55e16" : "#ef444416",
-                    color: business?.status === "active" ? "#22c55e" : "#ef4444",
-                    border: `1px solid ${business?.status === "active" ? "#22c55e38" : "#ef444438"}`,
-                  }}>
-                  {statusLabel}
-                </span>
-              </div>
-              <h2 className="text-lg font-semibold text-white leading-tight">{business?.name ?? "…"}</h2>
-              <div className="flex items-center gap-1 mt-1 text-[12px]" style={{ color: `${color}aa` }}>
-                <MapPin className="w-3 h-3" />
-                <span className="font-mono">{business?.city}, {business?.country}</span>
+          <div style={{ padding: "12px 20px 14px", borderBottom: `1px solid ${DIVIDER}`, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Badges />
+              <h2 style={{ fontSize: 18, fontWeight: 700, color: "rgba(228,232,255,0.95)", fontFamily: HF, lineHeight: 1.2 }}>{business?.name ?? "…"}</h2>
+              <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 5, color: "rgba(228,232,255,0.38)", fontSize: 12, fontFamily: HF }}>
+                <MapPin className="w-3 h-3 flex-shrink-0" />{business?.city}, {business?.country}
               </div>
             </div>
-            <button onClick={onClose}
-              className="ml-3 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-white/10"
-              style={{ color: `${color}66` }}>
+            <button onClick={onClose} className="hover:bg-white/10 transition-colors" style={{ marginLeft: 12, minWidth: 44, minHeight: 44, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", color: "rgba(228,232,255,0.35)", cursor: "pointer" }}>
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Period selector */}
-          <div className="px-5 py-2.5 flex items-center justify-between" style={{ borderBottom: `1px solid ${color}14` }}>
-            <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: `${color}66` }}>
-              Телеметрия — {periodLabel[period]}
-            </span>
+          <div style={{ padding: "8px 20px", borderBottom: `1px solid ${DIVIDER}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "rgba(228,232,255,0.35)", fontFamily: HF }}>Телеметрия — {periodLabel[period]}</span>
             <Select value={period} onValueChange={(val: FetchLatestReportPeriod) => setPeriod(val)}>
-              <SelectTrigger className="w-24 h-10 text-xs font-mono border-white/10 bg-white/5 text-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="day">24ч</SelectItem>
-                <SelectItem value="week">7д</SelectItem>
-                <SelectItem value="month">30д</SelectItem>
-              </SelectContent>
+              <SelectTrigger className="w-24 h-10 text-xs font-mono border-white/10 bg-white/5 text-white"><SelectValue /></SelectTrigger>
+              <SelectContent><SelectItem value="day">24ч</SelectItem><SelectItem value="week">7д</SelectItem><SelectItem value="month">30д</SelectItem></SelectContent>
             </Select>
           </div>
 
-          {/* Stats */}
-          <div className="px-5 py-4 overflow-y-auto space-y-2.5">
-            {isLoading ? (
-              <div className="flex justify-center py-8"><Loader2 className="w-7 h-7 animate-spin" style={{ color }} /></div>
-            ) : report ? (
-              <>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { label: "Выручка", value: formatMoney(report.revenue, business?.currency ?? "USD"), icon: Activity },
-                    { label: "Прибыль", value: formatMoney(report.profit, business?.currency ?? "USD"), icon: TrendingUp },
-                    { label: "Заказы", value: formatNumber(report.orders), icon: ShoppingCart },
-                  ].map(({ label, value, icon: Icon }) => (
-                    <div key={label} className="rounded-xl p-3" style={{ background: `${color}0a`, border: `1px solid ${color}1e` }}>
-                      <div className="text-[9px] font-mono uppercase tracking-widest mb-1" style={{ color: `${color}77` }}>{label}</div>
-                      <div className="text-base font-light text-white tabular-nums">{value}</div>
-                    </div>
-                  ))}
+          <div style={{ padding: "14px 20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
+            {isLoading ? <div style={{ display: "flex", justifyContent: "center", padding: "28px 0" }}><Loader2 className="w-7 h-7 animate-spin" style={{ color: "#8b7cff" }} /></div>
+              : report ? <>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                  <StatCard label="Выручка" value={formatMoney(report.revenue, business?.currency ?? "USD")} />
+                  <StatCard label="Прибыль" value={formatMoney(report.profit, business?.currency ?? "USD")} showMargin />
+                  <StatCard label="Заказы" value={formatNumber(report.orders)} />
                 </div>
-                {margin !== null && (
-                  <div className="text-xs font-mono" style={{ color: parseFloat(margin) >= 0 ? "#22c55e" : "#ef4444" }}>
-                    {parseFloat(margin) >= 0 ? "+" : ""}{margin}% маржа
-                  </div>
-                )}
-                {report.notes && (
-                  <div className="rounded-xl p-3" style={{ background: `${color}06`, border: `1px solid ${color}18` }}>
-                    <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: `${color}66` }}>Заметки</div>
-                    <p className="text-[12px] text-white/60 leading-relaxed">{report.notes}</p>
-                  </div>
-                )}
-              </>
-            ) : (
-              <div className="text-center py-8 text-white/25 font-mono text-sm">Нет данных телеметрии</div>
-            )}
+                {report.notes && <div className="glass" style={{ borderRadius: 16, padding: "12px 14px" }}>
+                  <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(228,232,255,0.45)", fontFamily: HF, marginBottom: 6 }}>Заметки</div>
+                  <p style={{ fontSize: 12, color: "rgba(228,232,255,0.55)", lineHeight: 1.6, fontFamily: HF }}>{report.notes}</p>
+                </div>}
+              </> : <div style={{ textAlign: "center", padding: "28px 0", color: "rgba(228,232,255,0.20)", fontSize: 14, fontFamily: HF }}>Нет данных телеметрии</div>}
           </div>
 
-          {/* CTA */}
-          <div className="px-5 py-4" style={{ borderTop: `1px solid ${color}18` }}>
-            <Link href={`/businesses/${businessId}`}
-              className="w-full flex items-center justify-center gap-2 min-h-[44px] rounded-xl font-mono text-xs uppercase tracking-widest transition-all"
-              style={{ background: `${color}14`, color, border: `1px solid ${color}33` }}>
-              <Zap className="w-3.5 h-3.5" />
-              Полный анализ
+          <div style={{ padding: "10px 20px 14px", borderTop: `1px solid ${DIVIDER}` }}>
+            <Link href={`/businesses/${businessId}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, background: "linear-gradient(135deg, #8b7cff 0%, #6c6bff 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(139,124,255,0.35)", textDecoration: "none" }}>
+              <Zap className="w-3.5 h-3.5" /> Полный анализ
             </Link>
           </div>
         </div>
       </div>
 
-      {/* Desktop: right slide-over */}
-      <div
-        className="hidden md:flex absolute top-0 right-0 h-full w-[420px] z-20 flex-col glass-panel"
-        style={{ borderLeft: `1px solid ${color}44`, boxShadow: `-16px 0 48px ${color}14` }}
-      >
-        <div className="p-6 flex justify-between items-start" style={{ borderBottom: `1px solid ${color}22` }}>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest font-semibold"
-                style={{ background: `${color}18`, color, border: `1px solid ${color}38` }}>
-                {business?.industry || "—"}
-              </span>
-              {/* Health badge */}
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest font-semibold"
-                style={{ background: `${color}26`, color, border: `1px solid ${color}55` }}>
-                {healthLabel}
-              </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-mono uppercase tracking-widest"
-                style={{
-                  background: business?.status === "active" ? "#22c55e16" : "#ef444416",
-                  color: business?.status === "active" ? "#22c55e" : "#ef4444",
-                  border: `1px solid ${business?.status === "active" ? "#22c55e38" : "#ef444438"}`,
-                }}>
-                {statusLabel}
-              </span>
-            </div>
-            <h2 className="text-[21px] font-semibold text-white leading-tight">{business?.name ?? "…"}</h2>
-            <div className="flex items-center gap-1.5 mt-1.5 text-[13px]" style={{ color: `${color}aa` }}>
-              <MapPin className="w-3.5 h-3.5 flex-shrink-0" />
-              <span className="font-mono">{business?.city}, {business?.country}</span>
+      {/* ── Desktop: right slide-over ── */}
+      <div className="hidden md:flex absolute top-0 right-0 h-full w-[420px] z-20 flex-col"
+        style={{ background: PANEL_BG, backdropFilter: PANEL_BLUR, WebkitBackdropFilter: PANEL_BLUR, borderLeft: "1px solid rgba(255,255,255,0.09)" }}>
+
+        <div style={{ padding: "24px 24px 20px", borderBottom: `1px solid ${DIVIDER}`, display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Badges />
+            <h2 style={{ fontSize: 21, fontWeight: 700, color: "rgba(228,232,255,0.95)", fontFamily: HF, lineHeight: 1.2 }}>{business?.name ?? "…"}</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 6, color: "rgba(228,232,255,0.38)", fontSize: 13, fontFamily: HF }}>
+              <MapPin className="w-3.5 h-3.5 flex-shrink-0" />{business?.city}, {business?.country}
             </div>
           </div>
-          <button onClick={onClose}
-            className="ml-4 min-w-[44px] min-h-[44px] rounded-full flex items-center justify-center hover:bg-white/10 transition-colors"
-            style={{ color: `${color}66` }}>
+          <button onClick={onClose} className="hover:bg-white/10 transition-colors" style={{ marginLeft: 16, minWidth: 44, minHeight: 44, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", color: "rgba(228,232,255,0.30)", cursor: "pointer" }}>
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {business?.managerName && (
-          <div className="px-6 py-4" style={{ borderBottom: `1px solid ${color}14`, background: `${color}06` }}>
-            <div className="text-[10px] font-mono uppercase tracking-widest mb-2.5" style={{ color: `${color}66` }}>Руководитель</div>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-[15px] font-bold flex-shrink-0"
-                style={{ background: `${color}18`, color, border: `1.5px solid ${color}38` }}>
+          <div style={{ padding: "16px 24px", borderBottom: `1px solid ${DIVIDER}`, background: "rgba(139,124,255,0.04)" }}>
+            <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(228,232,255,0.35)", fontFamily: HF, marginBottom: 10 }}>Руководитель</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 15, fontWeight: 700, background: "rgba(139,124,255,0.18)", color: "#8b7cff", border: "1.5px solid rgba(139,124,255,0.40)", fontFamily: HF }}>
                 {business.managerName.charAt(0).toUpperCase()}
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-white text-sm font-medium">
-                  <User className="w-3.5 h-3.5 flex-shrink-0" style={{ color }} />
-                  <span className="truncate">{business.managerName}</span>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(228,232,255,0.85)", fontSize: 14, fontWeight: 600, fontFamily: HF }}>
+                  <User className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#8b7cff" }} />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{business.managerName}</span>
                 </div>
                 {business.managerEmail && (
-                  <div className="flex items-center gap-1.5 text-[12px] mt-0.5 truncate" style={{ color: `${color}77` }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, color: "rgba(228,232,255,0.38)", fontSize: 12, marginTop: 3, fontFamily: HF }}>
                     <Mail className="w-3 h-3 flex-shrink-0" />
-                    <span className="truncate">{business.managerEmail}</span>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{business.managerEmail}</span>
                   </div>
                 )}
               </div>
@@ -242,60 +188,30 @@ function BusinessSlideOver({ businessId, color, onClose }: { businessId: number;
           </div>
         )}
 
-        <div className="px-6 py-3 flex items-center justify-between" style={{ borderBottom: `1px solid ${color}14` }}>
-          <span className="text-[10px] font-mono uppercase tracking-widest" style={{ color: `${color}66` }}>
-            Телеметрия — {periodLabel[period]}
-          </span>
+        <div style={{ padding: "10px 24px", borderBottom: `1px solid ${DIVIDER}`, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "rgba(228,232,255,0.35)", fontFamily: HF }}>Телеметрия — {periodLabel[period]}</span>
           <Select value={period} onValueChange={(val: FetchLatestReportPeriod) => setPeriod(val)}>
-            <SelectTrigger className="w-24 h-10 text-xs font-mono border-white/10 bg-white/5 text-white">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="day">24ч</SelectItem>
-              <SelectItem value="week">7д</SelectItem>
-              <SelectItem value="month">30д</SelectItem>
-            </SelectContent>
+            <SelectTrigger className="w-24 h-10 text-xs font-mono border-white/10 bg-white/5 text-white"><SelectValue /></SelectTrigger>
+            <SelectContent><SelectItem value="day">24ч</SelectItem><SelectItem value="week">7д</SelectItem><SelectItem value="month">30д</SelectItem></SelectContent>
           </Select>
         </div>
 
-        <div className="px-6 py-4 flex-1 overflow-y-auto space-y-3">
-          {isLoading ? (
-            <div className="flex justify-center py-16"><Loader2 className="w-8 h-8 animate-spin" style={{ color }} /></div>
-          ) : report ? (
-            <>
-              {[
-                { label: "Выручка", value: formatMoney(report.revenue, business?.currency ?? "USD"), icon: Activity, sub: null },
-                { label: "Прибыль", value: formatMoney(report.profit, business?.currency ?? "USD"), icon: TrendingUp, sub: margin !== null ? `${parseFloat(margin) >= 0 ? "+" : ""}${margin}% маржа` : null },
-                { label: "Заказы", value: formatNumber(report.orders), icon: ShoppingCart, sub: null },
-              ].map(({ label, value, icon: Icon, sub }) => (
-                <div key={label} className="rounded-xl p-4 flex items-center justify-between"
-                  style={{ background: `${color}0a`, border: `1px solid ${color}1e` }}>
-                  <div>
-                    <div className="text-[10px] font-mono uppercase tracking-widest mb-1.5" style={{ color: `${color}77` }}>{label}</div>
-                    <div className="text-[25px] font-light text-white tabular-nums">{value}</div>
-                    {sub && <div className="text-xs mt-1 font-mono" style={{ color: sub.startsWith("+") ? "#22c55e" : "#ef4444" }}>{sub}</div>}
-                  </div>
-                  <Icon className="w-9 h-9 opacity-20" style={{ color }} />
-                </div>
-              ))}
-              {report.notes && (
-                <div className="rounded-xl p-4" style={{ background: `${color}06`, border: `1px solid ${color}18` }}>
-                  <div className="text-[10px] font-mono uppercase tracking-widest mb-2" style={{ color: `${color}66` }}>Заметки</div>
-                  <p className="text-[13px] text-white/60 leading-relaxed">{report.notes}</p>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="text-center py-16 text-white/25 font-mono text-sm">Нет данных телеметрии</div>
-          )}
+        <div style={{ padding: "20px 24px", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
+          {isLoading ? <div style={{ display: "flex", justifyContent: "center", padding: "64px 0" }}><Loader2 className="w-8 h-8 animate-spin" style={{ color: "#8b7cff" }} /></div>
+            : report ? <>
+              <StatCard label="Выручка" value={formatMoney(report.revenue, business?.currency ?? "USD")} />
+              <StatCard label="Прибыль" value={formatMoney(report.profit, business?.currency ?? "USD")} showMargin />
+              <StatCard label="Заказы" value={formatNumber(report.orders)} />
+              {report.notes && <div className="glass" style={{ borderRadius: 16, padding: "16px 18px" }}>
+                <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(228,232,255,0.45)", fontFamily: HF, marginBottom: 8 }}>Заметки</div>
+                <p style={{ fontSize: 13, color: "rgba(228,232,255,0.55)", lineHeight: 1.65, fontFamily: HF }}>{report.notes}</p>
+              </div>}
+            </> : <div style={{ textAlign: "center", padding: "64px 0", color: "rgba(228,232,255,0.20)", fontSize: 14, fontFamily: HF }}>Нет данных телеметрии</div>}
         </div>
 
-        <div className="px-6 py-5" style={{ borderTop: `1px solid ${color}18` }}>
-          <Link href={`/businesses/${businessId}`}
-            className="w-full flex items-center justify-center gap-2 min-h-[44px] rounded-xl font-mono text-xs uppercase tracking-widest transition-all duration-200"
-            style={{ background: `${color}14`, color, border: `1px solid ${color}33` }}>
-            <Zap className="w-3.5 h-3.5" />
-            Полный анализ
+        <div style={{ padding: "16px 24px 20px", borderTop: `1px solid ${DIVIDER}` }}>
+          <Link href={`/businesses/${businessId}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, textDecoration: "none", background: "linear-gradient(135deg, #8b7cff 0%, #6c6bff 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(139,124,255,0.35)" }}>
+            <Zap className="w-3.5 h-3.5" /> Полный анализ
           </Link>
         </div>
       </div>
