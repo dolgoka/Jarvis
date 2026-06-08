@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Shell } from "@/components/layout/Shell";
 import { useAiChat } from "@workspace/api-client-react";
-import { Send, Bot, User, Loader2, Zap, Mic, MicOff, Volume2, Square } from "lucide-react";
+import { Send, Bot, User, Loader2, Mic, MicOff, Volume2, Square } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -10,11 +10,14 @@ interface Message {
 }
 
 const SUGGESTED = [
-  "Which business has the highest profit margin?",
-  "Compare revenue across all businesses",
-  "Which node needs attention right now?",
-  "Give me a one-line status on each business",
+  "У какого бизнеса самая высокая маржа?",
+  "Сравни выручку по всем компаниям",
+  "Какой узел требует внимания прямо сейчас?",
+  "Дай краткий статус по каждому бизнесу",
 ];
+
+const P = "#8b7cff";
+const HF = "'Hanken Grotesk', system-ui, sans-serif";
 
 function getMimeType(): string {
   const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
@@ -28,7 +31,7 @@ export default function AiChat() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "JARVIS online. I have full visibility across your global portfolio — financials, locations, performance metrics. Ask me anything about your businesses.",
+      content: "JARVIS активен. Полная видимость глобального портфеля — финансы, локации, метрики эффективности. Спрашивай о любом из бизнесов.",
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -58,7 +61,7 @@ export default function AiChat() {
       onError: () => {
         setMessages(prev => [...prev, {
           role: "assistant",
-          content: "Signal interference — unable to process request. Try again.",
+          content: "Ошибка связи — не удалось обработать запрос. Попробуй ещё раз.",
           timestamp: new Date().toISOString(),
         }]);
       },
@@ -175,81 +178,90 @@ export default function AiChat() {
 
   return (
     <Shell>
-      <div className="h-full flex flex-col bg-[#020810]">
-        {/* Header */}
+      <div className="h-full flex flex-col" style={{ fontFamily: HF, background: "#0b0b12" }}>
+
+        {/* ── Header ── */}
         <div
-          className="px-8 py-5 flex items-center gap-4 flex-shrink-0"
+          className="px-6 py-4 flex items-center gap-3 flex-shrink-0"
           style={{
-            background: 'linear-gradient(135deg, rgba(0,212,255,0.05) 0%, rgba(0,0,0,0) 100%)',
-            borderBottom: '1px solid rgba(0,212,255,0.1)',
-            backdropFilter: 'blur(20px)',
+            background: "rgba(139,124,255,0.04)",
+            borderBottom: "1px solid rgba(139,124,255,0.1)",
+            backdropFilter: "blur(20px)",
           }}
         >
           <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center"
+            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{
-              background: 'rgba(0,212,255,0.1)',
-              border: '1px solid rgba(0,212,255,0.25)',
-              boxShadow: '0 0 16px rgba(0,212,255,0.15)',
+              background: "rgba(139,124,255,0.12)",
+              border: "1px solid rgba(139,124,255,0.28)",
+              boxShadow: "0 0 14px rgba(139,124,255,0.15)",
             }}
           >
-            <Bot className="w-5 h-5 text-primary" />
+            <Bot className="w-4 h-4" style={{ color: P }} />
           </div>
           <div>
-            <h1 className="text-lg font-semibold text-white tracking-wide">JARVIS Intelligence</h1>
-            <p className="text-xs text-primary/60 font-mono uppercase tracking-widest">Full portfolio access · Real-time data</p>
+            <p className="text-sm font-semibold text-white leading-tight">JARVIS</p>
+            <p className="text-xs leading-tight" style={{ color: "rgba(139,124,255,0.6)" }}>
+              Полный доступ к портфелю · Данные в реальном времени
+            </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="text-xs font-mono text-green-400/80 uppercase tracking-widest">Online</span>
+            <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#3ed9a0" }} />
+            <span className="text-xs font-medium" style={{ color: "rgba(62,217,160,0.8)" }}>
+              Онлайн
+            </span>
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-4">
+        {/* ── Messages ── */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
           {messages.map((msg, i) => (
             <div key={i} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : "flex-row"}`}>
+
+              {/* Avatar */}
               <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-1"
+                className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={msg.role === "assistant" ? {
-                  background: 'rgba(0,212,255,0.12)',
-                  border: '1px solid rgba(0,212,255,0.25)',
-                  boxShadow: '0 0 10px rgba(0,212,255,0.1)',
+                  background: "rgba(139,124,255,0.12)",
+                  border: "1px solid rgba(139,124,255,0.25)",
                 } : {
-                  background: 'rgba(255,255,255,0.07)',
-                  border: '1px solid rgba(255,255,255,0.1)',
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.1)",
                 }}
               >
                 {msg.role === "assistant"
-                  ? <Bot className="w-4 h-4 text-primary" />
-                  : <User className="w-4 h-4 text-white/60" />
+                  ? <Bot className="w-4 h-4" style={{ color: P }} />
+                  : <User className="w-4 h-4" style={{ color: "rgba(255,255,255,0.55)" }} />
                 }
               </div>
 
+              {/* Bubble */}
               <div
                 className="max-w-[75%] rounded-2xl px-4 py-3"
                 style={msg.role === "assistant" ? {
-                  background: 'linear-gradient(135deg, rgba(8,18,40,0.85) 0%, rgba(4,10,24,0.9) 100%)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(0,212,255,0.1)',
-                  boxShadow: 'inset 0 1px 0 rgba(0,212,255,0.06), 0 4px 16px rgba(0,0,0,0.3)',
+                  background: "linear-gradient(135deg, rgba(16,14,32,0.9) 0%, rgba(10,9,22,0.95) 100%)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(139,124,255,0.12)",
+                  boxShadow: "inset 0 1px 0 rgba(139,124,255,0.06), 0 4px 16px rgba(0,0,0,0.3)",
                 } : {
-                  background: 'linear-gradient(135deg, rgba(0,212,255,0.12) 0%, rgba(0,150,200,0.08) 100%)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(0,212,255,0.2)',
-                  boxShadow: 'inset 0 1px 0 rgba(0,212,255,0.1)',
+                  background: "linear-gradient(135deg, rgba(139,124,255,0.13) 0%, rgba(108,107,255,0.08) 100%)",
+                  backdropFilter: "blur(20px)",
+                  border: "1px solid rgba(139,124,255,0.25)",
+                  boxShadow: "inset 0 1px 0 rgba(139,124,255,0.1)",
                 }}
               >
-                <p className="text-sm text-white/85 leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.85)", whiteSpace: "pre-wrap" }}>
+                  {msg.content}
+                </p>
                 <div className={`flex items-center mt-2 gap-2 ${msg.role === "assistant" ? "" : "flex-row-reverse"}`}>
-                  <span className={`text-[10px] font-mono ${msg.role === "assistant" ? "text-primary/30" : "text-primary/40"}`}>
-                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.22)" }}>
+                    {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                   </span>
                   {msg.role === "assistant" && (
                     <button
                       onClick={() => playMessage(i, msg.content)}
                       className="transition-colors"
-                      style={{ color: playingIdx === i ? "rgba(0,212,255,0.9)" : "rgba(0,212,255,0.2)" }}
+                      style={{ color: playingIdx === i ? P : "rgba(139,124,255,0.25)" }}
                       title={playingIdx === i ? "Остановить" : "Прослушать"}
                     >
                       {playingIdx === i
@@ -263,43 +275,49 @@ export default function AiChat() {
             </div>
           ))}
 
+          {/* Pending indicator */}
           {isPending && (
             <div className="flex gap-3">
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
-                style={{ background: 'rgba(0,212,255,0.12)', border: '1px solid rgba(0,212,255,0.25)' }}
-              >
-                <Bot className="w-4 h-4 text-primary" />
-              </div>
-              <div
-                className="rounded-2xl px-5 py-4 flex items-center gap-2"
                 style={{
-                  background: 'rgba(8,18,40,0.85)',
-                  border: '1px solid rgba(0,212,255,0.1)',
-                  backdropFilter: 'blur(20px)',
+                  background: "rgba(139,124,255,0.12)",
+                  border: "1px solid rgba(139,124,255,0.25)",
                 }}
               >
-                <Loader2 className="w-4 h-4 text-primary animate-spin" />
-                <span className="text-xs font-mono text-primary/60 tracking-widest">Analyzing...</span>
+                <Bot className="w-4 h-4" style={{ color: P }} />
+              </div>
+              <div
+                className="rounded-2xl px-4 py-3 flex items-center gap-2"
+                style={{
+                  background: "rgba(16,14,32,0.9)",
+                  border: "1px solid rgba(139,124,255,0.12)",
+                  backdropFilter: "blur(20px)",
+                }}
+              >
+                <Loader2 className="w-4 h-4 animate-spin" style={{ color: P }} />
+                <span className="text-xs" style={{ color: "rgba(139,124,255,0.6)" }}>
+                  Анализирую…
+                </span>
               </div>
             </div>
           )}
           <div ref={bottomRef} />
         </div>
 
-        {/* Suggested prompts */}
+        {/* ── Suggested prompts ── */}
         {messages.length === 1 && (
           <div className="px-6 pb-3 flex gap-2 flex-wrap">
             {SUGGESTED.map((s, i) => (
               <button
                 key={i}
                 onClick={() => handleSend(s)}
-                className="text-xs font-mono px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105"
+                className="text-xs px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105"
                 style={{
-                  background: 'rgba(0,212,255,0.06)',
-                  border: '1px solid rgba(0,212,255,0.16)',
-                  color: 'rgba(0,212,255,0.75)',
-                  backdropFilter: 'blur(8px)',
+                  background: "rgba(139,124,255,0.07)",
+                  border: "1px solid rgba(139,124,255,0.18)",
+                  color: "rgba(139,124,255,0.8)",
+                  backdropFilter: "blur(8px)",
                 }}
               >
                 {s}
@@ -308,27 +326,24 @@ export default function AiChat() {
           </div>
         )}
 
-        {/* Input */}
+        {/* ── Input ── */}
         <div
           className="px-6 py-4 flex-shrink-0"
-          style={{ borderTop: '1px solid rgba(0,212,255,0.08)' }}
+          style={{ borderTop: "1px solid rgba(139,124,255,0.08)" }}
         >
           <div
-            className="flex items-center gap-3 rounded-2xl px-4 py-2"
+            className="flex items-center gap-3 rounded-2xl px-4 py-2 transition-all duration-200"
             style={{
-              background: 'linear-gradient(135deg, rgba(8,18,38,0.8) 0%, rgba(4,10,22,0.9) 100%)',
-              backdropFilter: 'blur(24px)',
-              border: `1px solid ${isRecording ? "rgba(239,68,68,0.5)" : "rgba(0,212,255,0.15)"}`,
+              background: "rgba(255,255,255,0.03)",
+              backdropFilter: "blur(24px)",
+              border: `1px solid ${isRecording ? "rgba(240,98,90,0.5)" : "rgba(139,124,255,0.15)"}`,
               boxShadow: isRecording
-                ? "inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(239,68,68,0.1)"
-                : "inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(0,0,0,0.3)",
-              transition: "border-color 0.2s, box-shadow 0.2s",
+                ? "inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(240,98,90,0.08)"
+                : "inset 0 1px 0 rgba(255,255,255,0.03), 0 4px 20px rgba(0,0,0,0.25)",
             }}
           >
-            <Zap className="w-4 h-4 text-primary/40 flex-shrink-0" />
-
             {isRecording ? (
-              <span className="flex-1 text-sm font-mono text-red-400/80 animate-pulse py-2">
+              <span className="flex-1 text-sm animate-pulse py-2" style={{ color: "rgba(240,98,90,0.85)" }}>
                 Запись… {recordSeconds}с
               </span>
             ) : (
@@ -338,40 +353,50 @@ export default function AiChat() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder={isTranscribing ? "Распознаю речь…" : "Ask about your businesses..."}
+                placeholder={isTranscribing ? "Распознаю речь…" : "Спроси о своих бизнесах…"}
                 disabled={isPending || isTranscribing}
-                className="flex-1 bg-transparent text-sm text-white placeholder:text-white/25 outline-none font-mono py-2"
+                className="flex-1 bg-transparent text-sm text-white outline-none py-2"
+                style={{
+                  fontFamily: HF,
+                  color: "rgba(255,255,255,0.9)",
+                }}
               />
             )}
 
+            {/* Mic */}
             <button
               onClick={startRecording}
               disabled={micBusy}
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 disabled:opacity-30"
               style={{
-                background: isRecording ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${isRecording ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                background: isRecording ? "rgba(240,98,90,0.18)" : "rgba(139,124,255,0.08)",
+                border: `1px solid ${isRecording ? "rgba(240,98,90,0.4)" : "rgba(139,124,255,0.2)"}`,
               }}
               title={isRecording ? `Остановить (${recordSeconds}с)` : "Голосовой ввод"}
             >
               {isTranscribing
-                ? <Loader2 className="w-3.5 h-3.5 text-primary animate-spin" />
+                ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: P }} />
                 : isRecording
-                ? <MicOff className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-                : <Mic className="w-3.5 h-3.5 text-primary/50" />
+                ? <MicOff className="w-3.5 h-3.5 animate-pulse" style={{ color: "#f0625a" }} />
+                : <Mic className="w-3.5 h-3.5" style={{ color: "rgba(139,124,255,0.6)" }} />
               }
             </button>
 
+            {/* Send */}
             <button
               onClick={() => handleSend()}
               disabled={!input.trim() || isPending || isRecording}
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 disabled:opacity-30"
               style={{
-                background: input.trim() && !isPending && !isRecording ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.05)',
-                border: `1px solid ${input.trim() && !isPending && !isRecording ? 'rgba(0,212,255,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                background: input.trim() && !isPending && !isRecording
+                  ? "rgba(139,124,255,0.25)"
+                  : "rgba(255,255,255,0.04)",
+                border: `1px solid ${input.trim() && !isPending && !isRecording
+                  ? "rgba(139,124,255,0.5)"
+                  : "rgba(255,255,255,0.08)"}`,
               }}
             >
-              <Send className="w-3.5 h-3.5 text-primary" />
+              <Send className="w-3.5 h-3.5" style={{ color: P }} />
             </button>
           </div>
         </div>
