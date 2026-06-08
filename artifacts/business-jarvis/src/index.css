@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 @plugin "@tailwindcss/typography";
@@ -74,54 +74,64 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 220 60% 5%;
-  --foreground: 213 27% 84%;
-  --border: 217 33% 17%;
-  --card: 226 60% 10%;
-  --card-foreground: 213 27% 84%;
-  --card-border: 217 33% 17%;
-  --sidebar: 226 60% 8%;
-  --sidebar-foreground: 213 27% 84%;
-  --sidebar-border: 217 33% 17%;
-  --sidebar-primary: 190 100% 50%;
-  --sidebar-primary-foreground: 220 60% 5%;
-  --sidebar-accent: 217 33% 17%;
-  --sidebar-accent-foreground: 213 27% 95%;
-  --sidebar-ring: 190 100% 50%;
-  --popover: 226 60% 10%;
-  --popover-foreground: 213 27% 84%;
-  --popover-border: 217 33% 17%;
-  --primary: 190 100% 50%;
-  --primary-foreground: 220 60% 5%;
-  --secondary: 217 33% 17%;
-  --secondary-foreground: 213 27% 95%;
-  --muted: 226 60% 15%;
-  --muted-foreground: 213 27% 65%;
-  --accent: 199 89% 48%;
-  --accent-foreground: 213 27% 95%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
-  --input: 217 33% 17%;
-  --ring: 190 100% 50%;
-  --chart-1: 190 100% 50%;
-  --chart-2: 199 89% 48%;
-  --chart-3: 217 91% 60%;
-  --chart-4: 280 80% 60%;
-  --chart-5: 320 80% 60%;
-  --app-font-sans: 'Space Grotesk', sans-serif;
+  --background: 240 18% 7%;
+  --foreground: 230 40% 92%;
+  --border: 240 10% 16%;
+  --card: 240 15% 10%;
+  --card-foreground: 230 40% 92%;
+  --card-border: 240 10% 16%;
+  --sidebar: 240 18% 6%;
+  --sidebar-foreground: 230 40% 92%;
+  --sidebar-border: 240 10% 16%;
+  --sidebar-primary: 248 100% 74%;
+  --sidebar-primary-foreground: 240 18% 7%;
+  --sidebar-accent: 240 10% 16%;
+  --sidebar-accent-foreground: 230 40% 92%;
+  --sidebar-ring: 248 100% 74%;
+  --popover: 240 15% 10%;
+  --popover-foreground: 230 40% 92%;
+  --popover-border: 240 10% 16%;
+  --primary: 248 100% 74%;
+  --primary-foreground: 240 18% 7%;
+  --secondary: 240 10% 16%;
+  --secondary-foreground: 230 40% 92%;
+  --muted: 240 12% 15%;
+  --muted-foreground: 230 20% 58%;
+  --accent: 248 100% 74%;
+  --accent-foreground: 230 40% 92%;
+  --destructive: 3 75% 65%;
+  --destructive-foreground: 230 40% 98%;
+  --input: 240 10% 16%;
+  --ring: 248 100% 74%;
+  --chart-1: 248 100% 74%;
+  --chart-2: 160 65% 55%;
+  --chart-3: 210 80% 68%;
+  --chart-4: 330 65% 65%;
+  --chart-5: 38 80% 60%;
+  --app-font-sans: 'Hanken Grotesk', system-ui, sans-serif;
   --app-font-serif: Georgia, serif;
   --app-font-mono: Menlo, monospace;
   --radius: .5rem;
-  --shadow-2xs: 0px 2px 0px 0px rgba(0, 212, 255, 0.05);
-  --shadow-xs: 0px 2px 0px 0px rgba(0, 212, 255, 0.05);
-  --shadow-sm: 0px 2px 0px 0px rgba(0, 212, 255, 0.05), 0px 1px 2px -1px rgba(0, 212, 255, 0.05);
-  --shadow: 0px 2px 0px 0px rgba(0, 212, 255, 0.1), 0px 1px 2px -1px rgba(0, 212, 255, 0.1);
-  --shadow-md: 0px 2px 0px 0px rgba(0, 212, 255, 0.1), 0px 2px 4px -1px rgba(0, 212, 255, 0.1);
-  --shadow-lg: 0px 2px 0px 0px rgba(0, 212, 255, 0.1), 0px 4px 6px -1px rgba(0, 212, 255, 0.1);
-  --shadow-xl: 0px 2px 0px 0px rgba(0, 212, 255, 0.15), 0px 8px 10px -1px rgba(0, 212, 255, 0.15);
-  --shadow-2xl: 0px 2px 0px 0px rgba(0, 212, 255, 0.15);
-  --tracking-normal: 0em;
-  --spacing: 0.25rem;
+
+  /* ─── Liquid Glass токены (тёмная тема) ─── */
+  --glass-tint:   rgba(255, 255, 255, 0.045);
+  --glass-edge:   rgba(255, 255, 255, 0.08);
+  --glass-blur:   22px;
+  --glass-sat:    165%;
+  /* Мягкий блик сверху — деликатно, не 0.26 */
+  --glass-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.50),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.13),
+    inset 0 -1px 1px  rgba(255, 255, 255, 0.04);
+  /* Диагональный отблик — мягко, не 0.22 */
+  --glass-sheen: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.09) 0%,
+    rgba(255,255,255,0)    40%,
+    rgba(255,255,255,0)    68%,
+    rgba(255,255,255,0.04) 100%
+  );
+
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -129,84 +139,104 @@
   --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  --shadow-sm: 0px 2px 8px rgba(0,0,0,0.3);
+  --shadow: 0px 4px 16px rgba(0,0,0,0.4);
+  --shadow-md: 0px 8px 24px rgba(0,0,0,0.45);
+  --shadow-lg: 0px 12px 40px rgba(0,0,0,0.5);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
 }
 
 .dark {}
 
 @layer base {
   * { @apply border-border; }
-  body { @apply font-sans antialiased bg-background text-foreground overflow-x-hidden; }
+  body {
+    @apply antialiased bg-background text-foreground overflow-x-hidden;
+    font-family: 'Hanken Grotesk', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: #0b0b12;
+    color: rgba(228, 232, 255, 0.88);
+  }
 }
 
-/* ─────────────────────────────────────────────
-   Liquid Glass System
-   SVG filters #liquid / #liquid-strong must be
-   present in DOM (see LiquidFilters.tsx).
-   url() in backdrop-filter = Chrome/Edge only;
-   -webkit-backdrop-filter fallback has no url().
-───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════════════
+   LIQUID GLASS — эталонный рецепт (буквально по файлу образца)
+   Три части:
+     (1) Цветной фон сцены — radial-glow + drift анимация
+     (2) Сам материал .glass + ::after блик
+     (3) SVG-фильтры #liquid / #liquid-strong — в LiquidFilters.tsx
+   -webkit-backdrop-filter: без url() — запас для Safari.
+   url(#liquid) — Chrome/Edge only; искажает только фон под стеклом,
+   текст и иконки остаются чёткими.
+════════════════════════════════════════════════════════════════ */
 
-/* Base glass — деликатное преломление scale~20 */
+/* (2) ГЛАВНЫЙ КЛАСС — копировать буквально */
 .glass {
-  background:
-    linear-gradient(160deg, rgba(255,255,255,0.055) 0%, transparent 52%),
-    rgba(6, 14, 30, 0.56);
-  backdrop-filter: blur(24px) saturate(180%) url(#liquid);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(255, 255, 255, 0.10),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.25);
+  position: relative;
+  border-radius: 22px;
+  background: var(--glass-tint);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) url(#liquid);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow);
+  isolation: isolate;
 }
 
-/* Strong glass — витринное преломление scale~40 */
+/* Зеркальный диагональный отблик поверх */
+.glass::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass-sheen);
+  pointer-events: none;
+}
+
+/* Контент над бликом */
+.glass > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Витринное преломление — для крупных акцентных панелей */
 .glass.strong {
-  background:
-    linear-gradient(160deg, rgba(255,255,255,0.075) 0%, transparent 52%),
-    rgba(8, 18, 40, 0.62);
-  backdrop-filter: blur(32px) saturate(200%) url(#liquid-strong);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border: 1px solid rgba(255, 255, 255, 0.11);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) url(#liquid-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   box-shadow:
-    0 12px 48px rgba(0, 0, 0, 0.6),
-    inset 0 1px 0 rgba(255, 255, 255, 0.13),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+    0 16px 48px rgba(0, 0, 0, 0.55),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.15),
+    inset 0 -1px 1px  rgba(255, 255, 255, 0.04);
 }
 
-/* Pill variant */
+/* Пилюля — навбар, кнопки */
 .glass.pill {
   border-radius: 999px;
 }
 
-/* Cyan-tinted accent glass — для выручки / KPI */
-.glass-cyan {
-  background:
-    linear-gradient(160deg, rgba(0,212,255,0.09) 0%, transparent 52%),
-    rgba(0, 212, 255, 0.05);
-  backdrop-filter: blur(24px) saturate(200%) url(#liquid);
-  -webkit-backdrop-filter: blur(24px) saturate(200%);
-  border: 1px solid rgba(0, 212, 255, 0.16);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 0 rgba(0, 212, 255, 0.12),
-    0 0 24px rgba(0, 212, 255, 0.05);
+/* (1) Drift-анимация цветных пятен фона */
+@keyframes glow-drift {
+  from { transform: translate(0, 0) scale(1.0) rotate(0deg); }
+  to   { transform: translate(3%, -2%) scale(1.08) rotate(3deg); }
+}
+@keyframes glow-drift-r {
+  from { transform: translate(0, 0) scale(1.0) rotate(0deg); }
+  to   { transform: translate(-2%, 3%) scale(1.10) rotate(-4deg); }
 }
 
-/* ─── Beacon health animations ─── */
+/* ─── Beacon animations (globe health markers) ─── */
 @media (prefers-reduced-motion: no-preference) {
   .beacon-red    { animation: beacon-pulse-red    0.9s ease-in-out infinite; }
   .beacon-yellow { animation: beacon-pulse-yellow 1.8s ease-in-out infinite; }
 }
-
 @keyframes beacon-pulse-red {
-  0%, 100% { box-shadow: 0 0 8px 4px #ef4444cc, 0 0 18px 7px #ef444444; }
-  50%       { box-shadow: 0 0 18px 9px #ef4444cc, 0 0 36px 16px #ef444477; }
+  0%, 100% { box-shadow: 0 0 8px 4px #f0625acc, 0 0 18px 7px #f0625a44; }
+  50%       { box-shadow: 0 0 18px 9px #f0625acc, 0 0 36px 16px #f0625a77; }
 }
-
 @keyframes beacon-pulse-yellow {
-  0%, 100% { box-shadow: 0 0 8px 4px #eab308cc, 0 0 18px 7px #eab30844; }
-  50%       { box-shadow: 0 0 16px 8px #eab308cc, 0 0 30px 12px #eab30877; }
+  0%, 100% { box-shadow: 0 0 8px 4px #f0b54acc, 0 0 18px 7px #f0b54a44; }
+  50%       { box-shadow: 0 0 16px 8px #f0b54acc, 0 0 30px 12px #f0b54a77; }
 }
 
 @layer utilities {
@@ -258,6 +288,5 @@
   .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
   .border.active-elevate:not(.no-active-interaction-elevate)::after,
   .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
-  .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
-  .border.hover-elevate:not(.no-hover-interaction-elevate)::after { inset: -1px; }
+  .border.active-elevate-2:not(.no-active-interaction-elevate)::after { inset: -1px; }
 }

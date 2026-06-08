@@ -1,54 +1,50 @@
 export function LiquidFilters() {
   return (
     <svg
+      width="0" height="0"
+      style={{ position: "absolute" }}
       aria-hidden="true"
-      focusable="false"
-      style={{ position: "absolute", width: 0, height: 0, overflow: "hidden", pointerEvents: "none" }}
     >
       <defs>
-        {/* Деликатное преломление — для обычных панелей */}
+        {/* Деликатное преломление — эталонный рецепт scale 26 */}
         <filter
           id="liquid"
-          x="-5%" y="-5%" width="110%" height="110%"
+          x="-25%" y="-25%" width="150%" height="150%"
           colorInterpolationFilters="sRGB"
         >
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.016 0.016"
+            baseFrequency="0.011 0.013"
             numOctaves="2"
-            seed="5"
-            stitchTiles="stitch"
-            result="noise"
+            seed="7"
+            result="n"
           />
+          <feGaussianBlur in="n" stdDeviation="1.1" result="nb" />
           <feDisplacementMap
-            in="SourceGraphic"
-            in2="noise"
-            scale="20"
-            xChannelSelector="R"
-            yChannelSelector="G"
+            in="SourceGraphic" in2="nb"
+            scale="26"
+            xChannelSelector="R" yChannelSelector="G"
           />
         </filter>
 
-        {/* Витринное преломление — для акцентных карточек */}
+        {/* Витринное преломление — эталонный рецепт scale 44 */}
         <filter
           id="liquid-strong"
-          x="-8%" y="-8%" width="116%" height="116%"
+          x="-30%" y="-30%" width="160%" height="160%"
           colorInterpolationFilters="sRGB"
         >
           <feTurbulence
             type="fractalNoise"
-            baseFrequency="0.011 0.011"
+            baseFrequency="0.008 0.01"
             numOctaves="2"
-            seed="8"
-            stitchTiles="stitch"
-            result="noise"
+            seed="4"
+            result="n"
           />
+          <feGaussianBlur in="n" stdDeviation="1.4" result="nb" />
           <feDisplacementMap
-            in="SourceGraphic"
-            in2="noise"
-            scale="40"
-            xChannelSelector="R"
-            yChannelSelector="G"
+            in="SourceGraphic" in2="nb"
+            scale="44"
+            xChannelSelector="R" yChannelSelector="G"
           />
         </filter>
       </defs>

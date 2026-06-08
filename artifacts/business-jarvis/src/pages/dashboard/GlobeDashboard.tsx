@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from 
 import Globe from "react-globe.gl";
 import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
 import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
-import { Loader2, X, MapPin, TrendingUp, ShoppingCart, User, Mail, Zap, ChevronDown, ClipboardList } from "lucide-react";
+import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, User, Mail, Zap, ChevronDown, ClipboardList } from "lucide-react";
 import { EventsFeed } from "./EventsFeed";
 import { ChatWidget } from "./ChatWidget";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,13 +19,13 @@ class GlobeErrorBoundary extends Component<{ children: ReactNode; fallback: Reac
 }
 
 const HEALTH_COLORS: Record<string, string> = {
-  green:  "#22c55e",
-  yellow: "#eab308",
-  red:    "#ef4444",
+  green:  "#3ed9a0",
+  yellow: "#f0b54a",
+  red:    "#f0625a",
 };
 
 function getHealthColor(health: string | undefined): string {
-  return HEALTH_COLORS[health ?? "green"] ?? "#22c55e";
+  return HEALTH_COLORS[health ?? "green"] ?? "#3ed9a0";
 }
 
 const HEALTH_LABELS: Record<string, string> = {
@@ -410,8 +410,33 @@ export default function GlobeDashboard() {
 
   return (
     <Shell>
-      <div className="relative w-full h-full bg-[#020810] overflow-hidden" ref={containerRef}>
-        <div className="absolute inset-0 z-0">
+      <div className="relative w-full h-full overflow-hidden" ref={containerRef} style={{ background: "#0b0b12" }}>
+
+        {/* ── Цветные radial-glow пятна — дают цвет для преломления стекла ── */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
+          <div style={{
+            position: "absolute", width: "55%", height: "55%", top: "5%", left: "5%",
+            background: "radial-gradient(ellipse at center, rgba(139,124,255,0.20) 0%, transparent 70%)",
+            animation: "glow-drift 20s ease-in-out infinite alternate",
+          }} />
+          <div style={{
+            position: "absolute", width: "48%", height: "48%", top: "8%", right: "2%",
+            background: "radial-gradient(ellipse at center, rgba(95,168,255,0.16) 0%, transparent 70%)",
+            animation: "glow-drift-r 24s ease-in-out infinite alternate",
+          }} />
+          <div style={{
+            position: "absolute", width: "42%", height: "42%", bottom: "5%", right: "12%",
+            background: "radial-gradient(ellipse at center, rgba(255,143,199,0.13) 0%, transparent 70%)",
+            animation: "glow-drift 28s ease-in-out infinite alternate-reverse",
+          }} />
+          <div style={{
+            position: "absolute", width: "38%", height: "38%", bottom: "8%", left: "3%",
+            background: "radial-gradient(ellipse at center, rgba(62,217,160,0.11) 0%, transparent 70%)",
+            animation: "glow-drift-r 22s ease-in-out infinite alternate-reverse",
+          }} />
+        </div>
+
+        <div className="absolute inset-0 z-1">
           {dimensions.width > 0 && dimensions.height > 0 && (
             <GlobeErrorBoundary fallback={Fallback2D}>
               <Globe
@@ -421,12 +446,12 @@ export default function GlobeDashboard() {
                 globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
                 bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
                 backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-                atmosphereColor="#4db8ff"
+                atmosphereColor="#8b7cff"
                 atmosphereAltitude={0.32}
                 polygonsData={countries}
-                polygonCapColor={(d: any) => d === hoveredPolygon ? "rgba(0,212,255,0.18)" : "rgba(255,255,255,0.02)"}
-                polygonSideColor={() => "rgba(0,180,255,0.04)"}
-                polygonStrokeColor={(d: any) => d === hoveredPolygon ? "#00d4ff" : "rgba(0,180,255,0.18)"}
+                polygonCapColor={(d: any) => d === hoveredPolygon ? "rgba(139,124,255,0.18)" : "rgba(255,255,255,0.02)"}
+                polygonSideColor={() => "rgba(139,124,255,0.04)"}
+                polygonStrokeColor={(d: any) => d === hoveredPolygon ? "#8b7cff" : "rgba(139,124,255,0.18)"}
                 polygonAltitude={(d: any) => d === hoveredPolygon ? 0.015 : 0.001}
                 onPolygonHover={(d: any) => setHoveredPolygon(d || null)}
                 polygonsTransitionDuration={200}
@@ -463,9 +488,9 @@ export default function GlobeDashboard() {
 
         {/* Country tooltip */}
         {hoveredPolygon && !hoveredPoint && !selectedBusiness && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none rounded-xl font-mono glass"
-            style={{ padding: "8px 18px", border: "1px solid rgba(0,212,255,0.25)", boxShadow: "0 0 24px rgba(0,212,255,0.15)" }}>
-            <div className="text-[13px] font-semibold text-cyan-300 tracking-widest uppercase">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 pointer-events-none glass"
+            style={{ padding: "8px 20px", borderRadius: 999 }}>
+            <div className="text-[13px] font-semibold tracking-wide" style={{ color: "rgba(228,232,255,0.85)" }}>
               {hoveredPolygon.properties?.NAME || hoveredPolygon.properties?.name || ""}
             </div>
           </div>
@@ -473,25 +498,30 @@ export default function GlobeDashboard() {
 
         {/* Point hover tooltip (desktop) */}
         {hoveredPoint && !selectedBusiness && (
-          <div className="hidden md:block absolute z-10 pointer-events-none rounded-xl font-mono text-sm glass"
-            style={{ top: "50%", left: "50%", transform: "translate(20px, -28px)", padding: "12px 16px",
-              borderColor: `${hoveredPoint.color}44`, boxShadow: `0 0 24px ${hoveredPoint.color}28` }}>
-            <div className="font-semibold text-sm" style={{ color: hoveredPoint.color }}>{hoveredPoint.business.name}</div>
-            <div className="text-white/40 mt-0.5 text-[12px]">{hoveredPoint.business.city}, {hoveredPoint.business.country}</div>
+          <div className="hidden md:block absolute z-10 pointer-events-none glass"
+            style={{ top: "50%", left: "50%", transform: "translate(20px, -28px)", padding: "12px 18px", borderRadius: 16 }}>
+            <div className="font-semibold text-sm" style={{ color: hoveredPoint.color, fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>{hoveredPoint.business.name}</div>
+            <div className="mt-0.5 text-[12px]" style={{ color: "rgba(228,232,255,0.38)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>{hoveredPoint.business.city}, {hoveredPoint.business.country}</div>
           </div>
         )}
 
         {/* Header */}
         <div className="absolute top-4 md:top-6 left-4 md:left-6 z-10 pointer-events-none">
-          <h1 className="text-base md:text-xl font-mono font-bold text-white tracking-widest leading-none">ГЛОБАЛЬНЫЙ ЦЕНТР</h1>
-          <div className="text-[10px] font-mono text-white/28 tracking-widest uppercase mt-1">Командный центр</div>
+          <h1 className="text-base md:text-xl font-bold leading-none" style={{ color: "rgba(228,232,255,0.92)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>Глобальный центр</h1>
+          <div className="text-[10px] font-semibold uppercase tracking-widest mt-1" style={{ color: "rgba(228,232,255,0.28)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>Командный центр</div>
         </div>
 
         {/* Quick task button */}
         <a
           href="/tasks"
-          className="hidden md:flex absolute top-6 left-1/2 -translate-x-1/2 z-10 items-center gap-2 px-4 glass pill font-mono text-[11px] uppercase tracking-widest transition-all hover:scale-105"
-          style={{ color: "rgba(0,212,255,0.7)", minHeight: 36 }}
+          className="hidden md:flex absolute top-6 left-1/2 -translate-x-1/2 z-10 items-center gap-2 px-5 transition-all hover:scale-105 hover:opacity-90"
+          style={{
+            height: 36, borderRadius: 999,
+            background: "linear-gradient(135deg, #8b7cff 0%, #6c6bff 100%)",
+            color: "#fff", fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+            fontSize: 12, fontWeight: 600, letterSpacing: "0.05em",
+            boxShadow: "0 4px 16px rgba(139,124,255,0.35)",
+          }}
         >
           <ClipboardList className="w-3.5 h-3.5" /> Новая задача
         </a>
@@ -502,47 +532,73 @@ export default function GlobeDashboard() {
           style={{ transform: selectedBusiness ? "translateX(130%)" : "translateX(0)", opacity: selectedBusiness ? 0 : 1 }}
         >
           {/* Revenue */}
-          <div className="glass-cyan rounded-2xl p-6">
-            <div className="text-[11px] text-primary/50 uppercase tracking-widest font-mono mb-3">Глобальная выручка · 30 дн</div>
+          <div className="glass strong" style={{ borderRadius: 22, padding: "20px 24px" }}>
+            <div className="uppercase tracking-widest font-semibold mb-3" style={{ fontSize: 11, color: "rgba(228,232,255,0.35)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
+              Выручка · 30 дн
+            </div>
             {isLoadingStats
-              ? <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              : <div className="text-4xl font-light text-white font-mono tabular-nums">{formatCurrency(stats?.totalRevenue || 0)}</div>
+              ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: "#8b7cff" }} />
+              : (
+                <>
+                  <div className="tabular-nums" style={{ fontSize: 38, fontWeight: 800, lineHeight: 1, color: "rgba(228,232,255,0.95)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
+                    {formatCurrency(stats?.totalRevenue || 0)}
+                  </div>
+                  <div className="inline-flex items-center gap-1 mt-3 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(62,217,160,0.15)", color: "#3ed9a0", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
+                    ↑ Активно
+                  </div>
+                </>
+              )
             }
           </div>
 
           {/* Traffic light legend */}
-          <div className="glass rounded-2xl p-6">
-            <div className="text-[11px] text-white/30 uppercase tracking-widest font-mono mb-4">Статус узлов</div>
-            <div className="space-y-4">
+          <div className="glass" style={{ borderRadius: 22, padding: "20px 24px" }}>
+            <div className="uppercase tracking-widest font-semibold mb-4" style={{ fontSize: 11, color: "rgba(228,232,255,0.35)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
+              Статус узлов
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               {(["green", "yellow", "red"] as const).map(h => (
-                <div key={h} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ background: HEALTH_COLORS[h], boxShadow: `0 0 8px 3px ${HEALTH_COLORS[h]}88` }} />
-                    <span className="text-white/70 text-base font-mono">{HEALTH_LABELS[h]}</span>
+                <div key={h} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{
+                      width: 12, height: 12, borderRadius: "50%", flexShrink: 0,
+                      background: HEALTH_COLORS[h],
+                      boxShadow: `0 0 8px 3px ${HEALTH_COLORS[h]}66`,
+                    }} />
+                    <span style={{ color: "rgba(228,232,255,0.70)", fontSize: 14, fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>{HEALTH_LABELS[h]}</span>
                   </div>
-                  <span className="text-white/50 font-mono text-base tabular-nums font-medium">{healthCounts[h]}</span>
+                  <span style={{ color: "rgba(228,232,255,0.50)", fontSize: 15, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", fontWeight: 600 }}>{healthCounts[h]}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Top nodes */}
-          <div className="glass rounded-2xl p-6">
-            <div className="text-[11px] text-white/30 uppercase tracking-widest font-mono mb-4">Топ узлов</div>
-            {isLoadingTop ? <Loader2 className="h-6 w-6 animate-spin text-primary" /> : (
-              <div className="space-y-1">
+          <div className="glass" style={{ borderRadius: 22, padding: "20px 24px" }}>
+            <div className="uppercase tracking-widest font-semibold mb-4" style={{ fontSize: 11, color: "rgba(228,232,255,0.35)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
+              Топ узлов
+            </div>
+            {isLoadingTop ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: "#8b7cff" }} /> : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {topBusinesses?.map((b) => {
-                  const bColor = colorMap.get(b.id) ?? "#22c55e";
+                  const bColor = colorMap.get(b.id) ?? "#3ed9a0";
                   return (
-                    <div key={b.id} className="flex justify-between items-center cursor-pointer group min-h-[48px] rounded-xl px-2 -mx-2 transition-colors hover:bg-white/[0.03]"
-                      onClick={() => setSelectedBusiness({ id: b.id, color: bColor })}>
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-3 h-3 rounded-full flex-shrink-0"
-                          style={{ background: bColor, boxShadow: `0 0 8px 3px ${bColor}88` }} />
-                        <span className="text-white/65 text-sm group-hover:text-white transition-colors truncate">{b.name}</span>
+                    <div
+                      key={b.id}
+                      className="group"
+                      style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", minHeight: 46, borderRadius: 12, padding: "0 8px", margin: "0 -8px", transition: "background 150ms" }}
+                      onClick={() => setSelectedBusiness({ id: b.id, color: bColor })}
+                      onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                      onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                        <div style={{
+                          width: 8, height: 8, borderRadius: "50%", flexShrink: 0,
+                          background: bColor, boxShadow: `0 0 6px 2px ${bColor}66`,
+                        }} />
+                        <span style={{ color: "rgba(228,232,255,0.65)", fontSize: 14, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</span>
                       </div>
-                      <span className="text-white/40 font-mono text-xs ml-2 flex-shrink-0 tabular-nums">{formatCurrency(b.revenue)}</span>
+                      <span style={{ color: "rgba(228,232,255,0.38)", fontSize: 12, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", marginLeft: 8, flexShrink: 0, tabularNums: "tabular-nums" } as any}>{formatCurrency(b.revenue)}</span>
                     </div>
                   );
                 })}
@@ -555,43 +611,41 @@ export default function GlobeDashboard() {
         {!selectedBusiness && (
           <div className="md:hidden absolute top-10 right-3 z-10 pointer-events-auto flex flex-col items-end gap-2">
             {/* Revenue pill */}
-            <div className="rounded-2xl px-4 py-3 glass-cyan text-right">
-              <div className="text-[9px] font-mono text-primary/55 uppercase tracking-widest">Выручка 30Д</div>
-              <div className="text-sm font-mono font-light text-white tabular-nums mt-0.5">
+            <div className="glass text-right" style={{ borderRadius: 18, padding: "10px 16px" }}>
+              <div className="uppercase tracking-widest font-semibold" style={{ fontSize: 9, color: "rgba(228,232,255,0.38)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>Выручка 30Д</div>
+              <div className="tabular-nums mt-0.5" style={{ fontSize: 14, fontWeight: 700, color: "rgba(228,232,255,0.90)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
                 {isLoadingStats ? "…" : formatCurrency(stats?.totalRevenue || 0)}
               </div>
             </div>
 
             {/* Traffic light legend (mobile) */}
-            <div className="glass rounded-xl px-3 py-2.5 flex items-center gap-3">
+            <div className="glass flex items-center gap-3" style={{ borderRadius: 14, padding: "8px 12px" }}>
               {(["green", "yellow", "red"] as const).map(h => (
-                <div key={h} className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ background: HEALTH_COLORS[h], boxShadow: `0 0 6px 2px ${HEALTH_COLORS[h]}88` }} />
-                  <span className="text-white/55 text-[12px] font-mono tabular-nums">{healthCounts[h]}</span>
+                <div key={h} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <div style={{ width: 9, height: 9, borderRadius: "50%", flexShrink: 0, background: HEALTH_COLORS[h], boxShadow: `0 0 6px 2px ${HEALTH_COLORS[h]}66` }} />
+                  <span style={{ color: "rgba(228,232,255,0.55)", fontSize: 12, fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>{healthCounts[h]}</span>
                 </div>
               ))}
             </div>
 
             {/* Collapsible node list */}
-            <div className="glass rounded-xl overflow-hidden w-44">
+            <div className="glass overflow-hidden w-44" style={{ borderRadius: 18 }}>
               <button
                 className="w-full flex items-center justify-between px-3 min-h-[48px] text-left"
                 onClick={() => setStatsOpen(v => !v)}
               >
-                <span className="text-[10px] font-mono text-white/40 uppercase tracking-widest">Узлы</span>
-                <ChevronDown className={`w-3.5 h-3.5 text-white/30 transition-transform ${statsOpen ? "rotate-180" : ""}`} />
+                <span className="uppercase tracking-widest font-semibold" style={{ fontSize: 10, color: "rgba(228,232,255,0.35)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>Узлы</span>
+                <ChevronDown className="w-3.5 h-3.5 transition-transform" style={{ color: "rgba(228,232,255,0.28)", transform: statsOpen ? "rotate(180deg)" : "none" }} />
               </button>
               {statsOpen && (
-                <div className="px-3 pb-2 space-y-1 border-t border-white/5">
+                <div className="px-3 pb-2 space-y-1" style={{ borderTop: "1px solid rgba(255,255,255,0.06)" }}>
                   {businesses?.slice(0, 8).map(b => {
                     const bColor = getHealthColor(b.health);
                     return (
-                      <div key={b.id} className="flex items-center gap-2 cursor-pointer min-h-[44px]"
+                      <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", minHeight: 44 }}
                         onClick={() => { setSelectedBusiness({ id: b.id, color: bColor }); setStatsOpen(false); }}>
-                        <div className="w-2 h-2 rounded-full flex-shrink-0"
-                          style={{ background: bColor, boxShadow: `0 0 5px ${bColor}` }} />
-                        <span className="text-white/55 text-[12px] font-mono truncate">{b.name.split(" ").slice(0, 2).join(" ")}</span>
+                        <div style={{ width: 7, height: 7, borderRadius: "50%", flexShrink: 0, background: bColor, boxShadow: `0 0 5px ${bColor}` }} />
+                        <span style={{ color: "rgba(228,232,255,0.55)", fontSize: 12, fontFamily: "'Hanken Grotesk', system-ui, sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name.split(" ").slice(0, 2).join(" ")}</span>
                       </div>
                     );
                   })}
