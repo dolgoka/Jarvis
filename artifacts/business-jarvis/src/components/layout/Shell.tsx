@@ -22,11 +22,13 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-[100dvh] overflow-hidden" style={{ background: "#0b0b12", color: "rgba(228,232,255,0.9)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
 
-      {/* ── Desktop sidebar — no SVG filter (full-height perf) ── */}
+      {/* ── Desktop sidebar — blur+sat glass, no SVG filter (full-height perf) ── */}
       <aside
         className="hidden md:flex w-60 flex-shrink-0 flex-col z-20"
         style={{
-          background: "rgba(11, 11, 18, 0.96)",
+          background: "rgba(11,11,18,0.72)",
+          backdropFilter: "blur(20px) saturate(160%)",
+          WebkitBackdropFilter: "blur(20px) saturate(160%)",
           borderRight: "1px solid rgba(255,255,255,0.07)",
         }}
       >
@@ -89,14 +91,14 @@ export function Shell({ children }: { children: ReactNode }) {
       {/* ── Content column ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
-        {/* Mobile top bar — no SVG filter */}
+        {/* Mobile top bar — blur+sat glass, no SVG filter */}
         <div
           className="md:hidden h-14 flex items-center justify-between px-4 flex-shrink-0"
           style={{
-            background: "rgba(11,11,18,0.97)",
+            background: "rgba(11,11,18,0.72)",
             borderBottom: "1px solid rgba(255,255,255,0.07)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
+            backdropFilter: "blur(20px) saturate(160%)",
+            WebkitBackdropFilter: "blur(20px) saturate(160%)",
           }}
         >
           <div className="flex items-center gap-2">
@@ -124,13 +126,13 @@ export function Shell({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        {/* Mobile bottom nav — no SVG filter */}
+        {/* Mobile bottom nav — blur+sat glass, no SVG filter */}
         <div
           className="md:hidden flex-shrink-0"
           style={{
-            background: "rgba(11,11,18,0.97)",
-            backdropFilter: "blur(24px)",
-            WebkitBackdropFilter: "blur(24px)",
+            background: "rgba(11,11,18,0.72)",
+            backdropFilter: "blur(24px) saturate(160%)",
+            WebkitBackdropFilter: "blur(24px) saturate(160%)",
             borderTop: "1px solid rgba(255,255,255,0.07)",
             paddingBottom: "env(safe-area-inset-bottom)",
           }}
