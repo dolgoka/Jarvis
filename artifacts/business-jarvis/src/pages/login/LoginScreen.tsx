@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Globe } from "lucide-react";
+import { LiquidFilters } from "@/components/liquid/LiquidFilters";
 
 interface LoginScreenProps {
   onLogin: (code: string) => boolean;
@@ -39,101 +40,112 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
   return (
     <div
       className="fixed inset-0 flex items-center justify-center overflow-hidden"
-      style={{ background: "#020810" }}
+      style={{ background: "#0b0b12" }}
     >
-      {/* Ambient glow blobs */}
+      <LiquidFilters />
+
+      {/* Ambient pastel glow blobs — same recipe as GlobeDashboard */}
       <div
         className="absolute pointer-events-none"
         style={{
           inset: 0,
-          background:
-            "radial-gradient(ellipse 60% 40% at 50% 0%, rgba(0,212,255,0.07) 0%, transparent 70%)," +
-            "radial-gradient(ellipse 40% 60% at 80% 100%, rgba(0,100,255,0.05) 0%, transparent 70%)," +
-            "radial-gradient(ellipse 40% 40% at 10% 60%, rgba(0,212,255,0.04) 0%, transparent 70%)",
+          overflow: "hidden",
         }}
-      />
-
-      {/* Grid overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.03]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(0,212,255,1) 1px, transparent 1px)," +
-            "linear-gradient(90deg, rgba(0,212,255,1) 1px, transparent 1px)",
-          backgroundSize: "48px 48px",
-        }}
-      />
-
-      {/* Horizontal scan line */}
-      <div
-        className="absolute left-0 right-0 h-px pointer-events-none"
-        style={{
-          top: "30%",
-          background: "linear-gradient(90deg, transparent, rgba(0,212,255,0.15), transparent)",
-        }}
-      />
+      >
+        <div
+          className="absolute"
+          style={{
+            width: "60vw", height: "60vw",
+            top: "-10%", left: "-5%",
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(139,124,255,0.18) 0%, transparent 70%)",
+            animation: "glow-drift 20s ease-in-out infinite alternate",
+          }}
+        />
+        <div
+          className="absolute"
+          style={{
+            width: "50vw", height: "50vw",
+            bottom: "-5%", right: "-5%",
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(95,168,255,0.14) 0%, transparent 70%)",
+            animation: "glow-drift-r 24s ease-in-out infinite alternate",
+          }}
+        />
+        <div
+          className="absolute"
+          style={{
+            width: "40vw", height: "40vw",
+            top: "30%", right: "15%",
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(255,143,199,0.10) 0%, transparent 70%)",
+            animation: "glow-drift 28s ease-in-out infinite alternate-reverse",
+          }}
+        />
+        <div
+          className="absolute"
+          style={{
+            width: "35vw", height: "35vw",
+            bottom: "20%", left: "10%",
+            borderRadius: "50%",
+            background: "radial-gradient(ellipse at center, rgba(62,217,160,0.09) 0%, transparent 70%)",
+            animation: "glow-drift-r 22s ease-in-out infinite alternate-reverse",
+          }}
+        />
+      </div>
 
       {/* Card */}
       <div
-        className={`relative w-full mx-4 max-w-[480px] rounded-2xl p-8 md:p-10 transition-all duration-150 ${shake ? "animate-[shake_0.5s_ease-in-out]" : ""}`}
-        style={{
-          background: "linear-gradient(160deg, rgba(4,14,32,0.97) 0%, rgba(2,8,18,0.99) 100%)",
-          border: "1px solid rgba(0,212,255,0.18)",
-          boxShadow:
-            "0 0 0 1px rgba(0,212,255,0.06) inset," +
-            "0 32px 80px rgba(0,0,0,0.7)," +
-            "0 0 60px rgba(0,212,255,0.06)",
-          backdropFilter: "blur(40px)",
-        }}
+        className={`glass relative w-full mx-4 max-w-[400px] p-8 ${shake ? "animate-[shake_0.5s_ease-in-out]" : ""}`}
       >
-        {/* Corner accents */}
-        <span className="absolute top-0 left-0 w-6 h-6 border-t border-l border-cyan-400/40 rounded-tl-2xl" />
-        <span className="absolute top-0 right-0 w-6 h-6 border-t border-r border-cyan-400/40 rounded-tr-2xl" />
-        <span className="absolute bottom-0 left-0 w-6 h-6 border-b border-l border-cyan-400/40 rounded-bl-2xl" />
-        <span className="absolute bottom-0 right-0 w-6 h-6 border-b border-r border-cyan-400/40 rounded-br-2xl" />
-
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-10">
+        {/* Logo block */}
+        <div className="flex flex-col items-center mb-8">
           <div
-            className="w-16 h-16 rounded-2xl flex items-center justify-center mb-5"
+            className="w-12 h-12 flex items-center justify-center mb-4"
             style={{
-              background: "radial-gradient(circle at 40% 35%, rgba(0,212,255,0.18), rgba(0,80,180,0.08))",
-              border: "1px solid rgba(0,212,255,0.25)",
-              boxShadow: "0 0 30px rgba(0,212,255,0.15), inset 0 1px 0 rgba(0,212,255,0.2)",
+              borderRadius: 14,
+              background: "rgba(139,124,255,0.18)",
+              border: "1.5px solid rgba(139,124,255,0.40)",
+              boxShadow: "0 4px 16px rgba(139,124,255,0.20)",
             }}
           >
-            <Globe className="w-8 h-8 text-cyan-400" style={{ filter: "drop-shadow(0 0 8px rgba(0,212,255,0.8))" }} />
+            <Globe className="w-5 h-5" style={{ color: "#8b7cff" }} />
           </div>
 
           <div
-            className="font-mono font-bold tracking-[0.35em] text-3xl mb-1"
+            className="font-bold text-2xl mb-1"
             style={{
-              color: "#00d4ff",
-              textShadow: "0 0 20px rgba(0,212,255,0.6), 0 0 40px rgba(0,212,255,0.3)",
+              fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+              color: "rgba(228,232,255,0.92)",
+              letterSpacing: "0.08em",
             }}
           >
             JARVIS
           </div>
 
           <div
-            className="font-mono text-[10px] tracking-[0.25em] uppercase"
-            style={{ color: "rgba(0,212,255,0.45)" }}
+            className="text-xs"
+            style={{
+              fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+              color: "rgba(228,232,255,0.32)",
+              fontWeight: 400,
+            }}
           >
-            ГЛОБАЛЬНЫЙ ЦЕНТР УПРАВЛЕНИЯ
-          </div>
-
-          {/* Status bar */}
-          <div className="flex items-center gap-2 mt-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" style={{ boxShadow: "0 0 6px rgba(74,222,128,0.8)" }} />
-            <span className="font-mono text-[10px] text-green-400/70 tracking-widest">КАНАЛ ЗАЩИЩЁН</span>
+            Командный центр
           </div>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
-            <label className="font-mono text-[10px] tracking-widest uppercase" style={{ color: "rgba(0,212,255,0.5)" }}>
-              Идентификатор
+            <label
+              className="text-xs font-semibold"
+              style={{
+                fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+                color: "rgba(228,232,255,0.38)",
+              }}
+            >
+              Логин
             </label>
             <input
               type="text"
@@ -142,20 +154,33 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               placeholder="введите логин"
               autoComplete="off"
               spellCheck={false}
-              className="w-full rounded-xl px-4 py-3 font-mono text-sm outline-none transition-all duration-200"
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200"
               style={{
-                background: "rgba(0,212,255,0.04)",
-                border: "1px solid rgba(0,212,255,0.15)",
-                color: "rgba(255,255,255,0.8)",
-                caretColor: "#00d4ff",
+                fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+                background: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.08)",
+                color: "rgba(228,232,255,0.85)",
+                caretColor: "#8b7cff",
               }}
-              onFocus={e => { e.currentTarget.style.border = "1px solid rgba(0,212,255,0.4)"; e.currentTarget.style.boxShadow = "0 0 0 2px rgba(0,212,255,0.08)"; }}
-              onBlur={e => { e.currentTarget.style.border = "1px solid rgba(0,212,255,0.15)"; e.currentTarget.style.boxShadow = "none"; }}
+              onFocus={e => {
+                e.currentTarget.style.border = "1px solid rgba(139,124,255,0.5)";
+                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(139,124,255,0.12)";
+              }}
+              onBlur={e => {
+                e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
+                e.currentTarget.style.boxShadow = "none";
+              }}
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="font-mono text-[10px] tracking-widest uppercase" style={{ color: "rgba(0,212,255,0.5)" }}>
+            <label
+              className="text-xs font-semibold"
+              style={{
+                fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+                color: "rgba(228,232,255,0.38)",
+              }}
+            >
               Код доступа
             </label>
             <input
@@ -165,31 +190,39 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
               onChange={e => { setCode(e.target.value); setError(false); }}
               placeholder="••••"
               autoComplete="current-password"
-              className="w-full rounded-xl px-4 py-3 font-mono text-sm outline-none tracking-[0.4em] transition-all duration-200"
+              className="w-full rounded-xl px-4 py-3 text-sm outline-none transition-all duration-200"
               style={{
-                background: "rgba(0,212,255,0.04)",
-                border: error ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(0,212,255,0.15)",
-                color: "rgba(255,255,255,0.9)",
-                caretColor: "#00d4ff",
-                boxShadow: error ? "0 0 0 2px rgba(239,68,68,0.08)" : "none",
+                fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+                background: "rgba(255,255,255,0.04)",
+                border: error ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(255,255,255,0.08)",
+                color: "rgba(228,232,255,0.9)",
+                caretColor: "#8b7cff",
+                letterSpacing: "0.3em",
+                boxShadow: error ? "0 0 0 3px rgba(239,68,68,0.10)" : "none",
               }}
               onFocus={e => {
                 if (!error) {
-                  e.currentTarget.style.border = "1px solid rgba(0,212,255,0.4)";
-                  e.currentTarget.style.boxShadow = "0 0 0 2px rgba(0,212,255,0.08)";
+                  e.currentTarget.style.border = "1px solid rgba(139,124,255,0.5)";
+                  e.currentTarget.style.boxShadow = "0 0 0 3px rgba(139,124,255,0.12)";
                 }
               }}
               onBlur={e => {
                 if (!error) {
-                  e.currentTarget.style.border = "1px solid rgba(0,212,255,0.15)";
+                  e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
                   e.currentTarget.style.boxShadow = "none";
                 }
               }}
             />
             <div className="h-4">
               {error && (
-                <p className="font-mono text-[11px] text-red-400" style={{ textShadow: "0 0 8px rgba(239,68,68,0.5)" }}>
-                  ⚠ Неверный код доступа
+                <p
+                  className="text-[11px]"
+                  style={{
+                    fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+                    color: "rgba(239,68,68,0.85)",
+                  }}
+                >
+                  Неверный код доступа
                 </p>
               )}
             </div>
@@ -198,38 +231,48 @@ export default function LoginScreen({ onLogin }: LoginScreenProps) {
           <button
             type="submit"
             disabled={loading || !code.trim()}
-            className="mt-2 w-full rounded-xl py-3.5 font-mono text-sm font-bold tracking-[0.2em] uppercase transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="mt-1 w-full rounded-xl py-3.5 text-sm font-semibold transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
             style={{
+              fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
               background: loading
-                ? "rgba(0,212,255,0.08)"
-                : "linear-gradient(135deg, rgba(0,212,255,0.15) 0%, rgba(0,100,255,0.1) 100%)",
-              border: "1px solid rgba(0,212,255,0.35)",
-              color: "#00d4ff",
-              boxShadow: loading ? "none" : "0 0 20px rgba(0,212,255,0.12), inset 0 1px 0 rgba(0,212,255,0.15)",
+                ? "rgba(139,124,255,0.25)"
+                : "linear-gradient(135deg, #8b7cff 0%, #6c6bff 100%)",
+              color: "#fff",
+              boxShadow: loading ? "none" : "0 4px 16px rgba(139,124,255,0.35)",
+              border: "none",
             }}
             onMouseEnter={e => {
               if (!loading && code.trim()) {
-                e.currentTarget.style.background = "linear-gradient(135deg, rgba(0,212,255,0.22) 0%, rgba(0,100,255,0.15) 100%)";
-                e.currentTarget.style.boxShadow = "0 0 30px rgba(0,212,255,0.2), inset 0 1px 0 rgba(0,212,255,0.2)";
+                e.currentTarget.style.boxShadow = "0 6px 24px rgba(139,124,255,0.50)";
+                e.currentTarget.style.transform = "translateY(-1px)";
               }
             }}
             onMouseLeave={e => {
-              e.currentTarget.style.background = "linear-gradient(135deg, rgba(0,212,255,0.15) 0%, rgba(0,100,255,0.1) 100%)";
-              e.currentTarget.style.boxShadow = "0 0 20px rgba(0,212,255,0.12), inset 0 1px 0 rgba(0,212,255,0.15)";
+              e.currentTarget.style.boxShadow = "0 4px 16px rgba(139,124,255,0.35)";
+              e.currentTarget.style.transform = "translateY(0)";
             }}
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin inline-block" />
+                <span
+                  className="w-4 h-4 rounded-full border-2 animate-spin inline-block"
+                  style={{ borderColor: "rgba(255,255,255,0.25)", borderTopColor: "#fff" }}
+                />
                 Проверка...
               </span>
             ) : "Войти"}
           </button>
         </form>
 
-        {/* Bottom hint */}
-        <div className="mt-8 text-center font-mono text-[10px] tracking-widest" style={{ color: "rgba(255,255,255,0.12)" }}>
-          АВТОРИЗОВАННЫЙ ДОСТУП · ТОЛЬКО ДЛЯ УПОЛНОМОЧЕННЫХ ЛИЦ
+        {/* Quiet footer hint */}
+        <div
+          className="mt-7 text-center text-[11px]"
+          style={{
+            fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+            color: "rgba(255,255,255,0.10)",
+          }}
+        >
+          Только для уполномоченных
         </div>
       </div>
 
