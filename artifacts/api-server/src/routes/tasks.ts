@@ -5,10 +5,12 @@ import OpenAI from "openai";
 
 const router: IRouter = Router();
 
-const openai = new OpenAI({
-  baseURL: process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"],
-  apiKey: process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] ?? process.env["OPENAI_API_KEY"],
-});
+function makeClient() {
+  const baseURL = process.env["AI_INTEGRATIONS_OPENAI_BASE_URL"];
+  const apiKey = process.env["AI_INTEGRATIONS_OPENAI_API_KEY"] ?? process.env["OPENAI_API_KEY"];
+  if (!apiKey) throw new Error("No OpenAI API key configured (set OPENAI_API_KEY)");
+  return new OpenAI({ ...(baseURL ? { baseURL } : {}), apiKey });
+}
 
 function resolveLinked(ids: number[], allPeople: typeof peopleTable.$inferSelect[]) {
   return ids
@@ -81,7 +83,7 @@ ${directory}
 - Верни только валидный JSON, без markdown-обёртки`;
 
   try {
-    const completion = await openai.chat.completions.create({
+    const completion = await makeClient().chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },
