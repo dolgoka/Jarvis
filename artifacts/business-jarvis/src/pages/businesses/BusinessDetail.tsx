@@ -23,6 +23,9 @@ const HC = { green: "#3ed9a0", yellow: "#f0b54a", red: "#f0625a" };
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 const TEXT = { hi: "rgba(228,232,255,0.92)", mid: "rgba(228,232,255,0.65)", lo: "rgba(228,232,255,0.45)", dim: "rgba(228,232,255,0.30)" };
 
+// Plan marker sits at 80% of track width → 20% buffer for overperformance
+const GOAL_PCT = 80;
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 type PlanFactItem = {
   metric: string;
@@ -100,50 +103,385 @@ function HealthDot({ health, size = "md" }: { health: string; size?: "sm" | "md"
   );
 }
 
-// ── Plan vs Fact card ─────────────────────────────────────────────────────────
-function PlanFactCard({ item, currency }: { item: PlanFactItem; currency: string }) {
+// ── Plan-Fact Horizontal Bar ───────────────────────────────────────────────────
+function PlanFactBar({ item, currency }: { item: PlanFactItem; currency: string }) {
   const { metric, plan, actual, unit, lowerIsBetter = false } = item;
+
   const delta = actual - plan;
   const deltaPercent = plan !== 0 ? (delta / Math.abs(plan)) * 100 : 0;
-
   const isGood = lowerIsBetter ? actual <= plan : actual >= plan;
   const isBad  = lowerIsBetter ? actual > plan * 1.05 : actual < plan * 0.95;
-
   const statusColor = isGood ? HC.green : isBad ? HC.red : HC.yellow;
+
+  // Clamp fill at 125% of plan so the bar never fully escapes the track
+  // Plan marker sits at GOAL_PCT% → overperformance visible as fill past the marker
+  const fillPct = Math.min(actual / plan, 1.25) * GOAL_PCT;
+
   const DeltaIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
-  const absDelta = Math.abs(delta);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "14px 0" }}>
+      {/* Metric label + status dot */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+        <span style={{
+          fontSize: 11, fontWeight: 600, textTransform: "uppercase",
+          letterSpacing: "0.05em", color: TEXT.lo, fontFamily: HF,
+        }}>{metric}</span>
+        <span className="animate-pulse" style={{
+          width: 7, height: 7, borderRadius: "50%", display: "inline-block",
+          background: statusColor, boxShadow: `0 0 6px ${statusColor}`, flexShrink: 0,
+        }} />
+      </div>
+
+      {/* Track */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{
+          flex: 1, position: "relative", height: 10, borderRadius: 6,
+          background: "rgba(255,255,255,0.07)",
+        }}>
+          {/* Fill — actual value */}
+          <div style={{
+            position: "absolute", left: 0, top: 0, height: "100%",
+            width: `${Math.max(0, fillPct)}%`,
+            borderRadius: 6,
+            background: `linear-gradient(90deg, ${statusColor}99, ${statusColor})`,
+            transition: "width 0.6s ease",
+          }} />
+          {/* Goal marker — plan position at GOAL_PCT% */}
+          <div style={{
+            position: "absolute", top: -3, bottom: -3,
+            left: `${GOAL_PCT}%`,
+            width: 2, borderRadius: 2,
+            background: "rgba(228,232,255,0.55)",
+            boxShadow: "0 0 4px rgba(228,232,255,0.3)",
+          }}>
+            <div style={{
+              position: "absolute", bottom: "calc(100% + 3px)", left: "50%",
+              transform: "translateX(-50%)",
+              fontSize: 8, color: TEXT.dim, fontFamily: HF, fontWeight: 600,
+              whiteSpace: "nowrap",
+            }}>план</div>
+          </div>
+        </div>
+
+        {/* Values */}
+        <div style={{ flexShrink: 0, textAlign: "right", minWidth: 100 }}>
+          <div style={{ fontSize: 15, fontWeight: 800, color: TEXT.hi, fontFamily: HF, lineHeight: 1 }}>
+            {formatUnit(actual, unit, currency, true)}
+          </div>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "flex-end",
+            gap: 3, marginTop: 3, fontSize: 11, fontWeight: 600, color: statusColor, fontFamily: HF,
+          }}>
+            <DeltaIcon style={{ width: 10, height: 10, flexShrink: 0 }} />
+            <span>{delta > 0 ? "+" : ""}{deltaPercent.toFixed(1)}%</span>
+          </div>
+          <div style={{ fontSize: 10, color: TEXT.dim, fontFamily: HF, marginTop: 2 }}>
+            план {formatUnit(plan, unit, currency, true)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Waterfall helpers ──────────────────────────────────────────────────────────
+type WfStep = {
+  label: string;
+  value: number;     // always positive
+  rawValue: number;  // signed (negative = loss)
+  type: "inflow" | "deduction" | "result";
+};
+
+function bdrFind(bdr: Record<string, number>, pat: RegExp) {
+  const entry = Object.entries(bdr).find(([k]) => pat.test(k));
+  return entry ? { key: entry[0], val: entry[1] } : null;
+}
+
+function buildWaterfallSteps(bdr: Record<string, number>): WfStep[] | null {
+  const rev  = bdrFind(bdr, /выручка/i);
+  const net  = bdrFind(bdr, /чистая прибыль/i) ?? bdrFind(bdr, /убыток/i);
+  if (!rev || !net) return null;
+
+  const revenue   = rev.val;
+  const netProfit = net.val;
+  if (revenue <= 0) return null;
+
+  const ebitda = bdrFind(bdr, /^ebitda$/i);
+  const steps: WfStep[] = [];
+
+  steps.push({ label: "Выручка", value: revenue, rawValue: revenue, type: "inflow" });
+
+  if (ebitda !== null) {
+    // Collapse everything between Выручка and EBITDA into one "Операционные расходы"
+    const preExp = revenue - ebitda.val;
+    if (preExp > 0) {
+      steps.push({ label: "Операционные расходы", value: preExp, rawValue: -preExp, type: "deduction" });
+    }
+    steps.push({ label: "EBITDA", value: Math.abs(ebitda.val), rawValue: ebitda.val, type: "result" });
+
+    // Collapse everything between EBITDA and Чистая прибыль
+    const postExp = ebitda.val - netProfit;
+    if (postExp > 0) {
+      steps.push({ label: "Прочие расходы", value: postExp, rawValue: -postExp, type: "deduction" });
+    }
+  } else {
+    // No EBITDA anchor — try to show Себестоимость separately, collapse the rest
+    const cogs = bdrFind(bdr, /себестоимость/i);
+    const totalExpenses = revenue - netProfit;
+
+    if (cogs && cogs.val > 0 && cogs.val < totalExpenses) {
+      steps.push({ label: "Себестоимость", value: cogs.val, rawValue: -cogs.val, type: "deduction" });
+      const remainder = totalExpenses - cogs.val;
+      if (remainder > 0) {
+        steps.push({ label: "Прочие расходы", value: remainder, rawValue: -remainder, type: "deduction" });
+      }
+    } else if (totalExpenses > 0) {
+      steps.push({ label: "Операционные расходы", value: totalExpenses, rawValue: -totalExpenses, type: "deduction" });
+    }
+  }
+
+  const isLoss = netProfit < 0;
+  steps.push({
+    label: isLoss ? "Убыток" : "Чистая прибыль",
+    value: Math.abs(netProfit),
+    rawValue: netProfit,
+    type: "result",
+  });
+
+  return steps;
+}
+
+// ── Waterfall Block ────────────────────────────────────────────────────────────
+function WaterfallBlock({ bdr, currency }: { bdr: Record<string, number>; currency: string }) {
+  const steps = buildWaterfallSteps(bdr);
+  if (!steps || steps.length < 3) return null;
+
+  const revenue   = steps[0].value;
+  const netStep   = steps[steps.length - 1];
+  const netProfit = netStep.rawValue;
+  const MAX_PCT   = 88; // Leave 12% right breathing room
+
+  // Pre-compute bar geometry while tracking running total
+  let running = revenue;
+  type Computed = { step: WfStep; barLeft: number; barWidth: number; color: string };
+  const computed: Computed[] = steps.map(step => {
+    let barLeft: number;
+    let barWidth: number;
+    let color: string;
+
+    if (step.type === "inflow") {
+      barLeft  = 0;
+      barWidth = MAX_PCT;
+      color    = "#5b8fff";
+    } else if (step.type === "deduction") {
+      running -= step.value;
+      barLeft  = Math.max(0, (running / revenue) * MAX_PCT);
+      barWidth = (step.value / revenue) * MAX_PCT;
+      color    = HC.red;
+    } else {
+      // result — bar from 0 to current running (= step.value for subtotals)
+      barLeft  = 0;
+      barWidth = Math.max(0.4, (Math.abs(step.value) / revenue) * MAX_PCT);
+      const isLast = step === netStep;
+      if (isLast) {
+        color = step.rawValue < 0 ? HC.red : step.rawValue < revenue * 0.05 ? HC.yellow : HC.green;
+      } else {
+        color = "#8b7cff"; // EBITDA — violet
+      }
+    }
+
+    return { step, barLeft, barWidth, color };
+  });
+
+  const summaryLabel = netProfit < 0
+    ? `Убыток ${formatMoney(Math.abs(netProfit), currency, true)} при выручке ${formatMoney(revenue, currency, true)}`
+    : `из ${formatMoney(revenue, currency, true)} выручки до прибыли доходит ${formatMoney(netProfit, currency, true)} (${((netProfit / revenue) * 100).toFixed(2)}%)`;
 
   return (
     <div style={{
-      borderRadius: 16, padding: "14px 16px",
-      background: `${statusColor}08`,
-      border: `1px solid ${statusColor}30`,
-      display: "flex", flexDirection: "column", gap: 12,
+      borderRadius: 20, border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.025)", padding: "20px 22px",
+      display: "flex", flexDirection: "column", gap: 4, flex: 1,
     }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
-        <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: TEXT.lo, fontFamily: HF, lineHeight: 1.3 }}>{metric}</span>
-        <span className="animate-pulse" style={{ width: 8, height: 8, borderRadius: "50%", background: statusColor, boxShadow: `0 0 6px ${statusColor}`, flexShrink: 0, marginTop: 2, display: "inline-block" }} />
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: TEXT.lo, fontFamily: HF, marginBottom: 8 }}>
+        Куда уходит выручка
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-        <div>
-          <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", color: TEXT.dim, fontFamily: HF, marginBottom: 3 }}>план</div>
-          <div style={{ fontSize: 12, fontWeight: 500, color: TEXT.mid, fontFamily: HF }}>{formatUnit(plan, unit, currency, true)}</div>
+      {computed.map(({ step, barLeft, barWidth, color }, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, minHeight: 28 }}>
+          {/* Label */}
+          <div style={{
+            fontSize: 11, color: step.type === "result" ? TEXT.mid : TEXT.lo,
+            fontFamily: HF, fontWeight: step.type === "result" ? 600 : 400,
+            width: 150, flexShrink: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+          }}>{step.label}</div>
+
+          {/* Bar track */}
+          <div style={{ flex: 1, position: "relative", height: step.type === "result" ? 16 : 12, borderRadius: 4, background: "rgba(255,255,255,0.05)" }}>
+            <div style={{
+              position: "absolute", top: 0, height: "100%",
+              left: `${barLeft}%`,
+              width: `${Math.max(0.3, barWidth)}%`,
+              borderRadius: 4,
+              background: step.type === "inflow"
+                ? `linear-gradient(90deg, #3a6aff, #5b8fff)`
+                : step.type === "deduction"
+                  ? `linear-gradient(90deg, ${color}cc, ${color})`
+                  : `linear-gradient(90deg, ${color}99, ${color})`,
+              boxShadow: step.type === "result" ? `0 0 10px ${color}44` : "none",
+            }} />
+          </div>
+
+          {/* Value */}
+          <div style={{
+            fontSize: 11, fontWeight: step.type === "result" ? 700 : 500,
+            color: step.type === "deduction" ? HC.red : step.type === "result" ? color : TEXT.mid,
+            fontFamily: HF, width: 100, flexShrink: 0, textAlign: "right",
+          }}>
+            {step.type === "deduction" ? "−" : ""}{formatMoney(step.value, currency, true)}
+          </div>
         </div>
-        <div>
-          <div style={{ fontSize: 9, fontWeight: 600, textTransform: "uppercase", color: TEXT.dim, fontFamily: HF, marginBottom: 3 }}>факт</div>
-          <div style={{ fontSize: 14, fontWeight: 800, color: TEXT.hi, fontFamily: HF }}>{formatUnit(actual, unit, currency, true)}</div>
-        </div>
+      ))}
+
+      {/* Summary */}
+      <div style={{
+        marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.07)",
+        fontSize: 11, color: TEXT.lo, fontFamily: HF, lineHeight: 1.5,
+      }}>
+        {summaryLabel}
+      </div>
+    </div>
+  );
+}
+
+// ── Margin Donut ───────────────────────────────────────────────────────────────
+function MarginDonut({ bdr, planFact, currency }: {
+  bdr: Record<string, number>;
+  planFact: PlanFactItem[];
+  currency: string;
+}) {
+  const rev = bdrFind(bdr, /выручка/i);
+  const net = bdrFind(bdr, /чистая прибыль/i) ?? bdrFind(bdr, /убыток/i);
+  if (!rev || !net || rev.val <= 0) return null;
+
+  const marginPct = (net.val / rev.val) * 100;
+
+  // Derive plan margin: prefer explicit planFact item, else compute from plan revenue/profit
+  let planMarginPct: number | null = null;
+  const explicitMarginItem = planFact.find(m => /маржа|рентабельность/i.test(m.metric));
+  if (explicitMarginItem) {
+    planMarginPct = explicitMarginItem.plan;
+  } else {
+    const planRevItem    = planFact.find(m => /оборот|выручка/i.test(m.metric));
+    const planProfitItem = planFact.find(m => /чистая прибыль/i.test(m.metric));
+    if (planRevItem && planProfitItem && planRevItem.plan > 0) {
+      planMarginPct = (planProfitItem.plan / planRevItem.plan) * 100;
+    }
+  }
+
+  // Determine color
+  let arcColor: string;
+  if (planMarginPct !== null) {
+    if (marginPct >= planMarginPct * 0.95) arcColor = HC.green;
+    else if (marginPct >= planMarginPct * 0.80) arcColor = HC.yellow;
+    else arcColor = HC.red;
+  } else {
+    // Fixed thresholds fallback
+    arcColor = marginPct >= 15 ? HC.green : marginPct >= 5 ? HC.yellow : HC.red;
+  }
+
+  // SVG donut
+  const R = 46;
+  const cx = 60;
+  const cy = 60;
+  const circumference = 2 * Math.PI * R;
+  const clampedPct = Math.max(0, Math.min(100, Math.abs(marginPct)));
+  const dash = (clampedPct / 100) * circumference;
+  const gap  = circumference - dash;
+
+  // Plan marker angle on arc
+  const planAngle = planMarginPct !== null
+    ? ((Math.min(100, Math.abs(planMarginPct)) / 100) * 360) - 90
+    : null;
+  const planX = planAngle !== null ? cx + (R + 6) * Math.cos((planAngle * Math.PI) / 180) : null;
+  const planY = planAngle !== null ? cy + (R + 6) * Math.sin((planAngle * Math.PI) / 180) : null;
+
+  return (
+    <div style={{
+      borderRadius: 20, border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.025)", padding: "20px 22px",
+      display: "flex", flexDirection: "column", alignItems: "center", gap: 10,
+      minWidth: 160,
+    }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: TEXT.lo, fontFamily: HF }}>
+        Чистая маржа
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, color: statusColor, fontFamily: HF }}>
-        <DeltaIcon className="w-3 h-3 flex-shrink-0" />
-        <span>
-          {delta > 0 ? "+" : delta < 0 ? "−" : ""}{Math.abs(deltaPercent).toFixed(1)}%
-          {" · "}
-          {delta > 0 ? "+" : delta < 0 ? "−" : ""}{formatUnit(absDelta, unit, currency, true)}
-        </span>
+      <svg width={120} height={120} viewBox="0 0 120 120">
+        {/* Track */}
+        <circle cx={cx} cy={cy} r={R}
+          fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={10}
+        />
+        {/* Arc — starts at top (-90°) */}
+        <circle cx={cx} cy={cy} r={R}
+          fill="none"
+          stroke={arcColor}
+          strokeWidth={10}
+          strokeDasharray={`${dash} ${gap}`}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${cx} ${cy})`}
+          style={{ filter: `drop-shadow(0 0 6px ${arcColor}66)` }}
+        />
+        {/* Plan marker dot */}
+        {planX !== null && planY !== null && (
+          <circle cx={planX} cy={planY} r={3.5}
+            fill="rgba(228,232,255,0.8)"
+            style={{ filter: "drop-shadow(0 0 3px rgba(228,232,255,0.5))" }}
+          />
+        )}
+        {/* Center text */}
+        <text x={cx} y={cy - 6} textAnchor="middle"
+          fontSize={20} fontWeight={800}
+          fill={arcColor}
+          fontFamily="'Hanken Grotesk', system-ui, sans-serif"
+        >
+          {marginPct.toFixed(marginPct < 1 ? 2 : 1)}%
+        </text>
+        <text x={cx} y={cy + 12} textAnchor="middle"
+          fontSize={9} fontWeight={600}
+          fill="rgba(228,232,255,0.4)"
+          fontFamily="'Hanken Grotesk', system-ui, sans-serif"
+          letterSpacing="0.05em"
+        >
+          МАРЖА
+        </text>
+        {planMarginPct !== null && (
+          <text x={cx} y={cy + 26} textAnchor="middle"
+            fontSize={8.5} fontWeight={500}
+            fill="rgba(228,232,255,0.28)"
+            fontFamily="'Hanken Grotesk', system-ui, sans-serif"
+          >
+            цель {planMarginPct.toFixed(planMarginPct < 1 ? 2 : 1)}%
+          </text>
+        )}
+      </svg>
+
+      {/* Status label */}
+      <div style={{
+        padding: "3px 10px", borderRadius: 999, fontSize: 10, fontWeight: 600, fontFamily: HF,
+        background: `${arcColor}18`, color: arcColor, border: `1px solid ${arcColor}44`,
+      }}>
+        {planMarginPct !== null
+          ? marginPct >= planMarginPct * 0.95 ? "В плане" : marginPct >= planMarginPct * 0.80 ? "Ниже плана" : "Критично"
+          : marginPct >= 15 ? "Норма" : marginPct >= 5 ? "Ниже нормы" : "Критично"
+        }
       </div>
+      {planMarginPct !== null && (
+        <div style={{ fontSize: 9, color: TEXT.dim, fontFamily: HF, textAlign: "center" }}>
+          факт {marginPct.toFixed(2)}% · план {planMarginPct.toFixed(2)}%
+        </div>
+      )}
     </div>
   );
 }
@@ -317,6 +655,13 @@ export default function BusinessDetail() {
   const whyBorder = `${healthColor}30`;
   const whyText  = healthColor;
 
+  // Determine whether to show waterfall + donut:
+  // Only for operational stage where revenue AND net profit exist in bdr
+  const bdr = analytics?.forms?.bdr ?? {};
+  const hasRevenue  = !!bdrFind(bdr, /выручка/i);
+  const hasNetProfit = !!(bdrFind(bdr, /чистая прибыль/i) ?? bdrFind(bdr, /убыток/i));
+  const showFinancialVisuals = analytics?.stage === "operational" && hasRevenue && hasNetProfit;
+
   return (
     <Shell>
       <div className="p-4 md:p-8 max-w-6xl mx-auto" style={{ display: "flex", flexDirection: "column", gap: 28 }}>
@@ -344,19 +689,16 @@ export default function BusinessDetail() {
                 {business.name}
               </h1>
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
-                {/* Health badge */}
                 <span style={{
                   padding: "3px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600, fontFamily: HF,
                   background: `${healthColor}18`, color: healthColor, border: `1px solid ${healthColor}44`,
                 }}>{healthLabel}</span>
                 {analytics && (
                   <>
-                    {/* Stage */}
                     <span style={{
                       padding: "3px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600, fontFamily: HF,
                       background: "rgba(139,124,255,0.12)", color: "#8b7cff", border: "1px solid rgba(139,124,255,0.30)",
                     }}>{stageLabel}</span>
-                    {/* Contour */}
                     <span style={{
                       padding: "3px 12px", borderRadius: 999, fontSize: 12, fontWeight: 500, fontFamily: HF,
                       background: "rgba(255,255,255,0.05)", color: TEXT.mid, border: "1px solid rgba(255,255,255,0.10)",
@@ -410,16 +752,38 @@ export default function BusinessDetail() {
           </div>
         )}
 
-        {/* Plan vs Fact */}
+        {/* ── Plan vs Fact — horizontal bars ── */}
         {analytics?.planFact && analytics.planFact.length > 0 && (
-          <section style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-            <h2 style={{ fontSize: 13, fontWeight: 600, color: TEXT.lo, fontFamily: HF }}>
+          <section style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <h2 style={{ fontSize: 13, fontWeight: 600, color: TEXT.lo, fontFamily: HF, marginBottom: 4 }}>
               {analytics.stage === "investment" ? "Инвестиционные показатели" : "План vs факт"}
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <div style={{
+              borderRadius: 20, border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.025)", padding: "8px 22px",
+            }}>
               {analytics.planFact.map((item, i) => (
-                <PlanFactCard key={i} item={item} currency={currency} />
+                <div key={i} style={{
+                  borderBottom: i < analytics.planFact.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                }}>
+                  <PlanFactBar item={item} currency={currency} />
+                </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* ── Waterfall + Donut — only for operational with revenue data ── */}
+        {showFinancialVisuals && (
+          <section style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            <h2 style={{ fontSize: 13, fontWeight: 600, color: TEXT.lo, fontFamily: HF, marginBottom: 4 }}>
+              Финансовый анализ
+            </h2>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "stretch" }}>
+              <WaterfallBlock bdr={bdr} currency={currency} />
+              {analytics?.planFact && (
+                <MarginDonut bdr={bdr} planFact={analytics.planFact} currency={currency} />
+              )}
             </div>
           </section>
         )}
