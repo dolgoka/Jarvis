@@ -43,15 +43,25 @@ function Router() {
   );
 }
 
+function getUrlRole(): Role | null {
+  try {
+    const v = new URLSearchParams(window.location.search).get("role");
+    if (v === "client" || v === "director" || v === "partner" || v === "staff") return v as Role;
+  } catch { /* ignore */ }
+  return null;
+}
+
 function AppInner() {
   const { selectedRole, selectRole, switchRole } = useRole();
 
-  if (!selectedRole) {
+  const effectiveRole = getUrlRole() ?? selectedRole;
+
+  if (!effectiveRole) {
     return <RoleSelect onSelect={selectRole} />;
   }
 
-  if (selectedRole !== "client") {
-    return <RoleStub role={selectedRole} onBack={switchRole} />;
+  if (effectiveRole !== "client") {
+    return <RoleStub role={effectiveRole} onBack={switchRole} />;
   }
 
   return (
