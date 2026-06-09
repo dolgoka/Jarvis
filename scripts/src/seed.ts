@@ -34,6 +34,11 @@ type Analytics = {
   };
   monthlyHistory?: MonthlyPoint[];
   recommendation?: string;
+  balanceChange?: {
+    equity:  { start: number; end: number };
+    debt:    { start: number; end: number };
+    profit:  { start: number; end: number; plan: number };
+  };
 };
 
 function minimalAnalytics(
@@ -134,6 +139,11 @@ const BUSINESSES: Array<{
         { month: "Май", revenuePlan: 7100000, revenueFact: 7320000, ebitdaPlan: 965000, ebitdaFact: 1025000, netProfitPlan: 990000, netProfitFact: 1025000, cashFlowPlan: 820000, cashFlowFact: 905000 },
         { month: "Июн", revenuePlan: 7000000, revenueFact: 7433333, ebitdaPlan: 950000, ebitdaFact: 1040000, netProfitPlan: 980000, netProfitFact: 1040666, cashFlowPlan: 800000, cashFlowFact: 920000 },
       ],
+      balanceChange: {
+        equity:  { start: 9_800_000, end: 11_300_000 },
+        debt:    { start: 8_400_000, end: 7_200_000 },
+        profit:  { start: 2_300_000, end: 5_375_700, plan: 2_940_000 },
+      },
     },
   },
   {
@@ -155,6 +165,11 @@ const BUSINESSES: Array<{
         { month: "Май", revenuePlan: 3800000, revenueFact: 3950000, ebitdaPlan: 460000, ebitdaFact: 475000, netProfitPlan: 440000, netProfitFact: 468000, cashFlowPlan: 380000, cashFlowFact: 412000 },
         { month: "Июн", revenuePlan: 3700000, revenueFact: 3983333, ebitdaPlan: 450000, ebitdaFact: 480000, netProfitPlan: 430000, netProfitFact: 477999, cashFlowPlan: 380000, cashFlowFact: 420000 },
       ],
+      balanceChange: {
+        equity:  { start: 4_600_000, end: 4_900_000 },
+        debt:    { start: 5_800_000, end: 6_200_000 },
+        profit:  { start: 800_000, end: 2_206_000, plan: 1_290_000 },
+      },
     },
   },
   {
@@ -176,6 +191,11 @@ const BUSINESSES: Array<{
         { month: "Май", revenuePlan: 13500000, revenueFact: 13100000, ebitdaPlan: 620000, ebitdaFact: 425000, netProfitPlan: 570000, netProfitFact: 418000, cashFlowPlan: 500000, cashFlowFact: 355000 },
         { month: "Июн", revenuePlan: 14000000, revenueFact: 13000000, ebitdaPlan: 700000, ebitdaFact: 416000, netProfitPlan: 650000, netProfitFact: 416000, cashFlowPlan: 600000, cashFlowFact: 350000 },
       ],
+      balanceChange: {
+        equity:  { start: 3_400_000, end: 3_100_000 },
+        debt:    { start: 8_800_000, end: 9_800_000 },
+        profit:  { start: 1_700_000, end: 2_959_000, plan: 1_950_000 },
+      },
     },
   },
   {
@@ -232,6 +252,11 @@ const BUSINESSES: Array<{
         { month: "Май", revenuePlan: 2220000, revenueFact: 2340000, ebitdaPlan: 380000, ebitdaFact: 420000, netProfitPlan: 370000, netProfitFact: 415000, cashFlowPlan: 320000, cashFlowFact: 378000 },
         { month: "Июн", revenuePlan: 2200000, revenueFact: 2366666, ebitdaPlan: 380000, ebitdaFact: 430000, netProfitPlan: 370000, netProfitFact: 425999, cashFlowPlan: 320000, cashFlowFact: 390000 },
       ],
+      balanceChange: {
+        equity:  { start: 1_700_000, end: 2_000_000 },
+        debt:    { start: 920_000, end: 800_000 },
+        profit:  { start: 620_000, end: 1_866_000, plan: 1_110_000 },
+      },
     },
   },
   {
@@ -304,6 +329,11 @@ const BUSINESSES: Array<{
         { month: "Май", revenuePlan: 750000, revenueFact: 660000, ebitdaPlan: 240000, ebitdaFact: 205000, netProfitPlan: 240000, netProfitFact: 205000, cashFlowPlan: 210000, cashFlowFact: 177000 },
         { month: "Июн", revenuePlan: 750000, revenueFact: 650000, ebitdaPlan: 240000, ebitdaFact: 200000, netProfitPlan: 240000, netProfitFact: 201500, cashFlowPlan: 210000, cashFlowFact: 170000 },
       ],
+      balanceChange: {
+        equity:  { start: 680_000, end: 730_000 },
+        debt:    { start: 490_000, end: 520_000 },
+        profit:  { start: 380_000, end: 996_500, plan: 720_000 },
+      },
     },
   },
   {
@@ -325,6 +355,11 @@ const BUSINESSES: Array<{
         { month: "Май", revenuePlan: 5200000, revenueFact: 5450000, ebitdaPlan: 400000, ebitdaFact: 440000, netProfitPlan: 380000, netProfitFact: 425000, cashFlowPlan: 330000, cashFlowFact: 375000 },
         { month: "Июн", revenuePlan: 5100000, revenueFact: 5583333, ebitdaPlan: 380000, ebitdaFact: 450000, netProfitPlan: 370000, netProfitFact: 446666, cashFlowPlan: 330000, cashFlowFact: 400000 },
       ],
+      balanceChange: {
+        equity:  { start: 2_400_000, end: 2_700_000 },
+        debt:    { start: 4_400_000, end: 4_200_000 },
+        profit:  { start: 1_100_000, end: 2_371_700, plan: 1_110_000 },
+      },
     },
   },
   {
@@ -359,6 +394,11 @@ const BUSINESSES: Array<{
         { month: "Май", revenuePlan: 3200000, revenueFact: 2870000, ebitdaPlan: 400000, ebitdaFact: 135000, netProfitPlan: 350000, netProfitFact: 130000, cashFlowPlan: 300000, cashFlowFact: 95000 },
         { month: "Июн", revenuePlan: 3200000, revenueFact: 2833333, ebitdaPlan: 400000, ebitdaFact: 113333, netProfitPlan: 400000, netProfitFact: 113333, cashFlowPlan: 350000, cashFlowFact: 85000 },
       ],
+      balanceChange: {
+        equity:  { start: 17_000_000, end: 17_200_000 },
+        debt:    { start: 27_500_000, end: 28_000_000 },
+        profit:  { start: 1_500_000, end: 1_898_300, plan: 1_050_000 },
+      },
     },
   },
   {
@@ -380,6 +420,11 @@ const BUSINESSES: Array<{
         { month: "Май", revenuePlan: 1800000, revenueFact: 1620000, ebitdaPlan: 290000, ebitdaFact: 220000, netProfitPlan: 265000, netProfitFact: 210000, cashFlowPlan: 240000, cashFlowFact: 185000 },
         { month: "Июн", revenuePlan: 1800000, revenueFact: 1583333, ebitdaPlan: 290000, ebitdaFact: 210000, netProfitPlan: 265000, netProfitFact: 205833, cashFlowPlan: 240000, cashFlowFact: 180000 },
       ],
+      balanceChange: {
+        equity:  { start: 560_000, end: 610_000 },
+        debt:    { start: 900_000, end: 960_000 },
+        profit:  { start: 230_000, end: 870_800, plan: 960_000 },
+      },
     },
   },
   {
@@ -438,6 +483,11 @@ const BUSINESSES: Array<{
         { month: "Май", revenuePlan: 5200000000, revenueFact: 5380000000, ebitdaPlan: 120000000, ebitdaFact: 48000000, netProfitPlan: 50000000, netProfitFact: 18500000, cashFlowPlan: 30000000, cashFlowFact: 12500000 },
         { month: "Июн", revenuePlan: 5200000000, revenueFact: 5460000000, ebitdaPlan: 120000000, ebitdaFact: 45000000, netProfitPlan: 50000000, netProfitFact: 17490000, cashFlowPlan: 30000000, cashFlowFact: 12000000 },
       ],
+      balanceChange: {
+        equity:  { start: 95_000_000, end: 110_000_000 },
+        debt:    { start: 745_000_000, end: 780_000_000 },
+        profit:  { start: 54_010_000, end: 110_000_000, plan: 150_000_000 },
+      },
     },
   },
 ];

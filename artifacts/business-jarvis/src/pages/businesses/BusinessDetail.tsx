@@ -61,6 +61,11 @@ type Analytics = {
   };
   monthlyHistory?: MonthlyPoint[];
   recommendation?: string;
+  balanceChange?: {
+    equity:  { start: number; end: number };
+    debt:    { start: number; end: number };
+    profit:  { start: number; end: number; plan: number };
+  };
 };
 
 // ── Money helpers ──────────────────────────────────────────────────────────────
@@ -496,6 +501,149 @@ function MarginDonut({ bdr, planFact, currency }: {
   );
 }
 
+// ── Balance Change Block ────────────────────────────────────────────────────────
+type BalanceChange = {
+  equity:  { start: number; end: number };
+  debt:    { start: number; end: number };
+  profit:  { start: number; end: number; plan: number };
+};
+
+function profitColor(factIncrement: number, planIncrement: number): string {
+  if (planIncrement <= 0) return TEXT.mid;
+  const ratio = factIncrement / planIncrement;
+  if (ratio >= 1.0) return "#3ed9a0";
+  if (ratio >= 0.7) return "#f0b54a";
+  return "#f0625a";
+}
+
+function BalanceChangeBlock({ bc, currency }: { bc: BalanceChange; currency: string }) {
+  const factIncrement = bc.profit.end - bc.profit.start;
+  const planIncrement = bc.profit.plan;
+  const pct = planIncrement > 0 ? Math.round((factIncrement / planIncrement) * 100) : null;
+  const color = profitColor(factIncrement, planIncrement);
+
+  const rows: Array<{
+    label: string;
+    start: number;
+    end: number;
+    isProfit?: boolean;
+  }> = [
+    { label: "Собственный капитал", start: bc.equity.start, end: bc.equity.end },
+    { label: "Заёмные средства",    start: bc.debt.start,   end: bc.debt.end },
+    { label: "Прибыль",             start: bc.profit.start, end: bc.profit.end, isProfit: true },
+  ];
+
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <h2 style={{ fontSize: 13, fontWeight: 600, color: TEXT.lo, fontFamily: HF, marginBottom: 4 }}>
+        Изменение баланса за квартал
+      </h2>
+      <div style={{
+        borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.025)", overflow: "hidden",
+      }}>
+        {rows.map((row, i) => {
+          const delta = row.end - row.start;
+          const isUp = delta >= 0;
+          const rowColor = row.isProfit ? color : TEXT.dim;
+          const deltaSign = delta >= 0 ? "+" : "−";
+          const absDelta = Math.abs(delta);
+
+          return (
+            <div key={row.label} style={{
+              display: "flex", alignItems: "flex-start", gap: 12,
+              padding: "14px 20px",
+              borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none",
+              background: row.isProfit ? "rgba(255,255,255,0.02)" : "transparent",
+            }}>
+              {/* Dot / indicator */}
+              <div style={{
+                width: 6, height: 6, borderRadius: "50%", flexShrink: 0, marginTop: 5,
+                background: row.isProfit ? color : "rgba(255,255,255,0.15)",
+              }} />
+
+              {/* Label */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", rowGap: 4 }}>
+                  <span style={{
+                    fontSize: 13, fontWeight: row.isProfit ? 600 : 400,
+                    color: row.isProfit ? TEXT.mid : TEXT.lo, fontFamily: HF,
+                  }}>
+                    {row.label}
+                  </span>
+
+                  {/* было → стало */}
+                  <span style={{ fontSize: 12, color: TEXT.dim, fontFamily: HF }}>
+                    {formatMoney(row.start, currency, true)}
+                    <span style={{ margin: "0 4px", opacity: 0.5 }}>→</span>
+                    {formatMoney(row.end, currency, true)}
+                  </span>
+
+                  {/* Δ */}
+                  <span style={{
+                    fontSize: 12, fontWeight: 600, fontFamily: HF,
+                    color: rowColor,
+                    display: "inline-flex", alignItems: "center", gap: 2,
+                  }}>
+                    {row.isProfit ? null : (isUp ? "↑" : "↓")}
+                    {" "}{deltaSign}{formatMoney(absDelta, currency, true)}
+                  </span>
+                </div>
+
+                {/* Profit plan-fact sub-line */}
+                {row.isProfit && (
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8, marginTop: 7, flexWrap: "wrap", rowGap: 4,
+                  }}>
+                    {/* Mini bar */}
+                    <div style={{
+                      width: 80, height: 4, borderRadius: 2,
+                      background: "rgba(255,255,255,0.08)", overflow: "hidden", flexShrink: 0,
+                    }}>
+                      <div style={{
+                        height: "100%", borderRadius: 2,
+                        width: `${Math.min(pct ?? 0, 100)}%`,
+                        background: color,
+                        transition: "width 0.4s ease",
+                      }} />
+                    </div>
+                    <span style={{ fontSize: 11, color: TEXT.dim, fontFamily: HF }}>
+                      план {formatMoney(planIncrement, currency, true)}
+                      <span style={{ margin: "0 5px", opacity: 0.4 }}>·</span>
+                      факт {formatMoney(factIncrement, currency, true)}
+                      {pct !== null && (
+                        <span style={{ marginLeft: 5, color: rowColor, fontWeight: 600 }}>
+                          {pct}%
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Summary footer */}
+        <div style={{
+          padding: "12px 20px",
+          borderTop: "1px solid rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.015)",
+          display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+        }}>
+          <span style={{ fontSize: 12, color: TEXT.dim, fontFamily: HF }}>За квартал заработано</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color, fontFamily: HF }}>
+            {formatMoney(factIncrement, currency, true)}
+          </span>
+          <span style={{ fontSize: 12, color: TEXT.dim, fontFamily: HF }}>
+            (план {formatMoney(planIncrement, currency, true)})
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── Form accordion ─────────────────────────────────────────────────────────────
 function FormAccordion({ title, data, currency }: { title: string; data: Record<string, number>; currency: string }) {
   const [open, setOpen] = useState(false);
@@ -868,6 +1016,11 @@ export default function BusinessDetail() {
         {/* ── Monthly Dynamics ── */}
         {analytics?.monthlyHistory && analytics.monthlyHistory.length > 0 && analytics.stage === "operational" && (
           <DynamicsBlock history={analytics.monthlyHistory} health={health} currency={currency} />
+        )}
+
+        {/* ── Balance Change ── */}
+        {analytics?.stage === "operational" && analytics.balanceChange && (
+          <BalanceChangeBlock bc={analytics.balanceChange} currency={currency} />
         )}
 
         {/* ── Waterfall + Donut — only for operational with revenue data ── */}
