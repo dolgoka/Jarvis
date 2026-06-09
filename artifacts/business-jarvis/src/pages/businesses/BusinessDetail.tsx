@@ -35,6 +35,14 @@ type PlanFactItem = {
   lowerIsBetter?: boolean;
 };
 
+type MonthlyPoint = {
+  month: string;
+  revenuePlan: number; revenueFact: number;
+  ebitdaPlan: number; ebitdaFact: number;
+  netProfitPlan: number; netProfitFact: number;
+  cashFlowPlan: number; cashFlowFact: number;
+};
+
 type Analytics = {
   stage: "investment" | "operational";
   contour: "internal" | "external";
@@ -51,6 +59,8 @@ type Analytics = {
     employees: number;
     projects: Array<{ name: string; status: string }>;
   };
+  monthlyHistory?: MonthlyPoint[];
+  recommendation?: string;
 };
 
 // ── Money helpers ──────────────────────────────────────────────────────────────
@@ -608,6 +618,80 @@ function StructureBlock({ analytics }: { analytics: Analytics }) {
   );
 }
 
+// ── Dynamics block ─────────────────────────────────────────────────────────────
+type MetricKey = "revenue" | "ebitda" | "netProfit" | "cashFlow";
+const METRIC_LABELS: Record<MetricKey, string> = {
+  revenue: "Оборот", ebitda: "EBITDA", netProfit: "Чистая прибыль", cashFlow: "Кэш-флоу",
+};
+const METRIC_FIELDS: Record<MetricKey, [keyof MonthlyPoint, keyof MonthlyPoint]> = {
+  revenue:   ["revenuePlan",   "revenueFact"],
+  ebitda:    ["ebitdaPlan",    "ebitdaFact"],
+  netProfit: ["netProfitPlan", "netProfitFact"],
+  cashFlow:  ["cashFlowPlan",  "cashFlowFact"],
+};
+
+function DynamicsBlock({ history, health, currency }: { history: MonthlyPoint[]; health: string; currency: string }) {
+  const [metric, setMetric] = useState<MetricKey>("revenue");
+  const factColor = HC[health as keyof typeof HC] ?? HC.green;
+  const [planKey, factKey] = METRIC_FIELDS[metric];
+  const chartData = history.map(p => ({
+    month: p.month,
+    plan: p[planKey] as unknown as number,
+    fact: p[factKey] as unknown as number,
+  }));
+
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 4 }}>
+        <h2 style={{ fontSize: 13, fontWeight: 600, color: TEXT.lo, fontFamily: HF }}>Динамика за 6 месяцев</h2>
+        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+          {(Object.keys(METRIC_LABELS) as MetricKey[]).map(k => (
+            <button key={k} onClick={() => setMetric(k)} style={{
+              padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: HF, cursor: "pointer",
+              background: metric === k ? "rgba(139,124,255,0.18)" : "rgba(255,255,255,0.04)",
+              color: metric === k ? "#8b7cff" : TEXT.lo,
+              border: metric === k ? "1px solid rgba(139,124,255,0.40)" : "1px solid rgba(255,255,255,0.08)",
+              transition: "all 150ms",
+            }}>{METRIC_LABELS[k]}</button>
+          ))}
+        </div>
+      </div>
+      <div style={{ borderRadius: 20, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.025)", padding: "20px 8px 8px" }}>
+        <div style={{ height: 220 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,124,255,0.08)" vertical={false} />
+              <XAxis dataKey="month" stroke="rgba(255,255,255,0.08)" tick={{ fill: TEXT.lo, fontSize: 11, fontFamily: HF }} />
+              <YAxis stroke="rgba(255,255,255,0.08)" tick={{ fill: TEXT.lo, fontSize: 11, fontFamily: HF }}
+                tickFormatter={(v) => formatMoney(v, currency, true)} width={80} />
+              <RechartsTooltip
+                contentStyle={{ backgroundColor: "rgba(11,11,18,0.95)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 12, fontSize: 13, fontFamily: HF }}
+                itemStyle={{ fontFamily: HF }}
+                labelStyle={{ color: TEXT.lo, marginBottom: 6, fontFamily: HF }}
+                formatter={(v: number) => [formatMoney(v, currency, true), ""]}
+              />
+              <Line type="monotone" dataKey="plan" stroke="rgba(228,232,255,0.28)" strokeWidth={1.5}
+                strokeDasharray="5 3" dot={false} name="План" />
+              <Line type="monotone" dataKey="fact" stroke={factColor} strokeWidth={2.5}
+                dot={{ fill: factColor, r: 3 }} activeDot={{ r: 5 }} name="Факт" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+        <div style={{ display: "flex", gap: 16, paddingLeft: 16, paddingBottom: 4, marginTop: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: TEXT.lo, fontFamily: HF }}>
+            <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke={factColor} strokeWidth="2.5" /></svg>
+            Факт
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: TEXT.lo, fontFamily: HF }}>
+            <svg width="20" height="8"><line x1="0" y1="4" x2="20" y2="4" stroke="rgba(228,232,255,0.28)" strokeWidth="1.5" strokeDasharray="5 3" /></svg>
+            План
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function BusinessDetail() {
   const [, params] = useRoute("/businesses/:id");
@@ -752,6 +836,14 @@ export default function BusinessDetail() {
           </div>
         )}
 
+        {/* Recommendation */}
+        {analytics?.recommendation && (
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "10px 16px", borderRadius: 12, background: "rgba(139,124,255,0.06)", border: "1px solid rgba(139,124,255,0.18)", fontSize: 13, fontFamily: HF, lineHeight: 1.5 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#8b7cff", flexShrink: 0 }}>Рекомендация:</span>
+            <span style={{ color: "rgba(180,175,255,0.80)" }}>{analytics.recommendation}</span>
+          </div>
+        )}
+
         {/* ── Plan vs Fact — horizontal bars ── */}
         {analytics?.planFact && analytics.planFact.length > 0 && (
           <section style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -771,6 +863,11 @@ export default function BusinessDetail() {
               ))}
             </div>
           </section>
+        )}
+
+        {/* ── Monthly Dynamics ── */}
+        {analytics?.monthlyHistory && analytics.monthlyHistory.length > 0 && analytics.stage === "operational" && (
+          <DynamicsBlock history={analytics.monthlyHistory} health={health} currency={currency} />
         )}
 
         {/* ── Waterfall + Donut — only for operational with revenue data ── */}

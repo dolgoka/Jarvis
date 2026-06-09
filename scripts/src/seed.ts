@@ -8,6 +8,14 @@ type PlanFactItem = {
   lowerIsBetter?: boolean;
 };
 
+type MonthlyPoint = {
+  month: string;
+  revenuePlan: number; revenueFact: number;
+  ebitdaPlan: number; ebitdaFact: number;
+  netProfitPlan: number; netProfitFact: number;
+  cashFlowPlan: number; cashFlowFact: number;
+};
+
 type Analytics = {
   stage: "investment" | "operational";
   contour: "internal" | "external";
@@ -24,6 +32,8 @@ type Analytics = {
     employees: number;
     projects: Array<{ name: string; status: string }>;
   };
+  monthlyHistory?: MonthlyPoint[];
+  recommendation?: string;
 };
 
 function minimalAnalytics(
@@ -115,6 +125,15 @@ const BUSINESSES: Array<{
           { name: "Mobile Platform", status: "завершён" },
         ],
       },
+      recommendation: "Ускорить EU-экспансию пока конкуренты не закрыли окно — квартальный рост +31% создаёт уникальный момент.",
+      monthlyHistory: [
+        { month: "Янв", revenuePlan: 6800000, revenueFact: 6950000, ebitdaPlan: 920000, ebitdaFact: 973000, netProfitPlan: 940000, netProfitFact: 960000, cashFlowPlan: 780000, cashFlowFact: 850000 },
+        { month: "Фев", revenuePlan: 6900000, revenueFact: 7050000, ebitdaPlan: 935000, ebitdaFact: 987000, netProfitPlan: 950000, netProfitFact: 975000, cashFlowPlan: 790000, cashFlowFact: 860000 },
+        { month: "Мар", revenuePlan: 7000000, revenueFact: 7150000, ebitdaPlan: 950000, ebitdaFact: 1001000, netProfitPlan: 980000, netProfitFact: 995000, cashFlowPlan: 800000, cashFlowFact: 875000 },
+        { month: "Апр", revenuePlan: 7050000, revenueFact: 7200000, ebitdaPlan: 960000, ebitdaFact: 1008000, netProfitPlan: 985000, netProfitFact: 1010000, cashFlowPlan: 810000, cashFlowFact: 890000 },
+        { month: "Май", revenuePlan: 7100000, revenueFact: 7320000, ebitdaPlan: 965000, ebitdaFact: 1025000, netProfitPlan: 990000, netProfitFact: 1025000, cashFlowPlan: 820000, cashFlowFact: 905000 },
+        { month: "Июн", revenuePlan: 7000000, revenueFact: 7433333, ebitdaPlan: 950000, ebitdaFact: 1040000, netProfitPlan: 980000, netProfitFact: 1040666, cashFlowPlan: 800000, cashFlowFact: 920000 },
+      ],
     },
   },
   {
@@ -124,8 +143,19 @@ const BUSINESSES: Array<{
     managerName: "Карим Эль-Хайям", managerEmail: "k.hayam@azure-hospitality.ae",
     description: "Сеть бутик-отелей премиум-класса в Дубае. 4 объекта, 705 номеров, occupancy 84.3%.",
     revenue: 3983333, orders: 705, profit: 477999,
-    analytics: minimalAnalytics("Карим Эль-Хайям", "General Manager", "green", 3983333, 477999, "USD", "operational", "external",
-      "Загрузка отелей 84.3% — рекорд квартала, выручка превышает план на 7%"),
+    analytics: {
+      ...minimalAnalytics("Карим Эль-Хайям", "General Manager", "green", 3983333, 477999, "USD", "operational", "external",
+        "Загрузка отелей 84.3% — рекорд квартала, выручка превышает план на 7%"),
+      recommendation: "Запустить программу лояльности — удержать 84% загрузку в низкий сезон и повысить RevPAR.",
+      monthlyHistory: [
+        { month: "Янв", revenuePlan: 3700000, revenueFact: 3750000, ebitdaPlan: 440000, ebitdaFact: 450000, netProfitPlan: 420000, netProfitFact: 430000, cashFlowPlan: 360000, cashFlowFact: 380000 },
+        { month: "Фев", revenuePlan: 3720000, revenueFact: 3800000, ebitdaPlan: 445000, ebitdaFact: 460000, netProfitPlan: 425000, netProfitFact: 440000, cashFlowPlan: 365000, cashFlowFact: 385000 },
+        { month: "Мар", revenuePlan: 3750000, revenueFact: 3860000, ebitdaPlan: 450000, ebitdaFact: 465000, netProfitPlan: 430000, netProfitFact: 450000, cashFlowPlan: 370000, cashFlowFact: 395000 },
+        { month: "Апр", revenuePlan: 3780000, revenueFact: 3900000, ebitdaPlan: 455000, ebitdaFact: 470000, netProfitPlan: 435000, netProfitFact: 460000, cashFlowPlan: 375000, cashFlowFact: 405000 },
+        { month: "Май", revenuePlan: 3800000, revenueFact: 3950000, ebitdaPlan: 460000, ebitdaFact: 475000, netProfitPlan: 440000, netProfitFact: 468000, cashFlowPlan: 380000, cashFlowFact: 412000 },
+        { month: "Июн", revenuePlan: 3700000, revenueFact: 3983333, ebitdaPlan: 450000, ebitdaFact: 480000, netProfitPlan: 430000, netProfitFact: 477999, cashFlowPlan: 380000, cashFlowFact: 420000 },
+      ],
+    },
   },
   {
     name: "Pacific Trade Partners Pte Ltd",
@@ -134,8 +164,19 @@ const BUSINESSES: Array<{
     managerName: "Тан Вэй Минь", managerEmail: "tanwm@pacifictrade.sg",
     description: "Commodity trader: пальмовое масло, каучук, металлы. Выручка $156M, маржа сжата до 3.2%.",
     revenue: 13000000, orders: 28, profit: 416000,
-    analytics: minimalAnalytics("Тан Вэй Минь", "Managing Director", "yellow", 13000000, 416000, "USD", "operational", "external",
-      "Маржа сжалась до 3.2% — ниже порогового значения 5%, волатильность сырьевых рынков давит на прибыль"),
+    analytics: {
+      ...minimalAnalytics("Тан Вэй Минь", "Managing Director", "yellow", 13000000, 416000, "USD", "operational", "external",
+        "Маржа сжалась до 3.2% — ниже порогового значения 5%, волатильность сырьевых рынков давит на прибыль"),
+      recommendation: "Пересмотреть контрактный портфель и зафиксировать цены по ключевым позициям — остановить дальнейшее сжатие маржи.",
+      monthlyHistory: [
+        { month: "Янв", revenuePlan: 14500000, revenueFact: 14200000, ebitdaPlan: 700000, ebitdaFact: 600000, netProfitPlan: 650000, netProfitFact: 560000, cashFlowPlan: 550000, cashFlowFact: 450000 },
+        { month: "Фев", revenuePlan: 14200000, revenueFact: 13800000, ebitdaPlan: 680000, ebitdaFact: 520000, netProfitPlan: 630000, netProfitFact: 480000, cashFlowPlan: 540000, cashFlowFact: 400000 },
+        { month: "Мар", revenuePlan: 14000000, revenueFact: 13600000, ebitdaPlan: 660000, ebitdaFact: 470000, netProfitPlan: 610000, netProfitFact: 440000, cashFlowPlan: 520000, cashFlowFact: 380000 },
+        { month: "Апр", revenuePlan: 13800000, revenueFact: 13400000, ebitdaPlan: 640000, ebitdaFact: 445000, netProfitPlan: 590000, netProfitFact: 425000, cashFlowPlan: 510000, cashFlowFact: 365000 },
+        { month: "Май", revenuePlan: 13500000, revenueFact: 13100000, ebitdaPlan: 620000, ebitdaFact: 425000, netProfitPlan: 570000, netProfitFact: 418000, cashFlowPlan: 500000, cashFlowFact: 355000 },
+        { month: "Июн", revenuePlan: 14000000, revenueFact: 13000000, ebitdaPlan: 700000, ebitdaFact: 416000, netProfitPlan: 650000, netProfitFact: 416000, cashFlowPlan: 600000, cashFlowFact: 350000 },
+      ],
+    },
   },
   {
     name: "Helios Real Estate Ltd",
@@ -179,8 +220,19 @@ const BUSINESSES: Array<{
     managerName: "Michael Torres", managerEmail: "m.torres@atlasdigital.com",
     description: "Performance digital агентство. Managed ad spend $180M/год, 67 клиентов, ROAS 4.2x.",
     revenue: 2366666, orders: 67, profit: 425999,
-    analytics: minimalAnalytics("Michael Torres", "CEO", "green", 2366666, 425999, "USD", "operational", "external",
-      "ROAS 4.2x превышает бенчмарк, все 67 клиентов продлили контракты"),
+    analytics: {
+      ...minimalAnalytics("Michael Torres", "CEO", "green", 2366666, 425999, "USD", "operational", "external",
+        "ROAS 4.2x превышает бенчмарк, все 67 клиентов продлили контракты"),
+      recommendation: "Нанять второго аккаунт-менеджера под рост managed spend — очередь из новых клиентов создаёт риск упущенной выручки.",
+      monthlyHistory: [
+        { month: "Янв", revenuePlan: 2100000, revenueFact: 2150000, ebitdaPlan: 360000, ebitdaFact: 375000, netProfitPlan: 350000, netProfitFact: 370000, cashFlowPlan: 300000, cashFlowFact: 320000 },
+        { month: "Фев", revenuePlan: 2150000, revenueFact: 2200000, ebitdaPlan: 365000, ebitdaFact: 385000, netProfitPlan: 355000, netProfitFact: 380000, cashFlowPlan: 305000, cashFlowFact: 335000 },
+        { month: "Мар", revenuePlan: 2180000, revenueFact: 2240000, ebitdaPlan: 370000, ebitdaFact: 395000, netProfitPlan: 360000, netProfitFact: 390000, cashFlowPlan: 310000, cashFlowFact: 350000 },
+        { month: "Апр", revenuePlan: 2200000, revenueFact: 2300000, ebitdaPlan: 375000, ebitdaFact: 410000, netProfitPlan: 365000, netProfitFact: 405000, cashFlowPlan: 315000, cashFlowFact: 365000 },
+        { month: "Май", revenuePlan: 2220000, revenueFact: 2340000, ebitdaPlan: 380000, ebitdaFact: 420000, netProfitPlan: 370000, netProfitFact: 415000, cashFlowPlan: 320000, cashFlowFact: 378000 },
+        { month: "Июн", revenuePlan: 2200000, revenueFact: 2366666, ebitdaPlan: 380000, ebitdaFact: 430000, netProfitPlan: 370000, netProfitFact: 425999, cashFlowPlan: 320000, cashFlowFact: 390000 },
+      ],
+    },
   },
   {
     name: "SkyLine Construction LLC",
@@ -240,8 +292,19 @@ const BUSINESSES: Array<{
     managerName: "Виктор Колымцев", managerEmail: "v.kolymtsev@kn-ao.ru",
     description: "Золото-серебряный добытчик. 4.2 т/год, AISC $980/oz, рентабельность 31%.",
     revenue: 650000, orders: 12, profit: 201500,
-    analytics: minimalAnalytics("Виктор Колымцев", "Директор", "yellow", 650000, 201500, "USD", "operational", "external",
-      "Задержка поставки оборудования замедляет добычу, AISC $980/oz выше планового $920/oz"),
+    analytics: {
+      ...minimalAnalytics("Виктор Колымцев", "Директор", "yellow", 650000, 201500, "USD", "operational", "external",
+        "Задержка поставки оборудования замедляет добычу, AISC $980/oz выше планового $920/oz"),
+      recommendation: "Форсировать поставку через альтернативного вендора — каждая неделя простоя стоит $25K недополученной добычи.",
+      monthlyHistory: [
+        { month: "Янв", revenuePlan: 750000, revenueFact: 740000, ebitdaPlan: 240000, ebitdaFact: 235000, netProfitPlan: 240000, netProfitFact: 235000, cashFlowPlan: 210000, cashFlowFact: 205000 },
+        { month: "Фев", revenuePlan: 750000, revenueFact: 720000, ebitdaPlan: 240000, ebitdaFact: 228000, netProfitPlan: 240000, netProfitFact: 228000, cashFlowPlan: 210000, cashFlowFact: 198000 },
+        { month: "Мар", revenuePlan: 750000, revenueFact: 700000, ebitdaPlan: 240000, ebitdaFact: 218000, netProfitPlan: 240000, netProfitFact: 218000, cashFlowPlan: 210000, cashFlowFact: 190000 },
+        { month: "Апр", revenuePlan: 750000, revenueFact: 680000, ebitdaPlan: 240000, ebitdaFact: 210000, netProfitPlan: 240000, netProfitFact: 210000, cashFlowPlan: 210000, cashFlowFact: 183000 },
+        { month: "Май", revenuePlan: 750000, revenueFact: 660000, ebitdaPlan: 240000, ebitdaFact: 205000, netProfitPlan: 240000, netProfitFact: 205000, cashFlowPlan: 210000, cashFlowFact: 177000 },
+        { month: "Июн", revenuePlan: 750000, revenueFact: 650000, ebitdaPlan: 240000, ebitdaFact: 200000, netProfitPlan: 240000, netProfitFact: 201500, cashFlowPlan: 210000, cashFlowFact: 170000 },
+      ],
+    },
   },
   {
     name: "Siam Pacific Foods Co Ltd",
@@ -250,8 +313,19 @@ const BUSINESSES: Array<{
     managerName: "Somchai Wattanaprapa", managerEmail: "s.wattanaprapa@siampacific.th",
     description: "Тайский производитель и экспортёр. 28 экспортных рынков, 64% выручки — экспорт.",
     revenue: 5583333, orders: 412, profit: 446666,
-    analytics: minimalAnalytics("Somchai Wattanaprapa", "CEO", "green", 5583333, 446666, "USD", "operational", "external",
-      "Экспорт +12% — открыт новый рынок в Европе, 28 рынков сбыта, все показатели в плане"),
+    analytics: {
+      ...minimalAnalytics("Somchai Wattanaprapa", "CEO", "green", 5583333, 446666, "USD", "operational", "external",
+        "Экспорт +12% — открыт новый рынок в Европе, 28 рынков сбыта, все показатели в плане"),
+      recommendation: "Удвоить квоту по новому европейскому рынку, пока конкуренты не перехватили полку.",
+      monthlyHistory: [
+        { month: "Янв", revenuePlan: 4800000, revenueFact: 4900000, ebitdaPlan: 360000, ebitdaFact: 370000, netProfitPlan: 340000, netProfitFact: 350000, cashFlowPlan: 290000, cashFlowFact: 305000 },
+        { month: "Фев", revenuePlan: 4900000, revenueFact: 5050000, ebitdaPlan: 370000, ebitdaFact: 385000, netProfitPlan: 350000, netProfitFact: 365000, cashFlowPlan: 300000, cashFlowFact: 320000 },
+        { month: "Мар", revenuePlan: 5000000, revenueFact: 5150000, ebitdaPlan: 380000, ebitdaFact: 400000, netProfitPlan: 360000, netProfitFact: 380000, cashFlowPlan: 310000, cashFlowFact: 335000 },
+        { month: "Апр", revenuePlan: 5100000, revenueFact: 5300000, ebitdaPlan: 390000, ebitdaFact: 420000, netProfitPlan: 370000, netProfitFact: 400000, cashFlowPlan: 320000, cashFlowFact: 355000 },
+        { month: "Май", revenuePlan: 5200000, revenueFact: 5450000, ebitdaPlan: 400000, ebitdaFact: 440000, netProfitPlan: 380000, netProfitFact: 425000, cashFlowPlan: 330000, cashFlowFact: 375000 },
+        { month: "Июн", revenuePlan: 5100000, revenueFact: 5583333, ebitdaPlan: 380000, ebitdaFact: 450000, netProfitPlan: 370000, netProfitFact: 446666, cashFlowPlan: 330000, cashFlowFact: 400000 },
+      ],
+    },
   },
   {
     name: "TajEnergo JSC",
@@ -276,6 +350,15 @@ const BUSINESSES: Array<{
         odds: { "Операционный CF": 85000, "Инвестиционный CF": -450000, "Финансовый CF": 400000, "Итого": 35000 },
         balance: { "Активы": 45000000, "Обязательства": 28000000, "Капитал": 17000000 },
       },
+      recommendation: "Выйти на регулятора с обоснованием повышения тарифа и восстановить регулярную отчётность — узел слепой уже 3 недели.",
+      monthlyHistory: [
+        { month: "Янв", revenuePlan: 3200000, revenueFact: 3100000, ebitdaPlan: 400000, ebitdaFact: 300000, netProfitPlan: 350000, netProfitFact: 280000, cashFlowPlan: 300000, cashFlowFact: 220000 },
+        { month: "Фев", revenuePlan: 3200000, revenueFact: 3000000, ebitdaPlan: 400000, ebitdaFact: 250000, netProfitPlan: 350000, netProfitFact: 230000, cashFlowPlan: 300000, cashFlowFact: 180000 },
+        { month: "Мар", revenuePlan: 3200000, revenueFact: 2950000, ebitdaPlan: 400000, ebitdaFact: 200000, netProfitPlan: 350000, netProfitFact: 190000, cashFlowPlan: 300000, cashFlowFact: 150000 },
+        { month: "Апр", revenuePlan: 3200000, revenueFact: 2900000, ebitdaPlan: 400000, ebitdaFact: 165000, netProfitPlan: 350000, netProfitFact: 155000, cashFlowPlan: 300000, cashFlowFact: 115000 },
+        { month: "Май", revenuePlan: 3200000, revenueFact: 2870000, ebitdaPlan: 400000, ebitdaFact: 135000, netProfitPlan: 350000, netProfitFact: 130000, cashFlowPlan: 300000, cashFlowFact: 95000 },
+        { month: "Июн", revenuePlan: 3200000, revenueFact: 2833333, ebitdaPlan: 400000, ebitdaFact: 113333, netProfitPlan: 400000, netProfitFact: 113333, cashFlowPlan: 350000, cashFlowFact: 85000 },
+      ],
     },
   },
   {
@@ -285,8 +368,19 @@ const BUSINESSES: Array<{
     managerName: "Бобур Юсупов", managerEmail: "b.yusupov@silkroadlogistics.uz",
     description: "Узбекский 3PL-оператор. 87 единиц флота, 24K sqm складов, рост +28% YoY.",
     revenue: 1583333, orders: 234, profit: 205833,
-    analytics: minimalAnalytics("Бобур Юсупов", "Генеральный директор", "red", 1583333, 205833, "USD", "operational", "external",
-      "Ключевые контракты под угрозой: задержка поставок критична, клиент X запустил тендер на замену"),
+    analytics: {
+      ...minimalAnalytics("Бобур Юсупов", "Генеральный директор", "red", 1583333, 205833, "USD", "operational", "external",
+        "Ключевые контракты под угрозой: задержка поставок критична, клиент X запустил тендер на замену"),
+      recommendation: "Лично встретиться с клиентом X этой неделей — предотвратить потерю контракта до завершения тендера.",
+      monthlyHistory: [
+        { month: "Янв", revenuePlan: 1800000, revenueFact: 1850000, ebitdaPlan: 290000, ebitdaFact: 310000, netProfitPlan: 265000, netProfitFact: 285000, cashFlowPlan: 240000, cashFlowFact: 260000 },
+        { month: "Фев", revenuePlan: 1800000, revenueFact: 1780000, ebitdaPlan: 290000, ebitdaFact: 280000, netProfitPlan: 265000, netProfitFact: 260000, cashFlowPlan: 240000, cashFlowFact: 230000 },
+        { month: "Мар", revenuePlan: 1800000, revenueFact: 1720000, ebitdaPlan: 290000, ebitdaFact: 250000, netProfitPlan: 265000, netProfitFact: 240000, cashFlowPlan: 240000, cashFlowFact: 210000 },
+        { month: "Апр", revenuePlan: 1800000, revenueFact: 1680000, ebitdaPlan: 290000, ebitdaFact: 235000, netProfitPlan: 265000, netProfitFact: 225000, cashFlowPlan: 240000, cashFlowFact: 195000 },
+        { month: "Май", revenuePlan: 1800000, revenueFact: 1620000, ebitdaPlan: 290000, ebitdaFact: 220000, netProfitPlan: 265000, netProfitFact: 210000, cashFlowPlan: 240000, cashFlowFact: 185000 },
+        { month: "Июн", revenuePlan: 1800000, revenueFact: 1583333, ebitdaPlan: 290000, ebitdaFact: 210000, netProfitPlan: 265000, netProfitFact: 205833, cashFlowPlan: 240000, cashFlowFact: 180000 },
+      ],
+    },
   },
   {
     name: "Profimonsters",
@@ -335,6 +429,15 @@ const BUSINESSES: Array<{
           "Капитал": 110000000,
         },
       },
+      recommendation: "Провести срочный cost review: при обороте ₽5.46 млрд и марже 0.3% нужно срезать операционные расходы на 5–8%.",
+      monthlyHistory: [
+        { month: "Янв", revenuePlan: 5200000000, revenueFact: 4800000000, ebitdaPlan: 120000000, ebitdaFact: 80000000, netProfitPlan: 50000000, netProfitFact: 32000000, cashFlowPlan: 30000000, cashFlowFact: 22000000 },
+        { month: "Фев", revenuePlan: 5200000000, revenueFact: 5000000000, ebitdaPlan: 120000000, ebitdaFact: 70000000, netProfitPlan: 50000000, netProfitFact: 28000000, cashFlowPlan: 30000000, cashFlowFact: 18000000 },
+        { month: "Мар", revenuePlan: 5200000000, revenueFact: 5150000000, ebitdaPlan: 120000000, ebitdaFact: 60000000, netProfitPlan: 50000000, netProfitFact: 24000000, cashFlowPlan: 30000000, cashFlowFact: 15000000 },
+        { month: "Апр", revenuePlan: 5200000000, revenueFact: 5280000000, ebitdaPlan: 120000000, ebitdaFact: 52000000, netProfitPlan: 50000000, netProfitFact: 20000000, cashFlowPlan: 30000000, cashFlowFact: 13000000 },
+        { month: "Май", revenuePlan: 5200000000, revenueFact: 5380000000, ebitdaPlan: 120000000, ebitdaFact: 48000000, netProfitPlan: 50000000, netProfitFact: 18500000, cashFlowPlan: 30000000, cashFlowFact: 12500000 },
+        { month: "Июн", revenuePlan: 5200000000, revenueFact: 5460000000, ebitdaPlan: 120000000, ebitdaFact: 45000000, netProfitPlan: 50000000, netProfitFact: 17490000, cashFlowPlan: 30000000, cashFlowFact: 12000000 },
+      ],
     },
   },
 ];
