@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo, Component, type ReactNode } from "react";
+import { useEffect, useRef, useState, useMemo, useCallback, Component, type ReactNode } from "react";
 import Globe from "react-globe.gl";
 import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
 import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
@@ -228,6 +228,7 @@ export default function GlobeDashboard() {
   const [statsOpen, setStatsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const lastPolygonHoverRef = useRef(0);
 
   useEffect(() => {
     fetch("https://raw.githubusercontent.com/vasturiano/react-globe.gl/master/example/datasets/ne_110m_admin_0_countries.geojson")
@@ -267,26 +268,35 @@ export default function GlobeDashboard() {
   }, [businesses]);
 
   useEffect(() => {
-    const handleResize = () => {
+    let timer: ReturnType<typeof setTimeout>;
+    const measure = () => {
       if (containerRef.current) {
         setDimensions({ width: containerRef.current.clientWidth, height: containerRef.current.clientHeight });
       }
     };
-    handleResize();
+    const handleResize = () => { clearTimeout(timer); timer = setTimeout(measure, 150); };
+    measure();
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => { window.removeEventListener("resize", handleResize); clearTimeout(timer); };
   }, []);
 
   useEffect(() => {
-    if (globeEl.current) {
-      globeEl.current.controls().autoRotate = true;
-      globeEl.current.controls().autoRotateSpeed = 0.4;
-      globeEl.current.controls().enableZoom = true;
-      globeEl.current.scene().background = null;
-    }
+    if (!globeEl.current) return;
+    const ctrl = globeEl.current.controls();
+    ctrl.autoRotate = true;
+    ctrl.autoRotateSpeed = 0.4;
+    ctrl.enableZoom = true;
+    globeEl.current.scene().background = null;
+    globeEl.current.renderer().setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+
+    const handleVisibility = () => {
+      if (globeEl.current) globeEl.current.controls().autoRotate = !document.hidden;
+    };
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
   }, []);
 
-  const Fallback2D = (
+  const Fallback2D = useMemo(() => (
     <div className="w-full h-full flex items-center justify-center">
       <div className="relative" style={{ width: Math.min(dimensions.width * 0.85, 520), height: Math.min(dimensions.width * 0.85, 520) }}>
         {(() => {
@@ -322,7 +332,7 @@ export default function GlobeDashboard() {
         })()}
       </div>
     </div>
-  );
+  ), [dimensions.width, markersData]);
 
   return (
     <Shell>
@@ -334,21 +344,25 @@ export default function GlobeDashboard() {
             position: "absolute", width: "55%", height: "55%", top: "5%", left: "5%",
             background: "radial-gradient(ellipse at center, rgba(139,124,255,0.20) 0%, transparent 70%)",
             animation: "glow-drift 20s ease-in-out infinite alternate",
+            willChange: "transform",
           }} />
           <div style={{
             position: "absolute", width: "48%", height: "48%", top: "8%", right: "2%",
             background: "radial-gradient(ellipse at center, rgba(95,168,255,0.16) 0%, transparent 70%)",
             animation: "glow-drift-r 24s ease-in-out infinite alternate",
+            willChange: "transform",
           }} />
           <div style={{
             position: "absolute", width: "42%", height: "42%", bottom: "5%", right: "12%",
             background: "radial-gradient(ellipse at center, rgba(255,143,199,0.13) 0%, transparent 70%)",
             animation: "glow-drift 28s ease-in-out infinite alternate-reverse",
+            willChange: "transform",
           }} />
           <div style={{
             position: "absolute", width: "38%", height: "38%", bottom: "8%", left: "3%",
             background: "radial-gradient(ellipse at center, rgba(62,217,160,0.11) 0%, transparent 70%)",
             animation: "glow-drift-r 22s ease-in-out infinite alternate-reverse",
+            willChange: "transform",
           }} />
         </div>
 
@@ -360,7 +374,6 @@ export default function GlobeDashboard() {
                 width={dimensions.width}
                 height={dimensions.height}
                 globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
-                bumpImageUrl="//unpkg.com/three-globe/example/img/earth-topology.png"
                 backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
                 atmosphereColor="#8b7cff"
                 atmosphereAltitude={0.32}
@@ -369,7 +382,13 @@ export default function GlobeDashboard() {
                 polygonSideColor={() => "rgba(139,124,255,0.04)"}
                 polygonStrokeColor={(d: any) => d === hoveredPolygon ? "#8b7cff" : "rgba(139,124,255,0.18)"}
                 polygonAltitude={(d: any) => d === hoveredPolygon ? 0.015 : 0.001}
-                onPolygonHover={(d: any) => setHoveredPolygon(d || null)}
+                onPolygonHover={(d: any) => {
+                  const now = Date.now();
+                  if (now - lastPolygonHoverRef.current > 50) {
+                    lastPolygonHoverRef.current = now;
+                    setHoveredPolygon(d || null);
+                  }
+                }}
                 polygonsTransitionDuration={200}
                 pointsData={markersData}
                 pointLat="lat" pointLng="lng" pointAltitude="alt" pointRadius="radius" pointColor="color"
@@ -383,7 +402,7 @@ export default function GlobeDashboard() {
                 ringPropagationSpeed={(d: any) => d.health === "red" ? 6 : 2.8}
                 ringRepeatPeriod={(d: any) => d.health === "red" ? 380 : 750}
                 ringAltitude={0.001}
-                htmlElementsData={markersData}
+                htmlElementsData={markersData.filter((d: any) => d.health === "red")}
                 htmlElement={(d: any) => {
                   const el = document.createElement("div");
                   const cls = d.health === "red" ? "beacon-red" : d.health === "yellow" ? "beacon-yellow" : "";

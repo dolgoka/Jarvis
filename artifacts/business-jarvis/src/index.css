@@ -116,7 +116,7 @@
   /* ─── Liquid Glass токены (тёмная тема) ─── */
   --glass-tint:   rgba(255, 255, 255, 0.045);
   --glass-edge:   rgba(255, 255, 255, 0.08);
-  --glass-blur:   22px;
+  --glass-blur:   16px;
   --glass-sat:    165%;
   /* Мягкий блик сверху — деликатно, не 0.26 */
   --glass-shadow:
