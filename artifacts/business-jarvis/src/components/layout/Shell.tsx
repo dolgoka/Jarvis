@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Globe, LayoutGrid, Brain, Link as LinkIcon, MessageSquare, ClipboardList, LogOut } from "lucide-react";
+import { Globe, LayoutGrid, Brain, Link as LinkIcon, MessageSquare, ClipboardList, RefreshCcw } from "lucide-react";
 import { useAuthContext } from "@/hooks/AuthContext";
 
 const NAV = [
@@ -14,7 +14,7 @@ const NAV = [
 
 export function Shell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
-  const { logout } = useAuthContext();
+  const { switchRole } = useAuthContext();
 
   const isActive = (href: string) =>
     location === href || (href !== "/" && location.startsWith(href));
@@ -75,15 +75,15 @@ export function Shell({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        {/* Logout */}
+        {/* Switch role */}
         <div className="p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
           <button
-            onClick={logout}
+            onClick={switchRole}
             className="flex items-center gap-3 w-full px-3 text-sm transition-colors duration-150 min-h-[46px] group"
             style={{ borderRadius: 12, color: "rgba(228,232,255,0.25)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}
           >
-            <LogOut className="w-4 h-4 flex-shrink-0 opacity-40 group-hover:opacity-60" />
-            Выход
+            <RefreshCcw className="w-4 h-4 flex-shrink-0 opacity-40 group-hover:opacity-60" />
+            Сменить роль
           </button>
         </div>
       </aside>
@@ -111,12 +111,12 @@ export function Shell({ children }: { children: ReactNode }) {
               LIVE
             </div>
             <button
-              onClick={logout}
+              onClick={switchRole}
               className="flex items-center justify-center w-9 h-9 transition-colors"
               style={{ borderRadius: 10, color: "rgba(228,232,255,0.25)" }}
-              title="Выход"
+              title="Сменить роль"
             >
-              <LogOut className="w-4 h-4" />
+              <RefreshCcw className="w-4 h-4" />
             </button>
           </div>
         </div>

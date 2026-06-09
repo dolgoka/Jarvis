@@ -1,10 +1,10 @@
 import { createContext, useContext } from "react";
 
-interface AuthContextValue {
-  logout: () => void;
+interface RoleContextValue {
+  switchRole: () => void;
 }
 
-export const AuthContext = createContext<AuthContextValue>({ logout: () => {} });
+export const AuthContext = createContext<RoleContextValue>({ switchRole: () => {} });
 
 export function useAuthContext() {
   return useContext(AuthContext);
