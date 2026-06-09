@@ -402,7 +402,7 @@ export default function GlobeDashboard() {
                 ringPropagationSpeed={(d: any) => d.health === "red" ? 6 : 2.8}
                 ringRepeatPeriod={(d: any) => d.health === "red" ? 380 : 750}
                 ringAltitude={0.001}
-                htmlElementsData={markersData.filter((d: any) => d.health === "red")}
+                htmlElementsData={markersData}
                 htmlElement={(d: any) => {
                   const el = document.createElement("div");
                   const cls = d.health === "red" ? "beacon-red" : d.health === "yellow" ? "beacon-yellow" : "";
