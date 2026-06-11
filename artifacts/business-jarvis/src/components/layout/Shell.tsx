@@ -20,16 +20,16 @@ export function Shell({ children }: { children: ReactNode }) {
     location === href || (href !== "/" && location.startsWith(href));
 
   return (
-    <div className="flex h-[100dvh] overflow-hidden" style={{ background: "#0b0b12", color: "rgba(228,232,255,0.9)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
+    <div className="flex h-[100dvh] overflow-hidden" style={{ background: "var(--jarvis-bg-screen)", color: "rgba(228,232,255,0.9)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
 
       {/* ── Desktop sidebar — blur+sat glass, no SVG filter (full-height perf) ── */}
       <aside
         className="hidden md:flex w-60 flex-shrink-0 flex-col z-20"
         style={{
-          background: "rgba(11,11,18,0.72)",
+          background: "var(--jarvis-nav-bg)",
           backdropFilter: "blur(20px) saturate(160%)",
           WebkitBackdropFilter: "blur(20px) saturate(160%)",
-          borderRight: "1px solid rgba(255,255,255,0.07)",
+          borderRight: "1px solid var(--jarvis-nav-border)",
         }}
       >
         {/* Logo */}
@@ -38,8 +38,8 @@ export function Shell({ children }: { children: ReactNode }) {
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
           <div className="flex items-center gap-2.5">
-            <Globe className="w-5 h-5" style={{ color: "var(--jarvis-brass)" }} />
-            <span className="font-bold tracking-widest text-base" style={{ color: "rgba(228,232,255,0.9)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>JARVIS</span>
+            <Globe className="w-5 h-5" style={{ color: "var(--jarvis-accent)" }} />
+            <span className="font-bold tracking-widest text-base" style={{ color: "var(--jarvis-text-primary)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>JARVIS</span>
           </div>
         </div>
 
@@ -60,14 +60,14 @@ export function Shell({ children }: { children: ReactNode }) {
                 className="flex items-center gap-3 px-3 font-medium text-sm transition-colors duration-150 min-h-[46px]"
                 style={{
                   borderRadius: 12,
-                  color: active ? "#8b7cff" : "rgba(228,232,255,0.38)",
-                  background: active ? "rgba(139,124,255,0.13)" : "transparent",
+                  color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.38)",
+                  background: active ? "var(--jarvis-accent-12)" : "transparent",
                   fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
                 }}
               >
                 <item.icon
                   className="w-4 h-4 flex-shrink-0"
-                  style={{ color: active ? "#8b7cff" : "rgba(228,232,255,0.3)" }}
+                  style={{ color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.3)" }}
                 />
                 {item.fullLabel}
               </Link>
@@ -95,15 +95,15 @@ export function Shell({ children }: { children: ReactNode }) {
         <div
           className="md:hidden h-14 flex items-center justify-between px-4 flex-shrink-0"
           style={{
-            background: "rgba(11,11,18,0.72)",
-            borderBottom: "1px solid rgba(255,255,255,0.07)",
+            background: "var(--jarvis-nav-bg)",
+            borderBottom: "1px solid var(--jarvis-nav-border)",
             backdropFilter: "blur(20px) saturate(160%)",
             WebkitBackdropFilter: "blur(20px) saturate(160%)",
           }}
         >
           <div className="flex items-center gap-2">
-            <Globe className="w-5 h-5" style={{ color: "var(--jarvis-brass)" }} />
-            <span className="font-bold tracking-widest text-base" style={{ color: "rgba(228,232,255,0.9)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>JARVIS</span>
+            <Globe className="w-5 h-5" style={{ color: "var(--jarvis-accent)" }} />
+            <span className="font-bold tracking-widest text-base" style={{ color: "var(--jarvis-text-primary)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>JARVIS</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#3ed9a0", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
@@ -130,10 +130,10 @@ export function Shell({ children }: { children: ReactNode }) {
         <div
           className="md:hidden flex-shrink-0"
           style={{
-            background: "rgba(11,11,18,0.72)",
+            background: "var(--jarvis-nav-bg)",
             backdropFilter: "blur(24px) saturate(160%)",
             WebkitBackdropFilter: "blur(24px) saturate(160%)",
-            borderTop: "1px solid rgba(255,255,255,0.07)",
+            borderTop: "1px solid var(--jarvis-nav-border)",
             paddingBottom: "env(safe-area-inset-bottom)",
           }}
         >
@@ -148,18 +148,18 @@ export function Shell({ children }: { children: ReactNode }) {
                 >
                   <item.icon
                     className="w-5 h-5"
-                    style={{ color: active ? "#8b7cff" : "rgba(228,232,255,0.25)" }}
+                    style={{ color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.25)" }}
                   />
                   <span
                     className="text-[10px] font-semibold tracking-wide"
-                    style={{ color: active ? "#8b7cff" : "rgba(228,232,255,0.22)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}
+                    style={{ color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.22)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}
                   >
                     {item.label}
                   </span>
                   {active && (
                     <span
                       className="absolute top-0 left-1/2 -translate-x-1/2 w-5 h-0.5 rounded-full"
-                      style={{ background: "#8b7cff" }}
+                      style={{ background: "var(--jarvis-accent)" }}
                     />
                   )}
                 </Link>
