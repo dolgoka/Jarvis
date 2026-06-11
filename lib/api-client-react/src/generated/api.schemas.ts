@@ -273,6 +273,69 @@ export interface TaskDraft {
   linkedPeople: Person[];
 }
 
+export type FeedItemType = typeof FeedItemType[keyof typeof FeedItemType];
+
+
+export const FeedItemType = {
+  task_stuck: 'task_stuck',
+  staff: 'staff',
+  red_zone: 'red_zone',
+  routine: 'routine',
+} as const;
+
+export type FeedItemSeverity = typeof FeedItemSeverity[keyof typeof FeedItemSeverity];
+
+
+export const FeedItemSeverity = {
+  critical: 'critical',
+  important: 'important',
+  info: 'info',
+} as const;
+
+export type FeedItemStatus = typeof FeedItemStatus[keyof typeof FeedItemStatus];
+
+
+export const FeedItemStatus = {
+  pending: 'pending',
+  dismissed: 'dismissed',
+  resolved: 'resolved',
+} as const;
+
+export interface FeedItem {
+  id: number;
+  /** @nullable */
+  businessId?: number | null;
+  /** @nullable */
+  businessName?: string | null;
+  type: FeedItemType;
+  severity: FeedItemSeverity;
+  title: string;
+  body: string;
+  /** @nullable */
+  relatedPerson?: string | null;
+  status: FeedItemStatus;
+  createdAt: string;
+}
+
+export interface FeedDraftInput {
+  text: string;
+  feedItemId?: number;
+}
+
+export interface FeedDraft {
+  title: string;
+  description: string;
+  assigneeId: number;
+  assigneeName: string;
+  assigneeRole: string;
+  linkedPeopleIds: number[];
+  linkedPeople: Person[];
+  /** @nullable */
+  businessId?: number | null;
+  /** @nullable */
+  businessName?: string | null;
+}
+
 export type ListReportsParams = {
 businessId: number;
 period?: ListReportsPeriod;

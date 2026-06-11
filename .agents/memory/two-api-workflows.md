@@ -1,12 +1,13 @@
 ---
 name: Two API server workflows
-description: There are two overlapping API server workflows; only one works
+description: Which API server workflow to restart and why
 ---
 
 Two workflows both try to run the API server on port 8080:
-- "API Server" — runs `pnpm run build && node dist/index.mjs` (production mode), always fails with EADDRINUSE because the artifact workflow is already running
-- "artifacts/api-server: API Server" — runs `pnpm run dev` (build+start), this is the one that works
 
-**Why:** Both were created at different points. The "API Server" one was the original; the artifact workflow was added later and is the correct one to use.
+- **"API Server"** — runs `build && PORT=8080 start`. This is the resident process that actually holds port 8080. **Restart this one** to pick up backend code changes.
+- **"artifacts/api-server: API Server"** — runs `dev` (build+start). Fails with EADDRINUSE whenever "API Server" is already running.
 
-**How to apply:** Always restart "artifacts/api-server: API Server", never "API Server". The "API Server" workflow will always fail with EADDRINUSE.
+**Why:** "API Server" always starts first and stays resident. The artifacts dev workflow can't bind the same port.
+
+**How to apply:** After backend code changes, restart "API Server". Never try to restart "artifacts/api-server: API Server" when "API Server" is running — it will always fail with EADDRINUSE.

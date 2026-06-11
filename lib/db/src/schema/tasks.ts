@@ -15,6 +15,8 @@ export const tasksTable = pgTable("tasks", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   acceptedAt: timestamp("accepted_at"),
   stuckDays: integer("stuck_days"),
+  feedItemId: integer("feed_item_id"),
+  businessId: integer("business_id"),
 });
 
 export const insertTaskSchema = createInsertSchema(tasksTable).omit({ id: true, createdAt: true });

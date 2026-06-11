@@ -18,6 +18,7 @@ const AiSummary       = lazy(() => import("./pages/ai-summary/AiSummary"));
 const ConnectBusiness = lazy(() => import("./pages/connect/ConnectBusiness"));
 const AiChat          = lazy(() => import("./pages/chat/AiChat"));
 const TasksPage       = lazy(() => import("./pages/tasks/TasksPage"));
+const MorningFeed     = lazy(() => import("./pages/morning/MorningFeed"));
 
 const PageFallback = (
   <div style={{ width: "100%", height: "100dvh", background: "#0b0b12" }} />
@@ -35,6 +36,7 @@ function Router() {
         <Route path="/businesses" component={BusinessList} />
         <Route path="/businesses/:id" component={BusinessDetail} />
         <Route path="/tasks" component={TasksPage} />
+        <Route path="/morning" component={MorningFeed} />
         <Route path="/ai-summary" component={AiSummary} />
         <Route path="/chat" component={AiChat} />
         <Route path="/connect" component={ConnectBusiness} />

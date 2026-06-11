@@ -31,6 +31,9 @@ import type {
   DashboardStats,
   DismissResult,
   Event,
+  FeedDraft,
+  FeedDraftInput,
+  FeedItem,
   FetchLatestReportParams,
   GetAiSummaryParams,
   GetDashboardStatsParams,
@@ -1576,5 +1579,223 @@ export const useDismissEvent = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDismissEventMutationOptions(options));
+    }
+
+export const getGetFeedItemsUrl = () => {
+
+
+
+
+  return `/api/feed/items`
+}
+
+/**
+ * @summary Get pending morning feed items sorted by severity
+ */
+export const getFeedItems = async ( options?: RequestInit): Promise<FeedItem[]> => {
+
+  return customFetch<FeedItem[]>(getGetFeedItemsUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFeedItemsQueryKey = () => {
+    return [
+    `/api/feed/items`
+    ] as const;
+    }
+
+
+export const getGetFeedItemsQueryOptions = <TData = Awaited<ReturnType<typeof getFeedItems>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFeedItems>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFeedItemsQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeedItems>>> = ({ signal }) => getFeedItems({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFeedItems>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFeedItemsQueryResult = NonNullable<Awaited<ReturnType<typeof getFeedItems>>>
+export type GetFeedItemsQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get pending morning feed items sorted by severity
+ */
+
+export function useGetFeedItems<TData = Awaited<ReturnType<typeof getFeedItems>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFeedItems>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFeedItemsQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getDismissFeedItemUrl = (id: number,) => {
+
+
+
+
+  return `/api/feed/items/${id}/dismiss`
+}
+
+/**
+ * @summary Dismiss a feed item
+ */
+export const dismissFeedItem = async (id: number, options?: RequestInit): Promise<DismissResult> => {
+
+  return customFetch<DismissResult>(getDismissFeedItemUrl(id),
+  {
+    ...options,
+    method: 'PATCH'
+
+
+  }
+);}
+
+
+
+
+export const getDismissFeedItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof dismissFeedItem>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof dismissFeedItem>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['dismissFeedItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof dismissFeedItem>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  dismissFeedItem(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DismissFeedItemMutationResult = NonNullable<Awaited<ReturnType<typeof dismissFeedItem>>>
+
+    export type DismissFeedItemMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Dismiss a feed item
+ */
+export const useDismissFeedItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof dismissFeedItem>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof dismissFeedItem>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getDismissFeedItemMutationOptions(options));
+    }
+
+export const getFeedDraftTaskUrl = () => {
+
+
+
+
+  return `/api/feed/draft-task`
+}
+
+/**
+ * @summary Generate AI task draft from feed item context
+ */
+export const feedDraftTask = async (feedDraftInput: FeedDraftInput, options?: RequestInit): Promise<FeedDraft> => {
+
+  return customFetch<FeedDraft>(getFeedDraftTaskUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      feedDraftInput,)
+  }
+);}
+
+
+
+
+export const getFeedDraftTaskMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof feedDraftTask>>, TError,{data: BodyType<FeedDraftInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof feedDraftTask>>, TError,{data: BodyType<FeedDraftInput>}, TContext> => {
+
+const mutationKey = ['feedDraftTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof feedDraftTask>>, {data: BodyType<FeedDraftInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  feedDraftTask(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FeedDraftTaskMutationResult = NonNullable<Awaited<ReturnType<typeof feedDraftTask>>>
+    export type FeedDraftTaskMutationBody = BodyType<FeedDraftInput>
+    export type FeedDraftTaskMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Generate AI task draft from feed item context
+ */
+export const useFeedDraftTask = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof feedDraftTask>>, TError,{data: BodyType<FeedDraftInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof feedDraftTask>>,
+        TError,
+        {data: BodyType<FeedDraftInput>},
+        TContext
+      > => {
+      return useMutation(getFeedDraftTaskMutationOptions(options));
     }
 

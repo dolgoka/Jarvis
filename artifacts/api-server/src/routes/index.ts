@@ -9,6 +9,7 @@ import eventsRouter from "./events";
 import voiceRouter from "./voice";
 import peopleRouter from "./people";
 import tasksRouter from "./tasks";
+import feedRouter from "./feed";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(eventsRouter);
 router.use(voiceRouter);
 router.use(peopleRouter);
 router.use(tasksRouter);
+router.use(feedRouter);
 
 export default router;

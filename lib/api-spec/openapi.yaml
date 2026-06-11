@@ -22,6 +22,8 @@ tags:
     description: AI summaries
   - name: events
     description: Event feed
+  - name: feed
+    description: Morning feed items
 
 paths:
   /healthz:
@@ -404,6 +406,59 @@ paths:
         "404":
           description: Not found
 
+  /feed/items:
+    get:
+      operationId: getFeedItems
+      tags: [feed]
+      summary: Get pending morning feed items sorted by severity
+      responses:
+        "200":
+          description: List of pending feed items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/FeedItem"
+
+  /feed/items/{id}/dismiss:
+    patch:
+      operationId: dismissFeedItem
+      tags: [feed]
+      summary: Dismiss a feed item
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Dismissed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DismissResult"
+
+  /feed/draft-task:
+    post:
+      operationId: feedDraftTask
+      tags: [feed]
+      summary: Generate AI task draft from feed item context
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FeedDraftInput"
+      responses:
+        "200":
+          description: Task draft with business context
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeedDraft"
+
 components:
   schemas:
     HealthStatus:
@@ -770,3 +825,67 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/Person"
+
+    FeedItem:
+      type: object
+      required: [id, type, severity, title, body, status, createdAt]
+      properties:
+        id:
+          type: integer
+        businessId:
+          type: ["integer", "null"]
+        businessName:
+          type: ["string", "null"]
+        type:
+          type: string
+          enum: [task_stuck, staff, red_zone, routine]
+        severity:
+          type: string
+          enum: [critical, important, info]
+        title:
+          type: string
+        body:
+          type: string
+        relatedPerson:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, dismissed, resolved]
+        createdAt:
+          type: string
+
+    FeedDraftInput:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+        feedItemId:
+          type: integer
+
+    FeedDraft:
+      type: object
+      required: [title, description, assigneeId, assigneeName, assigneeRole, linkedPeopleIds, linkedPeople]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        assigneeId:
+          type: integer
+        assigneeName:
+          type: string
+        assigneeRole:
+          type: string
+        linkedPeopleIds:
+          type: array
+          items:
+            type: integer
+        linkedPeople:
+          type: array
+          items:
+            $ref: "#/components/schemas/Person"
+        businessId:
+          type: ["integer", "null"]
+        businessName:
+          type: ["string", "null"]

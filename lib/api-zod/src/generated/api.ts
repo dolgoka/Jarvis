@@ -379,3 +379,59 @@ export const DismissEventResponse = zod.object({
 })
 
 
+/**
+ * @summary Get pending morning feed items sorted by severity
+ */
+export const GetFeedItemsResponseItem = zod.object({
+  "id": zod.number(),
+  "businessId": zod.number().nullish(),
+  "businessName": zod.string().nullish(),
+  "type": zod.enum(['task_stuck', 'staff', 'red_zone', 'routine']),
+  "severity": zod.enum(['critical', 'important', 'info']),
+  "title": zod.string(),
+  "body": zod.string(),
+  "relatedPerson": zod.string().nullish(),
+  "status": zod.enum(['pending', 'dismissed', 'resolved']),
+  "createdAt": zod.string()
+})
+export const GetFeedItemsResponse = zod.array(GetFeedItemsResponseItem)
+
+
+/**
+ * @summary Dismiss a feed item
+ */
+export const DismissFeedItemParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DismissFeedItemResponse = zod.object({
+  "dismissed": zod.number()
+})
+
+
+/**
+ * @summary Generate AI task draft from feed item context
+ */
+export const FeedDraftTaskBody = zod.object({
+  "text": zod.string(),
+  "feedItemId": zod.number().optional()
+})
+
+export const FeedDraftTaskResponse = zod.object({
+  "title": zod.string(),
+  "description": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "linkedPeopleIds": zod.array(zod.number()),
+  "linkedPeople": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "email": zod.string().nullish()
+})),
+  "businessId": zod.number().nullish(),
+  "businessName": zod.string().nullish()
+})
+
+
