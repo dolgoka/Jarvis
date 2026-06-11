@@ -9,6 +9,7 @@ import { AuthContext } from "./hooks/AuthContext";
 import { LiquidFilters } from "./components/liquid/LiquidFilters";
 import RoleSelect from "./pages/role-select/RoleSelect";
 import RoleStub from "./pages/role-select/RoleStub";
+import { ThemeProvider } from "./hooks/ThemeContext";
 
 const GlobeDashboard  = lazy(() => import("./pages/dashboard/GlobeDashboard"));
 const BusinessList    = lazy(() => import("./pages/businesses/BusinessList"));
@@ -75,13 +76,15 @@ function AppInner() {
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <LiquidFilters />
-        <AppInner />
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <LiquidFilters />
+          <AppInner />
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

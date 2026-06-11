@@ -1,7 +1,8 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Globe, LayoutGrid, Brain, Link as LinkIcon, MessageSquare, ClipboardList, RefreshCcw } from "lucide-react";
+import { Globe, LayoutGrid, Brain, Link as LinkIcon, MessageSquare, ClipboardList, RefreshCcw, Sun, Moon } from "lucide-react";
 import { useAuthContext } from "@/hooks/AuthContext";
+import { useTheme } from "@/hooks/ThemeContext";
 
 const NAV = [
   { href: "/",            label: "Центр",   fullLabel: "Глобальный центр", icon: Globe },
@@ -15,6 +16,7 @@ const NAV = [
 export function Shell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { switchRole } = useAuthContext();
+  const { theme, toggleTheme } = useTheme();
 
   const isActive = (href: string) =>
     location === href || (href !== "/" && location.startsWith(href));
@@ -75,8 +77,20 @@ export function Shell({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        {/* Switch role */}
-        <div className="p-3" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        {/* Switch role + theme toggle */}
+        <div className="p-3 flex flex-col gap-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-3 w-full px-3 text-sm transition-colors duration-150 min-h-[46px] group"
+            style={{ borderRadius: 12, color: "rgba(228,232,255,0.25)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}
+            title={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+          >
+            {theme === "dark"
+              ? <Sun className="w-4 h-4 flex-shrink-0 opacity-40 group-hover:opacity-70" />
+              : <Moon className="w-4 h-4 flex-shrink-0 opacity-40 group-hover:opacity-70" />
+            }
+            {theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+          </button>
           <button
             onClick={switchRole}
             className="flex items-center gap-3 w-full px-3 text-sm transition-colors duration-150 min-h-[46px] group"
@@ -105,11 +119,19 @@ export function Shell({ children }: { children: ReactNode }) {
             <Globe className="w-5 h-5" style={{ color: "var(--jarvis-accent)" }} />
             <span className="font-bold tracking-widest text-base" style={{ color: "var(--jarvis-text-primary)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>JARVIS</span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#3ed9a0", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
               <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#3ed9a0" }} />
               LIVE
             </div>
+            <button
+              onClick={toggleTheme}
+              className="flex items-center justify-center w-9 h-9 transition-colors"
+              style={{ borderRadius: 10, color: "rgba(228,232,255,0.35)" }}
+              title={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             <button
               onClick={switchRole}
               className="flex items-center justify-center w-9 h-9 transition-colors"
