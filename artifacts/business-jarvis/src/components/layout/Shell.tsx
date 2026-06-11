@@ -38,7 +38,7 @@ export function Shell({ children }: { children: ReactNode }) {
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
           <div className="flex items-center gap-2.5">
-            <Globe className="w-5 h-5" style={{ color: "#8b7cff" }} />
+            <Globe className="w-5 h-5" style={{ color: "var(--jarvis-brass)" }} />
             <span className="font-bold tracking-widest text-base" style={{ color: "rgba(228,232,255,0.9)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>JARVIS</span>
           </div>
         </div>
@@ -102,7 +102,7 @@ export function Shell({ children }: { children: ReactNode }) {
           }}
         >
           <div className="flex items-center gap-2">
-            <Globe className="w-5 h-5" style={{ color: "#8b7cff" }} />
+            <Globe className="w-5 h-5" style={{ color: "var(--jarvis-brass)" }} />
             <span className="font-bold tracking-widest text-base" style={{ color: "rgba(228,232,255,0.9)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>JARVIS</span>
           </div>
           <div className="flex items-center gap-3">

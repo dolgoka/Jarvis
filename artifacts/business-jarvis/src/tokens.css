@@ -1,0 +1,35 @@
+/*
+ * ── JARVIS Design Tokens ─────────────────────────────────────────────────────
+ * Единый источник палитры. Подключается первым в index.css.
+ * Прямые значения — без HSL-обёртки, чтобы легко использовать в style={}.
+ */
+
+:root {
+  /* Фоны */
+  --jarvis-bg-screen:       #181613;
+  --jarvis-bg-card:         #1d1a16;
+  --jarvis-bg-card-inner:   #24201a;
+  --jarvis-bg-globe-center: #16140f;
+
+  /* Акцент */
+  --jarvis-accent:          #5b8bd0; /* заголовки, активное состояние */
+
+  /* Глобус */
+  --jarvis-globe-core:      #5b8bd0;
+  --jarvis-globe-edge:      #182645;
+
+  /* Латунь — ТОЛЬКО логотип, НИКОГДА на кнопках/бейджах/статусах */
+  --jarvis-brass:           #c2a35e;
+
+  /* Текст */
+  --jarvis-text-primary:    #ece7dd;
+  --jarvis-text-muted:      #928a7a;
+
+  /* Граница */
+  --jarvis-border:          rgba(255,255,255,.06);
+
+  /* Светофор — не трогаем */
+  --jarvis-ok:              #3ed9a0;
+  --jarvis-warn:            #f0b54a;
+  --jarvis-alert:           #f0625a;
+}

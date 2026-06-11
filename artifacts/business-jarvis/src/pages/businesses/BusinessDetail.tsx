@@ -951,7 +951,7 @@ function FundingChartBlock({ data, currency }: { data: InvestmentData; currency:
         <div style={{ height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,124,255,0.08)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(91,139,208,0.08)" vertical={false} />
               <XAxis dataKey="label" stroke="rgba(255,255,255,0.08)" tick={{ fill: TEXT.lo, fontSize: 10, fontFamily: HF }} />
               <YAxis stroke="rgba(255,255,255,0.08)" tick={{ fill: TEXT.lo, fontSize: 11, fontFamily: HF }}
                 tickFormatter={(v) => formatMoney(v, currency, true)} width={80} />
@@ -963,7 +963,7 @@ function FundingChartBlock({ data, currency }: { data: InvestmentData; currency:
               />
               <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                 {chartData.map((entry, index) => (
-                  <Cell key={index} fill={entry.amount === maxAmount ? "#8b7cff" : "rgba(139,124,255,0.45)"} />
+                  <Cell key={index} fill={entry.amount === maxAmount ? "#5b8bd0" : "rgba(91,139,208,0.45)"} />
                 ))}
               </Bar>
             </BarChart>
@@ -971,7 +971,7 @@ function FundingChartBlock({ data, currency }: { data: InvestmentData; currency:
         </div>
         <div style={{ paddingLeft: 16, paddingBottom: 4, marginTop: 4 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: TEXT.lo, fontFamily: HF }}>
-            <span style={{ display: "inline-block", width: 14, height: 10, borderRadius: 3, background: "#8b7cff", flexShrink: 0 }} />
+            <span style={{ display: "inline-block", width: 14, height: 10, borderRadius: 3, background: "#5b8bd0", flexShrink: 0 }} />
             Раунды финансирования
           </div>
         </div>

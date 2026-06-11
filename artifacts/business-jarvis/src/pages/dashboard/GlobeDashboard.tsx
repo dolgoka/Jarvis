@@ -342,7 +342,7 @@ export default function GlobeDashboard() {
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
           <div style={{
             position: "absolute", width: "55%", height: "55%", top: "5%", left: "5%",
-            background: "radial-gradient(ellipse at center, rgba(139,124,255,0.20) 0%, transparent 70%)",
+            background: "radial-gradient(ellipse at center, rgba(91,139,208,0.20) 0%, transparent 70%)",
             animation: "glow-drift 20s ease-in-out infinite alternate",
             willChange: "transform",
           }} />
@@ -375,12 +375,12 @@ export default function GlobeDashboard() {
                 height={dimensions.height}
                 globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
                 backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-                atmosphereColor="#8b7cff"
+                atmosphereColor="var(--jarvis-globe-core)"
                 atmosphereAltitude={0.32}
                 polygonsData={countries}
-                polygonCapColor={(d: any) => d === hoveredPolygon ? "rgba(139,124,255,0.18)" : "rgba(255,255,255,0.02)"}
-                polygonSideColor={() => "rgba(139,124,255,0.04)"}
-                polygonStrokeColor={(d: any) => d === hoveredPolygon ? "#8b7cff" : "rgba(139,124,255,0.18)"}
+                polygonCapColor={(d: any) => d === hoveredPolygon ? "rgba(91,139,208,0.18)" : "rgba(255,255,255,0.02)"}
+                polygonSideColor={() => "rgba(91,139,208,0.04)"}
+                polygonStrokeColor={(d: any) => d === hoveredPolygon ? "var(--jarvis-globe-core)" : "rgba(91,139,208,0.18)"}
                 polygonAltitude={(d: any) => d === hoveredPolygon ? 0.015 : 0.001}
                 onPolygonHover={(d: any) => {
                   const now = Date.now();
