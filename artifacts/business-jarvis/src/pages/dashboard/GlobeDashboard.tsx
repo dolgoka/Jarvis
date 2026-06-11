@@ -141,7 +141,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: { businessId:
           </div>
 
           <div style={{ padding: "10px 20px 14px", borderTop: `1px solid ${DIVIDER}` }}>
-            <Link href={`/businesses/${businessId}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,212,255,0.25)", textDecoration: "none" }}>
+            <Link href={`/businesses/${businessId}`} className="jarvis-btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,212,255,0.25)", textDecoration: "none" }}>
               <Zap className="w-3.5 h-3.5" /> Полный анализ
             </Link>
           </div>
@@ -210,7 +210,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: { businessId:
         </div>
 
         <div style={{ padding: "16px 24px 20px", borderTop: `1px solid ${DIVIDER}` }}>
-          <Link href={`/businesses/${businessId}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, textDecoration: "none", background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,212,255,0.25)" }}>
+          <Link href={`/businesses/${businessId}`} className="jarvis-btn" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, textDecoration: "none", background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,212,255,0.25)" }}>
             <Zap className="w-3.5 h-3.5" /> Полный анализ
           </Link>
         </div>
@@ -468,7 +468,7 @@ export default function GlobeDashboard() {
         {/* Quick task button */}
         <a
           href="/tasks"
-          className="hidden md:flex absolute top-6 left-1/2 -translate-x-1/2 z-10 items-center gap-2 px-5 transition-all hover:scale-105 hover:opacity-90"
+          className="jarvis-btn hidden md:flex absolute top-6 left-1/2 -translate-x-1/2 z-10 items-center gap-2 px-5 transition-all hover:scale-105 hover:opacity-90"
           style={{
             height: 36, borderRadius: 999,
             background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)",

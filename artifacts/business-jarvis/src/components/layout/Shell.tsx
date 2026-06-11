@@ -57,7 +57,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-3 px-3 font-medium text-sm transition-colors duration-150 min-h-[46px]"
+                className="jarvis-btn flex items-center gap-3 px-3 font-medium text-sm transition-colors duration-150 min-h-[46px]"
                 style={{
                   borderRadius: 12,
                   color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.38)",
@@ -144,7 +144,7 @@ export function Shell({ children }: { children: ReactNode }) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="flex flex-col items-center justify-center gap-1 w-full h-full relative transition-all duration-150"
+                  className="jarvis-btn flex flex-col items-center justify-center gap-1 w-full h-full relative transition-all duration-150"
                 >
                   <item.icon
                     className="w-5 h-5"
