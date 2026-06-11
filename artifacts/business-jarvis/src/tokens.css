@@ -78,7 +78,7 @@
 /* ═══════════════════════════════════════════════════════════
    СВЕТЛАЯ ТЕМА — .jarvis-light на <html>
    ═══════════════════════════════════════════════════════════ */
-.jarvis-light {
+html.jarvis-light {
   --jarvis-bg-screen:       #edf2fb;
   --jarvis-bg-card:         #f5f8ff;
   --jarvis-bg-card-inner:   #ffffff;

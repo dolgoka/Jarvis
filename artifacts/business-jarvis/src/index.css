@@ -165,8 +165,9 @@
     @apply antialiased bg-background text-foreground overflow-x-hidden;
     font-family: 'Hanken Grotesk', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
-    background: #0b0b12;
-    color: rgba(228, 232, 255, 0.88);
+    background: var(--jarvis-bg-screen);
+    color: var(--jarvis-text-primary);
+    transition: background 0.25s ease, color 0.25s ease;
   }
 }
 

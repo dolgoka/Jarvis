@@ -34,13 +34,27 @@ export function Shell({ children }: { children: ReactNode }) {
           borderRight: "1px solid var(--jarvis-nav-border)",
         }}
       >
-        {/* Logo */}
+        {/* Logo — click globe to toggle theme */}
         <div
           className="h-16 flex items-center px-5"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
           <div className="flex items-center gap-2.5">
-            <Globe className="w-5 h-5" style={{ color: "var(--jarvis-accent)" }} />
+            <button
+              onClick={toggleTheme}
+              title={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+              className="flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 relative group"
+              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
+            >
+              <Globe
+                className="w-5 h-5 transition-opacity duration-150 group-hover:opacity-0 absolute"
+                style={{ color: "var(--jarvis-accent)" }}
+              />
+              {theme === "dark"
+                ? <Sun className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-150" style={{ color: "var(--jarvis-accent)" }} />
+                : <Moon className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-150" style={{ color: "var(--jarvis-accent)" }} />
+              }
+            </button>
             <span className="font-bold tracking-widest text-base" style={{ color: "var(--jarvis-text-primary)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>JARVIS</span>
           </div>
         </div>
