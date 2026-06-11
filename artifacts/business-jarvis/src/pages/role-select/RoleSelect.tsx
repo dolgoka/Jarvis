@@ -157,7 +157,7 @@ export default function RoleSelect({ onSelect }: RoleSelectProps) {
                 onClick={() => onSelect(role)}
                 onMouseEnter={() => setHovered(role)}
                 onMouseLeave={() => setHovered(null)}
-                className="jarvis-btn relative text-left p-5 transition-all duration-200 focus:outline-none"
+                className="relative text-left p-5 transition-all duration-200 focus:outline-none"
                 style={{
                   borderRadius: 18,
                   background: isHovered
