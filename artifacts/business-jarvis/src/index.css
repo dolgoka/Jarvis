@@ -231,8 +231,8 @@
 }
 
 /* ─── Кнопки с градиентным фоном — блик через ::before ─── */
+/* NB: position НЕ задаём здесь — не перебиваем Tailwind absolute/relative */
 .jarvis-btn {
-  position: relative;
   overflow: hidden;
 }
 .jarvis-btn::before {
