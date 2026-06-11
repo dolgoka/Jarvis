@@ -375,12 +375,12 @@ export default function GlobeDashboard() {
                 height={dimensions.height}
                 globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
                 backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-                atmosphereColor="var(--jarvis-globe-core)"
+                atmosphereColor="#5b8bd0"
                 atmosphereAltitude={0.32}
                 polygonsData={countries}
                 polygonCapColor={(d: any) => d === hoveredPolygon ? "rgba(91,139,208,0.18)" : "rgba(255,255,255,0.02)"}
                 polygonSideColor={() => "rgba(91,139,208,0.04)"}
-                polygonStrokeColor={(d: any) => d === hoveredPolygon ? "var(--jarvis-globe-core)" : "rgba(91,139,208,0.18)"}
+                polygonStrokeColor={(d: any) => d === hoveredPolygon ? "#5b8bd0" : "rgba(91,139,208,0.18)"}
                 polygonAltitude={(d: any) => d === hoveredPolygon ? 0.015 : 0.001}
                 onPolygonHover={(d: any) => {
                   const now = Date.now();
