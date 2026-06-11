@@ -61,7 +61,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: { businessId:
   const statusColor = business?.status === "active" ? "#3ed9a0" : "#f0625a";
   const HF = "'Hanken Grotesk', system-ui, sans-serif";
   const DIVIDER = "rgba(255,255,255,0.07)";
-  const PANEL_BG = "rgba(4,8,16,0.92)";
+  const PANEL_BG = "rgba(11,11,18,0.88)";
   const PANEL_BLUR = "blur(22px) saturate(165%)";
 
   const marginNum = margin !== null ? parseFloat(margin) : null;
@@ -126,7 +126,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: { businessId:
           </div>
 
           <div style={{ padding: "14px 20px", overflowY: "auto", display: "flex", flexDirection: "column", gap: 8 }}>
-            {isLoading ? <div style={{ display: "flex", justifyContent: "center", padding: "28px 0" }}><Loader2 className="w-7 h-7 animate-spin" style={{ color: "var(--jarvis-accent)" }} /></div>
+            {isLoading ? <div style={{ display: "flex", justifyContent: "center", padding: "28px 0" }}><Loader2 className="w-7 h-7 animate-spin" style={{ color: "#8b7cff" }} /></div>
               : report ? <>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
                   <StatCard label="Выручка" value={formatMoney(report.revenue, business?.currency ?? "USD")} />
@@ -141,7 +141,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: { businessId:
           </div>
 
           <div style={{ padding: "10px 20px 14px", borderTop: `1px solid ${DIVIDER}` }}>
-            <Link href={`/businesses/${businessId}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,212,255,0.25)", textDecoration: "none" }}>
+            <Link href={`/businesses/${businessId}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, background: "linear-gradient(135deg, #8b7cff 0%, #6c6bff 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(139,124,255,0.35)", textDecoration: "none" }}>
               <Zap className="w-3.5 h-3.5" /> Полный анализ
             </Link>
           </div>
@@ -166,15 +166,15 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: { businessId:
         </div>
 
         {business?.managerName && (
-          <div style={{ padding: "16px 24px", borderBottom: `1px solid ${DIVIDER}`, background: "var(--jarvis-accent-08)" }}>
+          <div style={{ padding: "16px 24px", borderBottom: `1px solid ${DIVIDER}`, background: "rgba(139,124,255,0.04)" }}>
             <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(228,232,255,0.35)", fontFamily: HF, marginBottom: 10 }}>Руководитель</div>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 15, fontWeight: 700, background: "var(--jarvis-accent-12)", color: "var(--jarvis-accent)", border: "1.5px solid var(--jarvis-accent-35)", fontFamily: HF }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, fontSize: 15, fontWeight: 700, background: "rgba(139,124,255,0.18)", color: "#8b7cff", border: "1.5px solid rgba(139,124,255,0.40)", fontFamily: HF }}>
                 {business.managerName.charAt(0).toUpperCase()}
               </div>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 6, color: "rgba(228,232,255,0.85)", fontSize: 14, fontWeight: 600, fontFamily: HF }}>
-                  <User className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "var(--jarvis-accent)" }} />
+                  <User className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#8b7cff" }} />
                   <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{business.managerName}</span>
                 </div>
                 {business.managerEmail && (
@@ -197,7 +197,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: { businessId:
         </div>
 
         <div style={{ padding: "20px 24px", flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 12 }}>
-          {isLoading ? <div style={{ display: "flex", justifyContent: "center", padding: "64px 0" }}><Loader2 className="w-8 h-8 animate-spin" style={{ color: "var(--jarvis-accent)" }} /></div>
+          {isLoading ? <div style={{ display: "flex", justifyContent: "center", padding: "64px 0" }}><Loader2 className="w-8 h-8 animate-spin" style={{ color: "#8b7cff" }} /></div>
             : report ? <>
               <StatCard label="Выручка" value={formatMoney(report.revenue, business?.currency ?? "USD")} />
               <StatCard label="Прибыль" value={formatMoney(report.profit, business?.currency ?? "USD")} showMargin />
@@ -210,7 +210,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: { businessId:
         </div>
 
         <div style={{ padding: "16px 24px 20px", borderTop: `1px solid ${DIVIDER}` }}>
-          <Link href={`/businesses/${businessId}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, textDecoration: "none", background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,212,255,0.25)" }}>
+          <Link href={`/businesses/${businessId}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, textDecoration: "none", background: "linear-gradient(135deg, #8b7cff 0%, #6c6bff 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(139,124,255,0.35)" }}>
             <Zap className="w-3.5 h-3.5" /> Полный анализ
           </Link>
         </div>
@@ -336,53 +336,34 @@ export default function GlobeDashboard() {
 
   return (
     <Shell>
-      <div className="relative w-full h-full overflow-hidden" ref={containerRef} style={{ background: "var(--jarvis-bg-screen)" }}>
+      <div className="relative w-full h-full overflow-hidden" ref={containerRef} style={{ background: "#0b0b12" }}>
 
-        {/* ── Ambient glow blobs — из токенов ── */}
+        {/* ── Цветные radial-glow пятна — дают цвет для преломления стекла ── */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
           <div style={{
             position: "absolute", width: "55%", height: "55%", top: "5%", left: "5%",
-            background: "var(--jarvis-blob-1-bg)",
+            background: "radial-gradient(ellipse at center, rgba(91,139,208,0.20) 0%, transparent 70%)",
             animation: "glow-drift 20s ease-in-out infinite alternate",
             willChange: "transform",
           }} />
           <div style={{
             position: "absolute", width: "48%", height: "48%", top: "8%", right: "2%",
-            background: "var(--jarvis-blob-2-bg)",
+            background: "radial-gradient(ellipse at center, rgba(95,168,255,0.16) 0%, transparent 70%)",
             animation: "glow-drift-r 24s ease-in-out infinite alternate",
             willChange: "transform",
           }} />
           <div style={{
             position: "absolute", width: "42%", height: "42%", bottom: "5%", right: "12%",
-            background: "var(--jarvis-blob-3-bg)",
+            background: "radial-gradient(ellipse at center, rgba(255,143,199,0.13) 0%, transparent 70%)",
             animation: "glow-drift 28s ease-in-out infinite alternate-reverse",
             willChange: "transform",
           }} />
           <div style={{
             position: "absolute", width: "38%", height: "38%", bottom: "8%", left: "3%",
-            background: "var(--jarvis-blob-4-bg)",
+            background: "radial-gradient(ellipse at center, rgba(62,217,160,0.11) 0%, transparent 70%)",
             animation: "glow-drift-r 22s ease-in-out infinite alternate-reverse",
             willChange: "transform",
           }} />
-        </div>
-
-        {/* ── Star particles — из токенов ── */}
-        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
-          {([
-            { top: "8%",  left: "22%",  size: 1.5 },
-            { top: "5%",  left: "71%",  size: 1   },
-            { top: "18%", left: "93%",  size: 2   },
-            { top: "80%", left: "4%",   size: 1.5 },
-            { top: "88%", left: "62%",  size: 1   },
-            { top: "52%", left: "89%",  size: 1.5 },
-          ] as Array<{top:string;left:string;size:number}>).map((s, i) => (
-            <div key={i} style={{
-              position: "absolute", width: s.size, height: s.size, borderRadius: "50%",
-              background: "var(--jarvis-star-color)",
-              top: s.top, left: s.left,
-              boxShadow: `0 0 ${s.size * 3}px var(--jarvis-star-glow)`,
-            }} />
-          ))}
         </div>
 
         <div className="absolute inset-0 z-1">
@@ -394,12 +375,12 @@ export default function GlobeDashboard() {
                 height={dimensions.height}
                 globeImageUrl="//unpkg.com/three-globe/example/img/earth-blue-marble.jpg"
                 backgroundImageUrl="//unpkg.com/three-globe/example/img/night-sky.png"
-                atmosphereColor="rgba(0,180,255,0.7)"
+                atmosphereColor="#5b8bd0"
                 atmosphereAltitude={0.32}
                 polygonsData={countries}
-                polygonCapColor={(d: any) => d === hoveredPolygon ? "rgba(0,212,255,0.12)" : "rgba(255,255,255,0.02)"}
-                polygonSideColor={() => "rgba(0,100,180,0.04)"}
-                polygonStrokeColor={(d: any) => d === hoveredPolygon ? "#00d4ff" : "rgba(0,150,220,0.16)"}
+                polygonCapColor={(d: any) => d === hoveredPolygon ? "rgba(91,139,208,0.18)" : "rgba(255,255,255,0.02)"}
+                polygonSideColor={() => "rgba(91,139,208,0.04)"}
+                polygonStrokeColor={(d: any) => d === hoveredPolygon ? "#5b8bd0" : "rgba(91,139,208,0.18)"}
                 polygonAltitude={(d: any) => d === hoveredPolygon ? 0.015 : 0.001}
                 onPolygonHover={(d: any) => {
                   const now = Date.now();
@@ -471,10 +452,10 @@ export default function GlobeDashboard() {
           className="hidden md:flex absolute top-6 left-1/2 -translate-x-1/2 z-10 items-center gap-2 px-5 transition-all hover:scale-105 hover:opacity-90"
           style={{
             height: 36, borderRadius: 999,
-            background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)",
+            background: "linear-gradient(135deg, #8b7cff 0%, #6c6bff 100%)",
             color: "#fff", fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
             fontSize: 12, fontWeight: 600, letterSpacing: "0.05em",
-            boxShadow: "0 4px 16px rgba(0,212,255,0.28)",
+            boxShadow: "0 4px 16px rgba(139,124,255,0.35)",
           }}
         >
           <ClipboardList className="w-3.5 h-3.5" /> Новая задача
@@ -491,7 +472,7 @@ export default function GlobeDashboard() {
               Выручка · 30 дн
             </div>
             {isLoadingStats
-              ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--jarvis-accent)" }} />
+              ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: "#8b7cff" }} />
               : (
                 <>
                   <div className="tabular-nums" style={{ fontSize: 38, fontWeight: 800, lineHeight: 1, color: "rgba(228,232,255,0.95)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
@@ -505,7 +486,7 @@ export default function GlobeDashboard() {
             }
           </div>
 
-          {/* Traffic light legend — светофор, цвета НЕ ТРОГАТЬ */}
+          {/* Traffic light legend */}
           <div className="glass" style={{ borderRadius: 22, padding: "20px 24px" }}>
             <div className="uppercase tracking-widest font-semibold mb-4" style={{ fontSize: 11, color: "rgba(228,232,255,0.35)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
               Статус узлов
@@ -532,7 +513,7 @@ export default function GlobeDashboard() {
             <div className="uppercase tracking-widest font-semibold mb-4" style={{ fontSize: 11, color: "rgba(228,232,255,0.35)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
               Топ узлов
             </div>
-            {isLoadingTop ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--jarvis-accent)" }} /> : (
+            {isLoadingTop ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: "#8b7cff" }} /> : (
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {topBusinesses?.map((b) => {
                   const bColor = colorMap.get(b.id) ?? "#3ed9a0";
