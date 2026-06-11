@@ -39,6 +39,13 @@ type Analytics = {
     debt:    { start: number; end: number };
     profit:  { start: number; end: number; plan: number };
   };
+  investmentData?: {
+    runwayMonths: number;
+    burnRateMonthly: number;
+    burnRatePrevious?: number;
+    cashOnHand: number;
+    fundingRounds: Array<{ date: string; amount: number; round: string }>;
+  };
 };
 
 function minimalAnalytics(
@@ -89,8 +96,23 @@ const BUSINESSES: Array<{
     managerName: "Александр Вернер", managerEmail: "a.werner@meridiancapital.ae",
     description: "Диверсифицированная инвестиционная группа с AUM $2.1B. Фокус на PE, Real Estate и VC в регионе MENA и глобально.",
     revenue: 34700000, orders: 47, profit: 7634000,
-    analytics: minimalAnalytics("Александр Вернер", "Managing Partner", "green", 34700000, 7634000, "USD", "investment", "internal",
-      "Все KPI в норме: AUM $2.1B, доходность портфеля 22% YoY, дивиденды выплачены в срок"),
+    analytics: {
+      ...minimalAnalytics("Александр Вернер", "Managing Partner", "green", 34700000, 7634000, "USD", "investment", "internal",
+        "Все KPI в норме: AUM $2.1B, доходность портфеля 22% YoY, дивиденды выплачены в срок"),
+      investmentData: {
+        runwayMonths: 15,
+        burnRateMonthly: 1850000,
+        burnRatePrevious: 1920000,
+        cashOnHand: 28500000,
+        fundingRounds: [
+          { date: "2021-06", amount: 45000000, round: "Fund I Close" },
+          { date: "2022-03", amount: 120000000, round: "Fund II Close" },
+          { date: "2023-09", amount: 85000000, round: "RE Fund Close" },
+          { date: "2024-06", amount: 210000000, round: "Fund III Close" },
+          { date: "2025-01", amount: 95000000, round: "Co-invest SPV" },
+        ],
+      },
+    },
   },
   {
     name: "NovaTech Solutions Ltd",
@@ -205,8 +227,22 @@ const BUSINESSES: Array<{
     managerName: "Николас Пападопулос", managerEmail: "n.papadopoulos@heliosre.cy",
     description: "Кипрский девелопер luxury недвижимости. AUM €185M, маржа 28%. Акцент на Лимассол.",
     revenue: 2583333, orders: 12, profit: 723333,
-    analytics: minimalAnalytics("Николас Пападопулос", "CEO", "green", 2583333, 723333, "USD", "investment", "external",
-      "Маржа 28% стабильна, все сделки закрыты в срок, AUM €185M растёт"),
+    analytics: {
+      ...minimalAnalytics("Николас Пападопулос", "CEO", "green", 2583333, 723333, "USD", "investment", "external",
+        "Маржа 28% стабильна, все сделки закрыты в срок, AUM €185M растёт"),
+      investmentData: {
+        runwayMonths: 13,
+        burnRateMonthly: 620000,
+        burnRatePrevious: 650000,
+        cashOnHand: 8200000,
+        fundingRounds: [
+          { date: "2020-11", amount: 22000000, round: "Equity Raise" },
+          { date: "2022-04", amount: 48000000, round: "Fund II" },
+          { date: "2023-08", amount: 35000000, round: "Debt Facility" },
+          { date: "2024-11", amount: 80000000, round: "Fund III" },
+        ],
+      },
+    },
   },
   {
     name: "AutoDrive Systems GmbH",
@@ -230,6 +266,17 @@ const BUSINESSES: Array<{
         bdr: { "Выручка": 683333, "R&D расходы": 4800000, "Операционные расходы": 3000000, "Убыток": -287000 },
         odds: { "Операционный CF": -650000, "Инвестиционный CF": -120000, "Финансовый CF": 780000, "Итого": 10000 },
         balance: { "Активы": 12000000, "Обязательства": 3500000, "Капитал": 8500000 },
+      },
+      investmentData: {
+        runwayMonths: 14,
+        burnRateMonthly: 650000,
+        burnRatePrevious: 580000,
+        cashOnHand: 9100000,
+        fundingRounds: [
+          { date: "2022-09", amount: 3500000, round: "Seed" },
+          { date: "2023-06", amount: 5000000, round: "Pre-Series A" },
+          { date: "2025-03", amount: 6500000, round: "Series A*" },
+        ],
       },
     },
   },
@@ -298,6 +345,19 @@ const BUSINESSES: Array<{
           { name: "Deira Mixed-Use Development", status: "active" },
         ],
       },
+      investmentData: {
+        runwayMonths: 13,
+        burnRateMonthly: 3200000,
+        burnRatePrevious: 3400000,
+        cashOnHand: 42000000,
+        fundingRounds: [
+          { date: "2021-03", amount: 50000000, round: "Project Finance" },
+          { date: "2022-08", amount: 120000000, round: "Syndicated Loan" },
+          { date: "2023-11", amount: 85000000, round: "Equity Drawdown" },
+          { date: "2024-05", amount: 200000000, round: "Project Finance II" },
+          { date: "2025-02", amount: 150000000, round: "Bridge Facility" },
+        ],
+      },
     },
   },
   {
@@ -307,8 +367,22 @@ const BUSINESSES: Array<{
     managerName: "Андрей Северов", managerEmail: "a.severov@severkapital.ru",
     description: "Российская УК, AUM ₽142B. Работает в условиях санкционного давления с 2022 года.",
     revenue: 1533333, orders: 847, profit: 168666,
-    analytics: minimalAnalytics("Андрей Северов", "Генеральный директор", "yellow", 1533333, 168666, "USD", "investment", "external",
-      "Задержка регуляторного одобрения нового фонда, санкционное давление ограничивает операции"),
+    analytics: {
+      ...minimalAnalytics("Андрей Северов", "Генеральный директор", "yellow", 1533333, 168666, "USD", "investment", "external",
+        "Задержка регуляторного одобрения нового фонда, санкционное давление ограничивает операции"),
+      investmentData: {
+        runwayMonths: 11,
+        burnRateMonthly: 410000,
+        burnRatePrevious: 380000,
+        cashOnHand: 4800000,
+        fundingRounds: [
+          { date: "2021-07", amount: 8500000, round: "Привлечение LP" },
+          { date: "2022-10", amount: 12000000, round: "Фонд II" },
+          { date: "2023-05", amount: 6000000, round: "Co-invest" },
+          { date: "2024-09", amount: 4200000, round: "Допфинансирование" },
+        ],
+      },
+    },
   },
   {
     name: "Колымские Недра АО",

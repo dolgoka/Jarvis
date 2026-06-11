@@ -14,7 +14,8 @@ import {
   MapPin, Flag,
 } from "lucide-react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  LineChart, Line, BarChart, Bar, Cell,
+  XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
 } from "recharts";
 
@@ -65,6 +66,13 @@ type Analytics = {
     equity:  { start: number; end: number };
     debt:    { start: number; end: number };
     profit:  { start: number; end: number; plan: number };
+  };
+  investmentData?: {
+    runwayMonths: number;
+    burnRateMonthly: number;
+    burnRatePrevious?: number;
+    cashOnHand: number;
+    fundingRounds: Array<{ date: string; amount: number; round: string }>;
   };
 };
 
@@ -840,6 +848,156 @@ function DynamicsBlock({ history, health, currency }: { history: MonthlyPoint[];
   );
 }
 
+// ── Runway Block ──────────────────────────────────────────────────────────────
+type InvestmentData = NonNullable<Analytics["investmentData"]>;
+
+function RunwayBlock({ data, currency }: { data: InvestmentData; currency: string }) {
+  const { runwayMonths, cashOnHand } = data;
+  const color = runwayMonths >= 12 ? HC.green : runwayMonths >= 6 ? HC.yellow : HC.red;
+  const label = runwayMonths >= 12 ? "Устойчиво" : runwayMonths >= 6 ? "Внимание" : "Критично";
+  const barPct = Math.min(100, (runwayMonths / 24) * 100);
+
+  return (
+    <div style={{
+      borderRadius: 20, border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.025)", padding: "20px 22px",
+      display: "flex", flexDirection: "column", gap: 14, flex: 1, minWidth: 200,
+    }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: TEXT.lo, fontFamily: HF }}>
+        Runway
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+        <span style={{ fontSize: 48, fontWeight: 800, color, fontFamily: HF, lineHeight: 1, filter: `drop-shadow(0 0 12px ${color}55)` }}>
+          {runwayMonths}
+        </span>
+        <span style={{ fontSize: 16, fontWeight: 600, color: TEXT.mid, fontFamily: HF, paddingBottom: 6 }}>мес.</span>
+      </div>
+      <div style={{ height: 8, borderRadius: 4, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+        <div style={{
+          height: "100%", borderRadius: 4, width: `${barPct}%`,
+          background: `linear-gradient(90deg, ${color}88, ${color})`,
+          transition: "width 0.6s ease",
+        }} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{
+          padding: "3px 10px", borderRadius: 999, fontSize: 10, fontWeight: 600, fontFamily: HF,
+          background: `${color}18`, color, border: `1px solid ${color}44`,
+        }}>{label}</span>
+        <span style={{ fontSize: 12, color: TEXT.lo, fontFamily: HF }}>
+          {formatMoney(cashOnHand, currency, true)} на счетах
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ── Burn Rate Block ───────────────────────────────────────────────────────────
+function BurnRateBlock({ data, currency }: { data: InvestmentData; currency: string }) {
+  const { burnRateMonthly, burnRatePrevious } = data;
+  const delta = burnRatePrevious != null ? burnRateMonthly - burnRatePrevious : null;
+  const deltaPct = delta != null && burnRatePrevious ? Math.abs((delta / burnRatePrevious) * 100).toFixed(1) : null;
+  const trendColor = delta == null ? TEXT.mid : delta > 0 ? HC.red : HC.green;
+  const TrendIcon = delta == null ? Minus : delta > 0 ? TrendingUp : TrendingDown;
+
+  return (
+    <div style={{
+      borderRadius: 20, border: "1px solid rgba(255,255,255,0.08)",
+      background: "rgba(255,255,255,0.025)", padding: "20px 22px",
+      display: "flex", flexDirection: "column", gap: 14, flex: 1, minWidth: 200,
+    }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: TEXT.lo, fontFamily: HF }}>
+        Burn Rate / мес.
+      </div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 8 }}>
+        <span style={{ fontSize: 36, fontWeight: 800, color: TEXT.hi, fontFamily: HF, lineHeight: 1 }}>
+          {formatMoney(burnRateMonthly, currency, true)}
+        </span>
+      </div>
+      {delta != null && deltaPct != null && (
+        <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontFamily: HF, color: trendColor }}>
+          <TrendIcon style={{ width: 14, height: 14, flexShrink: 0 }} />
+          <span style={{ fontWeight: 600 }}>
+            {delta > 0 ? "+" : "−"}{deltaPct}% к прошлому месяцу
+          </span>
+        </div>
+      )}
+      {burnRatePrevious != null && (
+        <div style={{ fontSize: 11, color: TEXT.dim, fontFamily: HF }}>
+          Прошлый месяц: {formatMoney(burnRatePrevious, currency, true)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Funding Chart Block ───────────────────────────────────────────────────────
+function FundingChartBlock({ data, currency }: { data: InvestmentData; currency: string }) {
+  const { fundingRounds } = data;
+  if (!fundingRounds || fundingRounds.length === 0) return null;
+
+  const chartData = fundingRounds.map(r => ({ label: r.round, date: r.date, amount: r.amount }));
+  const maxAmount = Math.max(...chartData.map(d => d.amount));
+
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <h2 style={{ fontSize: 13, fontWeight: 600, color: TEXT.lo, fontFamily: HF, marginBottom: 4 }}>
+        История финансирования
+      </h2>
+      <div style={{
+        borderRadius: 20, border: "1px solid rgba(255,255,255,0.08)",
+        background: "rgba(255,255,255,0.025)", padding: "20px 8px 8px",
+      }}>
+        <div style={{ height: 220 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,124,255,0.08)" vertical={false} />
+              <XAxis dataKey="label" stroke="rgba(255,255,255,0.08)" tick={{ fill: TEXT.lo, fontSize: 10, fontFamily: HF }} />
+              <YAxis stroke="rgba(255,255,255,0.08)" tick={{ fill: TEXT.lo, fontSize: 11, fontFamily: HF }}
+                tickFormatter={(v) => formatMoney(v, currency, true)} width={80} />
+              <RechartsTooltip
+                contentStyle={{ backgroundColor: "rgba(11,11,18,0.95)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 12, fontSize: 13, fontFamily: HF }}
+                itemStyle={{ fontFamily: HF }}
+                labelStyle={{ color: TEXT.lo, marginBottom: 6, fontFamily: HF }}
+                formatter={(v: number) => [formatMoney(v, currency, true), "Объём"]}
+              />
+              <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
+                {chartData.map((entry, index) => (
+                  <Cell key={index} fill={entry.amount === maxAmount ? "#8b7cff" : "rgba(139,124,255,0.45)"} />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div style={{ paddingLeft: 16, paddingBottom: 4, marginTop: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: TEXT.lo, fontFamily: HF }}>
+            <span style={{ display: "inline-block", width: 14, height: 10, borderRadius: 3, background: "#8b7cff", flexShrink: 0 }} />
+            Раунды финансирования
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Investment Metrics Section ────────────────────────────────────────────────
+function InvestmentMetricsSection({ data, currency }: { data: InvestmentData; currency: string }) {
+  return (
+    <>
+      <section style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <h2 style={{ fontSize: 13, fontWeight: 600, color: TEXT.lo, fontFamily: HF, marginBottom: 4 }}>
+          Инвестиционные метрики
+        </h2>
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "stretch" }}>
+          <RunwayBlock data={data} currency={currency} />
+          <BurnRateBlock data={data} currency={currency} />
+        </div>
+      </section>
+      <FundingChartBlock data={data} currency={currency} />
+    </>
+  );
+}
+
 // ── Main page ──────────────────────────────────────────────────────────────────
 export default function BusinessDetail() {
   const [, params] = useRoute("/businesses/:id");
@@ -1036,6 +1194,11 @@ export default function BusinessDetail() {
               )}
             </div>
           </section>
+        )}
+
+        {/* ── Runway / Burn Rate / Funding — только для инвест-компаний ── */}
+        {analytics?.stage === "investment" && analytics.investmentData && (
+          <InvestmentMetricsSection data={analytics.investmentData} currency={currency} />
         )}
 
         {/* Financial forms */}
