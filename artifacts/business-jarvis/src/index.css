@@ -124,13 +124,21 @@
     0 12px 40px rgba(0, 0, 0, 0.50),
     inset 0 1px 1.5px rgba(255, 255, 255, 0.13),
     inset 0 -1px 1px  rgba(255, 255, 255, 0.04);
-  /* Диагональный отблик — мягко, не 0.22 */
+  /* Диагональный отблик — статик */
   --glass-sheen: linear-gradient(
     135deg,
-    rgba(255,255,255,0.09) 0%,
-    rgba(255,255,255,0)    40%,
-    rgba(255,255,255,0)    68%,
-    rgba(255,255,255,0.04) 100%
+    rgba(255,255,255,0.13) 0%,
+    rgba(255,255,255,0.03) 38%,
+    rgba(255,255,255,0)    65%,
+    rgba(255,255,255,0.05) 100%
+  );
+  /* Блик при наведении — ярче */
+  --glass-sheen-hover: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.26) 0%,
+    rgba(255,255,255,0.06) 38%,
+    rgba(255,255,255,0)    65%,
+    rgba(255,255,255,0.09) 100%
   );
 
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -193,6 +201,12 @@
   border-radius: inherit;
   background: var(--glass-sheen);
   pointer-events: none;
+  transition: background 0.25s ease, opacity 0.25s ease;
+}
+
+/* Усиление блика при наведении */
+.glass:hover::after {
+  background: var(--glass-sheen-hover);
 }
 
 /* Контент над бликом */
@@ -215,6 +229,36 @@
 .glass.pill {
   border-radius: 999px;
 }
+
+/* ─── Кнопки с градиентным фоном — блик через ::before ─── */
+.jarvis-btn {
+  position: relative;
+  overflow: hidden;
+}
+.jarvis-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.20) 0%,
+    rgba(255,255,255,0.04) 38%,
+    rgba(255,255,255,0)    65%
+  );
+  pointer-events: none;
+  z-index: 1;
+  transition: background 0.22s ease;
+}
+.jarvis-btn:hover::before {
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.38) 0%,
+    rgba(255,255,255,0.10) 38%,
+    rgba(255,255,255,0)    65%
+  );
+}
+.jarvis-btn > * { position: relative; z-index: 2; }
 
 /* (1) Drift-анимация цветных пятен фона */
 @keyframes glow-drift {
