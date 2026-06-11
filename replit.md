@@ -52,6 +52,7 @@ Global business intelligence command center — a real-time dashboard where an o
 - Dark theme throughout — deep space / command center aesthetic
 - Cyan/electric blue as primary accent color
 - All business language uses "command center" framing (nodes, uplink, telemetry, etc.)
+- After every completed task: attach 1–2 screenshots of verified screens. Always navigate via `?role=client` (bypasses role selector). Always hard-refresh the page before screenshotting to avoid stale HMR snapshots.
 
 ## Gotchas
 
