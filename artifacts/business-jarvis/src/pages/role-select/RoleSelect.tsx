@@ -184,6 +184,8 @@ export default function RoleSelect({ onSelect }: RoleSelectProps) {
                       background: "rgba(255,255,255,0.07)",
                       border: "1px solid rgba(255,255,255,0.15)",
                       color: "rgba(220,235,255,0.40)",
+                      position: "absolute",
+                      zIndex: 10,
                     }}
                   >
                     в разработке
