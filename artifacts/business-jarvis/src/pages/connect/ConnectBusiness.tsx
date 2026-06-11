@@ -1,10 +1,4 @@
-import { useState } from "react";
 import { Shell } from "@/components/layout/Shell";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,19 +7,63 @@ import { useCreateBusiness } from "@workspace/api-client-react";
 import { Loader2, Link as LinkIcon } from "lucide-react";
 import { useLocation } from "wouter";
 
+const HF = "'Hanken Grotesk', system-ui, sans-serif";
+const ACCENT = "#5b8bd0";
+
 const connectSchema = z.object({
-  name: z.string().min(1, "Name is required"),
-  city: z.string().min(1, "City is required"),
-  country: z.string().min(1, "Country is required"),
+  name: z.string().min(1, "Введите название"),
+  city: z.string().min(1, "Введите город"),
+  country: z.string().min(1, "Введите страну"),
   lat: z.coerce.number(),
   lng: z.coerce.number(),
-  industry: z.string().min(1, "Industry is required"),
-  managerName: z.string().min(1, "Manager name is required"),
-  managerEmail: z.string().email("Invalid email"),
+  industry: z.string().min(1, "Введите отрасль"),
+  managerName: z.string().min(1, "Введите имя менеджера"),
+  managerEmail: z.string().email("Неверный email"),
   description: z.string().optional(),
 });
 
 type ConnectFormData = z.infer<typeof connectSchema>;
+
+const fieldBase: React.CSSProperties = {
+  fontFamily: HF,
+  background: "rgba(255,255,255,0.04)",
+  border: "1px solid rgba(255,255,255,0.08)",
+  borderRadius: 12,
+  color: "rgba(228,232,255,0.88)",
+  fontSize: 14,
+  padding: "10px 14px",
+  width: "100%",
+  outline: "none",
+  transition: "border 0.2s, box-shadow 0.2s",
+};
+
+const labelBase: React.CSSProperties = {
+  fontFamily: HF,
+  fontSize: 11,
+  fontWeight: 600,
+  color: "rgba(228,232,255,0.40)",
+  display: "block",
+  marginBottom: 6,
+};
+
+const errBase: React.CSSProperties = {
+  fontFamily: HF,
+  fontSize: 11,
+  color: "rgba(240,98,90,0.85)",
+  marginTop: 4,
+};
+
+function Field({
+  label, error, children,
+}: { label: string; error?: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <label style={labelBase}>{label}</label>
+      {children}
+      {error && <p style={errBase}>{error}</p>}
+    </div>
+  );
+}
 
 export default function ConnectBusiness() {
   const { toast } = useToast();
@@ -35,130 +73,210 @@ export default function ConnectBusiness() {
   const { register, handleSubmit, formState: { errors } } = useForm<ConnectFormData>({
     resolver: zodResolver(connectSchema),
     defaultValues: {
-      name: "",
-      city: "",
-      country: "",
-      lat: 0,
-      lng: 0,
-      industry: "",
-      managerName: "",
-      managerEmail: "",
-      description: "",
-    }
+      name: "", city: "", country: "",
+      lat: 0, lng: 0, industry: "",
+      managerName: "", managerEmail: "", description: "",
+    },
   });
+
+  const focusField = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.currentTarget.style.border = `1px solid rgba(91,139,208,0.45)`;
+    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(91,139,208,0.10)";
+  };
+  const blurField = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
+    e.currentTarget.style.boxShadow = "none";
+  };
+
+  const inp = { ...register } as unknown as typeof register;
 
   const onSubmit = (data: ConnectFormData) => {
     createBusiness.mutate({ data }, {
       onSuccess: () => {
-        toast({
-          title: "UPLINK ESTABLISHED",
-          description: "Node successfully registered to the network.",
-          variant: "default",
-        });
+        toast({ title: "Узел подключён", description: "Бизнес успешно зарегистрирован в сети.", variant: "default" });
         setLocation("/businesses");
       },
       onError: () => {
-        toast({
-          title: "UPLINK FAILED",
-          description: "Failed to establish connection to node.",
-          variant: "destructive",
-        });
-      }
+        toast({ title: "Ошибка подключения", description: "Не удалось установить связь с узлом.", variant: "destructive" });
+      },
     });
   };
 
+  const pending = createBusiness.isPending;
+
   return (
     <Shell>
-      <div className="p-8 max-w-3xl mx-auto space-y-8">
+      <div style={{ fontFamily: HF }} className="p-8 max-w-3xl mx-auto space-y-8">
+
+        {/* Header */}
         <div>
-          <h1 className="text-3xl font-light text-white tracking-tight uppercase flex items-center gap-3">
-            <LinkIcon className="w-8 h-8 text-primary" />
-            Establish Node Uplink
-          </h1>
-          <p className="text-muted-foreground mt-1">Register a new business node to the global command network.</p>
+          <div className="flex items-center gap-3 mb-1">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center"
+              style={{
+                background: "rgba(91,139,208,0.12)",
+                border: "1px solid rgba(91,139,208,0.28)",
+              }}
+            >
+              <LinkIcon className="w-5 h-5" style={{ color: ACCENT }} />
+            </div>
+            <h1 className="text-2xl font-bold text-white">Подключения</h1>
+          </div>
+          <p className="text-sm ml-12" style={{ color: "rgba(255,255,255,0.38)" }}>
+            Зарегистрировать новый бизнес-узел в командной сети
+          </p>
         </div>
 
-        <Card className="bg-black/60 border-primary/30 backdrop-blur-md">
-          <CardHeader>
-            <CardTitle className="text-primary font-mono text-sm tracking-widest uppercase">Node Configuration</CardTitle>
-            <CardDescription className="text-muted-foreground">Input telemetry data for the new operation.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-primary/70 font-mono text-xs uppercase">Node Designation</Label>
-                  <Input {...register("name")} className="bg-black/40 border-primary/20 focus-visible:ring-primary text-white" placeholder="Business Name" />
-                  {errors.name && <p className="text-destructive text-xs font-mono">{errors.name.message}</p>}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-primary/70 font-mono text-xs uppercase">Sector</Label>
-                  <Input {...register("industry")} className="bg-black/40 border-primary/20 focus-visible:ring-primary text-white" placeholder="Industry" />
-                  {errors.industry && <p className="text-destructive text-xs font-mono">{errors.industry.message}</p>}
-                </div>
-              </div>
+        {/* Card */}
+        <div
+          className="glass"
+          style={{ padding: "28px" }}
+        >
+          {/* Section title */}
+          <div className="mb-6">
+            <p
+              className="text-xs font-semibold"
+              style={{ color: "rgba(91,139,208,0.75)" }}
+            >
+              Конфигурация узла
+            </p>
+            <p
+              className="text-xs mt-0.5"
+              style={{ color: "rgba(228,232,255,0.30)" }}
+            >
+              Введите телеметрические данные нового подразделения
+            </p>
+          </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-primary/70 font-mono text-xs uppercase">City</Label>
-                  <Input {...register("city")} className="bg-black/40 border-primary/20 focus-visible:ring-primary text-white" placeholder="City" />
-                  {errors.city && <p className="text-destructive text-xs font-mono">{errors.city.message}</p>}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-primary/70 font-mono text-xs uppercase">Country</Label>
-                  <Input {...register("country")} className="bg-black/40 border-primary/20 focus-visible:ring-primary text-white" placeholder="Country" />
-                  {errors.country && <p className="text-destructive text-xs font-mono">{errors.country.message}</p>}
-                </div>
-              </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label className="text-primary/70 font-mono text-xs uppercase">Latitude</Label>
-                  <Input type="number" step="any" {...register("lat")} className="bg-black/40 border-primary/20 focus-visible:ring-primary text-white font-mono" />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-primary/70 font-mono text-xs uppercase">Longitude</Label>
-                  <Input type="number" step="any" {...register("lng")} className="bg-black/40 border-primary/20 focus-visible:ring-primary text-white font-mono" />
-                </div>
-              </div>
+            {/* Row 1 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Field label="Название" error={errors.name?.message}>
+                <input
+                  style={fieldBase}
+                  placeholder="Название компании"
+                  {...register("name")}
+                  onFocus={focusField}
+                  onBlur={blurField}
+                />
+              </Field>
+              <Field label="Отрасль" error={errors.industry?.message}>
+                <input
+                  style={fieldBase}
+                  placeholder="Сфера деятельности"
+                  {...register("industry")}
+                  onFocus={focusField}
+                  onBlur={blurField}
+                />
+              </Field>
+            </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-primary/10">
-                <div className="space-y-2">
-                  <Label className="text-primary/70 font-mono text-xs uppercase">Commander Designation</Label>
-                  <Input {...register("managerName")} className="bg-black/40 border-primary/20 focus-visible:ring-primary text-white" placeholder="Manager Name" />
-                  {errors.managerName && <p className="text-destructive text-xs font-mono">{errors.managerName.message}</p>}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label className="text-primary/70 font-mono text-xs uppercase">Comms Channel</Label>
-                  <Input type="email" {...register("managerEmail")} className="bg-black/40 border-primary/20 focus-visible:ring-primary text-white" placeholder="manager@example.com" />
-                  {errors.managerEmail && <p className="text-destructive text-xs font-mono">{errors.managerEmail.message}</p>}
-                </div>
-              </div>
+            {/* Row 2 */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Field label="Город" error={errors.city?.message}>
+                <input
+                  style={fieldBase}
+                  placeholder="Город"
+                  {...register("city")}
+                  onFocus={focusField}
+                  onBlur={blurField}
+                />
+              </Field>
+              <Field label="Страна" error={errors.country?.message}>
+                <input
+                  style={fieldBase}
+                  placeholder="Страна"
+                  {...register("country")}
+                  onFocus={focusField}
+                  onBlur={blurField}
+                />
+              </Field>
+            </div>
 
-              <div className="space-y-2">
-                <Label className="text-primary/70 font-mono text-xs uppercase">Parameters / Notes</Label>
-                <Textarea {...register("description")} className="bg-black/40 border-primary/20 focus-visible:ring-primary text-white min-h-[100px]" placeholder="Additional node parameters..." />
-              </div>
+            {/* Row 3 — coordinates */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Field label="Широта">
+                <input
+                  type="number"
+                  step="any"
+                  style={fieldBase}
+                  {...register("lat")}
+                  onFocus={focusField}
+                  onBlur={blurField}
+                />
+              </Field>
+              <Field label="Долгота">
+                <input
+                  type="number"
+                  step="any"
+                  style={fieldBase}
+                  {...register("lng")}
+                  onFocus={focusField}
+                  onBlur={blurField}
+                />
+              </Field>
+            </div>
 
-              <Button 
-                type="submit" 
-                className="w-full bg-primary/20 text-primary border border-primary/50 hover:bg-primary hover:text-black font-mono tracking-widest transition-all shadow-[0_0_15px_rgba(0,212,255,0.2)]"
-                disabled={createBusiness.isPending}
-              >
-                {createBusiness.isPending ? (
-                  <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> INITIATING UPLINK...</>
-                ) : (
-                  "INITIALIZE NODE"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+            {/* Divider */}
+            <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", margin: "8px 0" }} />
+
+            {/* Row 4 — manager */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <Field label="Менеджер" error={errors.managerName?.message}>
+                <input
+                  style={fieldBase}
+                  placeholder="Имя и фамилия"
+                  {...register("managerName")}
+                  onFocus={focusField}
+                  onBlur={blurField}
+                />
+              </Field>
+              <Field label="Email" error={errors.managerEmail?.message}>
+                <input
+                  type="email"
+                  style={fieldBase}
+                  placeholder="manager@example.com"
+                  {...register("managerEmail")}
+                  onFocus={focusField}
+                  onBlur={blurField}
+                />
+              </Field>
+            </div>
+
+            {/* Notes */}
+            <Field label="Параметры / Примечания">
+              <textarea
+                rows={4}
+                style={{ ...fieldBase, resize: "none", minHeight: 100 }}
+                placeholder="Дополнительные данные по узлу…"
+                {...register("description")}
+                onFocus={focusField}
+                onBlur={blurField}
+              />
+            </Field>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={pending}
+              className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                fontFamily: HF,
+                background: "linear-gradient(135deg, #5b8bd0 0%, #3d6aad 100%)",
+                color: "#fff",
+                border: "none",
+                boxShadow: "0 4px 20px rgba(91,139,208,0.28)",
+              }}
+              onMouseEnter={e => { if (!pending) { e.currentTarget.style.boxShadow = "0 6px 28px rgba(91,139,208,0.45)"; e.currentTarget.style.transform = "translateY(-1px)"; } }}
+              onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 20px rgba(91,139,208,0.28)"; e.currentTarget.style.transform = "translateY(0)"; }}
+            >
+              {pending
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Подключаю…</>
+                : "Зарегистрировать узел"}
+            </button>
+          </form>
+        </div>
       </div>
     </Shell>
   );

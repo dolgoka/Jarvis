@@ -310,7 +310,7 @@ function WaterfallBlock({ bdr, currency }: { bdr: Record<string, number>; curren
       if (isLast) {
         color = step.rawValue < 0 ? HC.red : step.rawValue < revenue * 0.05 ? HC.yellow : HC.green;
       } else {
-        color = "#8b7cff"; // EBITDA — violet
+        color = "#5b8bd0"; // EBITDA — violet
       }
     }
 
@@ -663,7 +663,7 @@ function FormAccordion({ title, data, currency }: { title: string; data: Record<
           padding: "14px 20px", background: "transparent", cursor: "pointer",
           transition: "background 150ms",
         }}
-        onMouseEnter={e => (e.currentTarget.style.background = "rgba(139,124,255,0.05)")}
+        onMouseEnter={e => (e.currentTarget.style.background = "rgba(91,139,208,0.05)")}
         onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
         onClick={() => setOpen(o => !o)}
       >
@@ -708,10 +708,10 @@ function StructureBlock({ analytics }: { analytics: Analytics }) {
                 <div key={i} style={{ display: "flex", flexDirection: "column", gap: 5 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 13, color: TEXT.mid, fontFamily: HF, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", paddingRight: 8 }}>{p.name}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: "#8b7cff", fontFamily: HF, flexShrink: 0 }}>{p.share}%</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: "#5b8bd0", fontFamily: HF, flexShrink: 0 }}>{p.share}%</span>
                   </div>
                   <div style={{ height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
-                    <div style={{ height: "100%", borderRadius: 3, background: "linear-gradient(90deg, #8b7cff 0%, #6c6bff 100%)", width: `${p.share}%` }} />
+                    <div style={{ height: "100%", borderRadius: 3, background: "linear-gradient(90deg, #5b8bd0 0%, #3d6aad 100%)", width: `${p.share}%` }} />
                   </div>
                 </div>
               ))}
@@ -766,7 +766,7 @@ function StructureBlock({ analytics }: { analytics: Analytics }) {
           проектов доступна в квартальном отчёте управляющего.
         </p>
         <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: TEXT.dim, fontFamily: HF, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(139,124,255,0.35)", display: "inline-block" }} />
+          <span style={{ width: 6, height: 6, borderRadius: "50%", background: "rgba(91,139,208,0.35)", display: "inline-block" }} />
           Данные из квартального отчёта
         </div>
       </div>
@@ -804,9 +804,9 @@ function DynamicsBlock({ history, health, currency }: { history: MonthlyPoint[];
           {(Object.keys(METRIC_LABELS) as MetricKey[]).map(k => (
             <button key={k} onClick={() => setMetric(k)} style={{
               padding: "3px 10px", borderRadius: 999, fontSize: 11, fontWeight: 600, fontFamily: HF, cursor: "pointer",
-              background: metric === k ? "rgba(139,124,255,0.18)" : "rgba(255,255,255,0.04)",
-              color: metric === k ? "#8b7cff" : TEXT.lo,
-              border: metric === k ? "1px solid rgba(139,124,255,0.40)" : "1px solid rgba(255,255,255,0.08)",
+              background: metric === k ? "rgba(91,139,208,0.18)" : "rgba(255,255,255,0.04)",
+              color: metric === k ? "#5b8bd0" : TEXT.lo,
+              border: metric === k ? "1px solid rgba(91,139,208,0.40)" : "1px solid rgba(255,255,255,0.08)",
               transition: "all 150ms",
             }}>{METRIC_LABELS[k]}</button>
           ))}
@@ -816,7 +816,7 @@ function DynamicsBlock({ history, health, currency }: { history: MonthlyPoint[];
         <div style={{ height: 220 }}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,124,255,0.08)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(91,139,208,0.08)" vertical={false} />
               <XAxis dataKey="month" stroke="rgba(255,255,255,0.08)" tick={{ fill: TEXT.lo, fontSize: 11, fontFamily: HF }} />
               <YAxis stroke="rgba(255,255,255,0.08)" tick={{ fill: TEXT.lo, fontSize: 11, fontFamily: HF }}
                 tickFormatter={(v) => formatMoney(v, currency, true)} width={80} />
@@ -1017,7 +1017,7 @@ export default function BusinessDetail() {
     return (
       <Shell>
         <div className="flex h-full items-center justify-center">
-          <Loader2 className="w-12 h-12 animate-spin" style={{ color: "#8b7cff" }} />
+          <Loader2 className="w-12 h-12 animate-spin" style={{ color: "#5b8bd0" }} />
         </div>
       </Shell>
     );
@@ -1064,7 +1064,7 @@ export default function BusinessDetail() {
             fontSize: 12, fontWeight: 600, color: TEXT.dim, fontFamily: HF,
             transition: "color 150ms",
           }}
-          onMouseEnter={e => (e.currentTarget.style.color = "#8b7cff")}
+          onMouseEnter={e => (e.currentTarget.style.color = "#5b8bd0")}
           onMouseLeave={e => (e.currentTarget.style.color = TEXT.dim)}
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Назад к сети
@@ -1087,7 +1087,7 @@ export default function BusinessDetail() {
                   <>
                     <span style={{
                       padding: "3px 12px", borderRadius: 999, fontSize: 12, fontWeight: 600, fontFamily: HF,
-                      background: "rgba(139,124,255,0.12)", color: "#8b7cff", border: "1px solid rgba(139,124,255,0.30)",
+                      background: "rgba(91,139,208,0.12)", color: "#5b8bd0", border: "1px solid rgba(91,139,208,0.30)",
                     }}>{stageLabel}</span>
                     <span style={{
                       padding: "3px 12px", borderRadius: 999, fontSize: 12, fontWeight: 500, fontFamily: HF,
@@ -1144,9 +1144,9 @@ export default function BusinessDetail() {
 
         {/* Recommendation */}
         {analytics?.recommendation && (
-          <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "10px 16px", borderRadius: 12, background: "rgba(139,124,255,0.06)", border: "1px solid rgba(139,124,255,0.18)", fontSize: 13, fontFamily: HF, lineHeight: 1.5 }}>
-            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#8b7cff", flexShrink: 0 }}>Рекомендация:</span>
-            <span style={{ color: "rgba(180,175,255,0.80)" }}>{analytics.recommendation}</span>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 6, padding: "10px 16px", borderRadius: 12, background: "rgba(91,139,208,0.06)", border: "1px solid rgba(91,139,208,0.18)", fontSize: 13, fontFamily: HF, lineHeight: 1.5 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#5b8bd0", flexShrink: 0 }}>Рекомендация:</span>
+            <span style={{ color: "rgba(175,195,230,0.80)" }}>{analytics.recommendation}</span>
           </div>
         )}
 
@@ -1232,7 +1232,7 @@ export default function BusinessDetail() {
               {reports?.length ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={[...reports].reverse()} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(139,124,255,0.08)" vertical={false} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(91,139,208,0.08)" vertical={false} />
                     <XAxis
                       dataKey="date"
                       stroke="rgba(255,255,255,0.08)"
@@ -1257,8 +1257,8 @@ export default function BusinessDetail() {
                       labelStyle={{ color: TEXT.lo, marginBottom: 6, fontFamily: HF }}
                       formatter={(v: number) => [formatMoney(v, currency, true), ""]}
                     />
-                    <Line type="monotone" dataKey="revenue" stroke="#8b7cff" strokeWidth={2.5}
-                      dot={{ fill: "#8b7cff", r: 3 }} activeDot={{ r: 5 }} name="Выручка" />
+                    <Line type="monotone" dataKey="revenue" stroke="#5b8bd0" strokeWidth={2.5}
+                      dot={{ fill: "#5b8bd0", r: 3 }} activeDot={{ r: 5 }} name="Выручка" />
                     <Line type="monotone" dataKey="profit" stroke="#3ed9a0" strokeWidth={2.5}
                       dot={{ fill: "#3ed9a0", r: 3 }} activeDot={{ r: 5 }} name="Прибыль" />
                   </LineChart>

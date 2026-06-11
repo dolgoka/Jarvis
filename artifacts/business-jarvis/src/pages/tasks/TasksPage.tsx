@@ -56,9 +56,9 @@ function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
       className={`${sz} rounded-full flex-shrink-0 flex items-center justify-center font-semibold`}
       style={{
         fontFamily: HF,
-        background: "rgba(139,124,255,0.18)",
-        border: "1.5px solid rgba(139,124,255,0.40)",
-        color: "#8b7cff",
+        background: "rgba(91,139,208,0.18)",
+        border: "1.5px solid rgba(91,139,208,0.40)",
+        color: "#5b8bd0",
       }}
     >
       {initials(name)}
@@ -171,7 +171,7 @@ function AssigneeSelect({
           border: "1px solid rgba(255,255,255,0.08)",
           color: "rgba(228,232,255,0.85)",
         }}
-        onFocus={e => { e.currentTarget.style.border = "1px solid rgba(139,124,255,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(139,124,255,0.12)"; }}
+        onFocus={e => { e.currentTarget.style.border = "1px solid rgba(91,139,208,0.5)"; e.currentTarget.style.boxShadow = "0 0 0 3px rgba(91,139,208,0.12)"; }}
         onBlur={e => { e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)"; e.currentTarget.style.boxShadow = "none"; }}
       >
         <div className="flex items-center gap-2">
@@ -197,7 +197,7 @@ function AssigneeSelect({
         <div
           className="absolute z-50 top-full mt-1 w-full rounded-xl overflow-hidden"
           style={{
-            background: "#0f0f1a",
+            background: "#08080c",
             border: "1px solid rgba(255,255,255,0.08)",
             boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
           }}
@@ -209,7 +209,7 @@ function AssigneeSelect({
               onClick={() => { onChange(p.id); setOpen(false); }}
               className="w-full flex items-center gap-2 px-4 py-2.5 text-left transition-colors"
               style={{ fontFamily: HF }}
-              onMouseEnter={e => { e.currentTarget.style.background = "rgba(139,124,255,0.10)"; }}
+              onMouseEnter={e => { e.currentTarget.style.background = "rgba(91,139,208,0.10)"; }}
               onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
             >
               <Avatar name={p.name} size="sm" />
@@ -217,7 +217,7 @@ function AssigneeSelect({
                 <div className="text-sm font-medium" style={{ color: "rgba(228,232,255,0.85)" }}>{p.name}</div>
                 <div className="text-[10px]" style={{ color: "rgba(228,232,255,0.35)" }}>{p.role}</div>
               </div>
-              {p.id === value && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#8b7cff" }} />}
+              {p.id === value && <Check className="w-3.5 h-3.5 flex-shrink-0" style={{ color: "#5b8bd0" }} />}
             </button>
           ))}
         </div>
@@ -236,7 +236,7 @@ const fieldStyle = (error = false) => ({
   background: "rgba(255,255,255,0.04)",
   border: error ? "1px solid rgba(239,68,68,0.5)" : "1px solid rgba(255,255,255,0.08)",
   color: "rgba(228,232,255,0.88)",
-  caretColor: "#8b7cff",
+  caretColor: "#5b8bd0",
   outline: "none",
   transition: "border 0.2s, box-shadow 0.2s",
 } as React.CSSProperties);
@@ -295,8 +295,8 @@ function TaskComposer({ people, onClose, onCreated }: {
 
   // Focus/blur handlers for fields
   function onFocusField(e: React.FocusEvent<HTMLTextAreaElement | HTMLInputElement>) {
-    e.currentTarget.style.border = "1px solid rgba(139,124,255,0.5)";
-    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(139,124,255,0.12)";
+    e.currentTarget.style.border = "1px solid rgba(91,139,208,0.5)";
+    e.currentTarget.style.boxShadow = "0 0 0 3px rgba(91,139,208,0.12)";
   }
   function onBlurField(e: React.FocusEvent<HTMLTextAreaElement | HTMLInputElement>) {
     e.currentTarget.style.border = "1px solid rgba(255,255,255,0.08)";
@@ -317,7 +317,7 @@ function TaskComposer({ people, onClose, onCreated }: {
           style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
         >
           <div className="flex items-center gap-2.5">
-            <ClipboardList className="w-4 h-4" style={{ color: "#8b7cff" }} />
+            <ClipboardList className="w-4 h-4" style={{ color: "#5b8bd0" }} />
             <span
               className="text-sm font-semibold"
               style={{ fontFamily: HF, color: "rgba(228,232,255,0.85)" }}
@@ -355,7 +355,7 @@ function TaskComposer({ people, onClose, onCreated }: {
                 {voice.isTranscribing && (
                   <div
                     className="absolute bottom-3 right-3 flex items-center gap-1.5 text-[10px]"
-                    style={{ fontFamily: HF, color: "rgba(139,124,255,0.70)" }}
+                    style={{ fontFamily: HF, color: "rgba(91,139,208,0.70)" }}
                   >
                     <Loader2 className="w-3 h-3 animate-spin" /> транскрипция…
                   </div>
@@ -396,10 +396,10 @@ function TaskComposer({ people, onClose, onCreated }: {
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{
                     fontFamily: HF,
-                    background: "linear-gradient(135deg, #8b7cff 0%, #6c6bff 100%)",
+                    background: "linear-gradient(135deg, #5b8bd0 0%, #3d6aad 100%)",
                     color: "#fff",
                     border: "none",
-                    boxShadow: "0 4px 16px rgba(139,124,255,0.30)",
+                    boxShadow: "0 4px 16px rgba(91,139,208,0.30)",
                   }}
                 >
                   {isDrafting
@@ -477,8 +477,8 @@ function TaskComposer({ people, onClose, onCreated }: {
                         key={p.id}
                         className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5"
                         style={{
-                          background: "rgba(139,124,255,0.08)",
-                          border: "1px solid rgba(139,124,255,0.20)",
+                          background: "rgba(91,139,208,0.08)",
+                          border: "1px solid rgba(91,139,208,0.20)",
                         }}
                       >
                         <Avatar name={p.name} size="sm" />
@@ -526,10 +526,10 @@ function TaskComposer({ people, onClose, onCreated }: {
                   className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   style={{
                     fontFamily: HF,
-                    background: "linear-gradient(135deg, #8b7cff 0%, #6c6bff 100%)",
+                    background: "linear-gradient(135deg, #5b8bd0 0%, #3d6aad 100%)",
                     color: "#fff",
                     border: "none",
-                    boxShadow: "0 4px 16px rgba(139,124,255,0.30)",
+                    boxShadow: "0 4px 16px rgba(91,139,208,0.30)",
                   }}
                 >
                   {isSaving
@@ -613,13 +613,13 @@ export default function TasksPage() {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all flex-shrink-0"
             style={{
               fontFamily: HF,
-              background: "linear-gradient(135deg, #8b7cff 0%, #6c6bff 100%)",
+              background: "linear-gradient(135deg, #5b8bd0 0%, #3d6aad 100%)",
               color: "#fff",
               border: "none",
-              boxShadow: "0 4px 16px rgba(139,124,255,0.35)",
+              boxShadow: "0 4px 16px rgba(91,139,208,0.35)",
             }}
-            onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 24px rgba(139,124,255,0.50)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
-            onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 16px rgba(139,124,255,0.35)"; e.currentTarget.style.transform = "translateY(0)"; }}
+            onMouseEnter={e => { e.currentTarget.style.boxShadow = "0 6px 24px rgba(91,139,208,0.50)"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+            onMouseLeave={e => { e.currentTarget.style.boxShadow = "0 4px 16px rgba(91,139,208,0.35)"; e.currentTarget.style.transform = "translateY(0)"; }}
           >
             <Plus className="w-4 h-4" /> Новая задача
           </button>
@@ -628,7 +628,7 @@ export default function TasksPage() {
         {/* Loading */}
         {isLoading && (
           <div className="flex justify-center py-16">
-            <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#8b7cff" }} />
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#5b8bd0" }} />
           </div>
         )}
 
@@ -650,9 +650,9 @@ export default function TasksPage() {
             <button
               onClick={() => setComposerOpen(true)}
               className="text-xs font-medium underline underline-offset-2 transition-colors"
-              style={{ fontFamily: HF, color: "#8b7cff" }}
-              onMouseEnter={e => { e.currentTarget.style.color = "#a89eff"; }}
-              onMouseLeave={e => { e.currentTarget.style.color = "#8b7cff"; }}
+              style={{ fontFamily: HF, color: "#5b8bd0" }}
+              onMouseEnter={e => { e.currentTarget.style.color = "#7aaae8"; }}
+              onMouseLeave={e => { e.currentTarget.style.color = "#5b8bd0"; }}
             >
               Создать первую
             </button>

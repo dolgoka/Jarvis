@@ -5,7 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Brain, Sparkles, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
-const P = "#8b7cff";
+const P = "#5b8bd0";
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 
 export default function AiSummary() {
@@ -30,8 +30,8 @@ export default function AiSummary() {
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center"
                 style={{
-                  background: "rgba(139,124,255,0.12)",
-                  border: "1px solid rgba(139,124,255,0.28)",
+                  background: "rgba(91,139,208,0.12)",
+                  border: "1px solid rgba(91,139,208,0.28)",
                 }}
               >
                 <Brain className="w-5 h-5" style={{ color: P }} />
@@ -49,17 +49,17 @@ export default function AiSummary() {
               className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
               style={{
                 background: "rgba(255,255,255,0.03)",
-                border: "1px solid rgba(139,124,255,0.2)",
-                color: "rgba(139,124,255,0.6)",
+                border: "1px solid rgba(91,139,208,0.2)",
+                color: "rgba(91,139,208,0.6)",
               }}
               onMouseEnter={e => {
                 (e.currentTarget as HTMLButtonElement).style.color = P;
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(139,124,255,0.4)";
-                (e.currentTarget as HTMLButtonElement).style.background = "rgba(139,124,255,0.06)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(91,139,208,0.4)";
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(91,139,208,0.06)";
               }}
               onMouseLeave={e => {
-                (e.currentTarget as HTMLButtonElement).style.color = "rgba(139,124,255,0.6)";
-                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(139,124,255,0.2)";
+                (e.currentTarget as HTMLButtonElement).style.color = "rgba(91,139,208,0.6)";
+                (e.currentTarget as HTMLButtonElement).style.borderColor = "rgba(91,139,208,0.2)";
                 (e.currentTarget as HTMLButtonElement).style.background = "rgba(255,255,255,0.03)";
               }}
               title="Обновить"
@@ -93,7 +93,7 @@ export default function AiSummary() {
             <div className="relative">
               <div
                 className="absolute inset-0 rounded-full blur-xl"
-                style={{ background: "rgba(139,124,255,0.15)" }}
+                style={{ background: "rgba(91,139,208,0.15)" }}
               />
               <Loader2 className="w-10 h-10 animate-spin relative z-10" style={{ color: P }} />
             </div>
@@ -128,8 +128,8 @@ export default function AiSummary() {
               onClick={handleRefresh}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all"
               style={{
-                background: "rgba(139,124,255,0.1)",
-                border: "1px solid rgba(139,124,255,0.3)",
+                background: "rgba(91,139,208,0.1)",
+                border: "1px solid rgba(91,139,208,0.3)",
                 color: P,
               }}
             >
@@ -150,8 +150,8 @@ export default function AiSummary() {
               <div
                 className="absolute top-0 left-0 w-1 h-full rounded-l-[22px]"
                 style={{
-                  background: "linear-gradient(180deg, #8b7cff 0%, #6c6bff 100%)",
-                  boxShadow: "0 0 12px rgba(139,124,255,0.6)",
+                  background: "linear-gradient(180deg, #5b8bd0 0%, #3d6aad 100%)",
+                  boxShadow: "0 0 12px rgba(91,139,208,0.6)",
                 }}
               />
               <div className="pl-4">
@@ -159,7 +159,7 @@ export default function AiSummary() {
                   <Sparkles className="w-4 h-4" style={{ color: P }} />
                   <span
                     className="text-xs font-semibold uppercase tracking-wide"
-                    style={{ color: "rgba(139,124,255,0.8)" }}
+                    style={{ color: "rgba(91,139,208,0.8)" }}
                   >
                     Исполнительный синтез
                   </span>
@@ -190,7 +190,7 @@ export default function AiSummary() {
                 >
                   <span
                     className="text-sm font-bold tabular-nums flex-shrink-0 mt-0.5"
-                    style={{ color: "rgba(139,124,255,0.55)", minWidth: "24px" }}
+                    style={{ color: "rgba(91,139,208,0.55)", minWidth: "24px" }}
                   >
                     {(idx + 1).toString().padStart(2, "0")}
                   </span>

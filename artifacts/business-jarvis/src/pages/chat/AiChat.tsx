@@ -16,7 +16,7 @@ const SUGGESTED = [
   "Дай краткий статус по каждому бизнесу",
 ];
 
-const P = "#8b7cff";
+const P = "#5b8bd0";
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 
 function getMimeType(): string {
@@ -178,30 +178,30 @@ export default function AiChat() {
 
   return (
     <Shell>
-      <div className="h-full flex flex-col" style={{ fontFamily: HF, background: "#0b0b12" }}>
+      <div className="h-full flex flex-col" style={{ fontFamily: HF, background: "#08080c" }}>
 
         {/* ── Header ── */}
         <div
           className="px-6 py-4 flex items-center gap-3 flex-shrink-0"
           style={{
-            background: "rgba(139,124,255,0.04)",
-            borderBottom: "1px solid rgba(139,124,255,0.1)",
+            background: "rgba(91,139,208,0.04)",
+            borderBottom: "1px solid rgba(91,139,208,0.1)",
             backdropFilter: "blur(20px)",
           }}
         >
           <div
             className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0"
             style={{
-              background: "rgba(139,124,255,0.12)",
-              border: "1px solid rgba(139,124,255,0.28)",
-              boxShadow: "0 0 14px rgba(139,124,255,0.15)",
+              background: "rgba(91,139,208,0.12)",
+              border: "1px solid rgba(91,139,208,0.28)",
+              boxShadow: "0 0 14px rgba(91,139,208,0.15)",
             }}
           >
             <Bot className="w-4 h-4" style={{ color: P }} />
           </div>
           <div>
             <p className="text-sm font-semibold text-white leading-tight">JARVIS</p>
-            <p className="text-xs leading-tight" style={{ color: "rgba(139,124,255,0.6)" }}>
+            <p className="text-xs leading-tight" style={{ color: "rgba(91,139,208,0.6)" }}>
               Полный доступ к портфелю · Данные в реальном времени
             </p>
           </div>
@@ -222,8 +222,8 @@ export default function AiChat() {
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5"
                 style={msg.role === "assistant" ? {
-                  background: "rgba(139,124,255,0.12)",
-                  border: "1px solid rgba(139,124,255,0.25)",
+                  background: "rgba(91,139,208,0.12)",
+                  border: "1px solid rgba(91,139,208,0.25)",
                 } : {
                   background: "rgba(255,255,255,0.06)",
                   border: "1px solid rgba(255,255,255,0.1)",
@@ -239,15 +239,15 @@ export default function AiChat() {
               <div
                 className="max-w-[75%] rounded-2xl px-4 py-3"
                 style={msg.role === "assistant" ? {
-                  background: "linear-gradient(135deg, rgba(16,14,32,0.9) 0%, rgba(10,9,22,0.95) 100%)",
+                  background: "linear-gradient(135deg, rgba(12,14,20,0.92) 0%, rgba(8,9,16,0.96) 100%)",
                   backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(139,124,255,0.12)",
-                  boxShadow: "inset 0 1px 0 rgba(139,124,255,0.06), 0 4px 16px rgba(0,0,0,0.3)",
+                  border: "1px solid rgba(91,139,208,0.12)",
+                  boxShadow: "inset 0 1px 0 rgba(91,139,208,0.06), 0 4px 16px rgba(0,0,0,0.3)",
                 } : {
-                  background: "linear-gradient(135deg, rgba(139,124,255,0.13) 0%, rgba(108,107,255,0.08) 100%)",
+                  background: "linear-gradient(135deg, rgba(91,139,208,0.13) 0%, rgba(61,106,173,0.08) 100%)",
                   backdropFilter: "blur(20px)",
-                  border: "1px solid rgba(139,124,255,0.25)",
-                  boxShadow: "inset 0 1px 0 rgba(139,124,255,0.1)",
+                  border: "1px solid rgba(91,139,208,0.25)",
+                  boxShadow: "inset 0 1px 0 rgba(91,139,208,0.1)",
                 }}
               >
                 <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.85)", whiteSpace: "pre-wrap" }}>
@@ -261,7 +261,7 @@ export default function AiChat() {
                     <button
                       onClick={() => playMessage(i, msg.content)}
                       className="transition-colors"
-                      style={{ color: playingIdx === i ? P : "rgba(139,124,255,0.25)" }}
+                      style={{ color: playingIdx === i ? P : "rgba(91,139,208,0.25)" }}
                       title={playingIdx === i ? "Остановить" : "Прослушать"}
                     >
                       {playingIdx === i
@@ -281,8 +281,8 @@ export default function AiChat() {
               <div
                 className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0"
                 style={{
-                  background: "rgba(139,124,255,0.12)",
-                  border: "1px solid rgba(139,124,255,0.25)",
+                  background: "rgba(91,139,208,0.12)",
+                  border: "1px solid rgba(91,139,208,0.25)",
                 }}
               >
                 <Bot className="w-4 h-4" style={{ color: P }} />
@@ -290,13 +290,13 @@ export default function AiChat() {
               <div
                 className="rounded-2xl px-4 py-3 flex items-center gap-2"
                 style={{
-                  background: "rgba(16,14,32,0.9)",
-                  border: "1px solid rgba(139,124,255,0.12)",
+                  background: "rgba(12,14,20,0.92)",
+                  border: "1px solid rgba(91,139,208,0.12)",
                   backdropFilter: "blur(20px)",
                 }}
               >
                 <Loader2 className="w-4 h-4 animate-spin" style={{ color: P }} />
-                <span className="text-xs" style={{ color: "rgba(139,124,255,0.6)" }}>
+                <span className="text-xs" style={{ color: "rgba(91,139,208,0.6)" }}>
                   Анализирую…
                 </span>
               </div>
@@ -314,9 +314,9 @@ export default function AiChat() {
                 onClick={() => handleSend(s)}
                 className="text-xs px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105"
                 style={{
-                  background: "rgba(139,124,255,0.07)",
-                  border: "1px solid rgba(139,124,255,0.18)",
-                  color: "rgba(139,124,255,0.8)",
+                  background: "rgba(91,139,208,0.07)",
+                  border: "1px solid rgba(91,139,208,0.18)",
+                  color: "rgba(91,139,208,0.8)",
                   backdropFilter: "blur(8px)",
                 }}
               >
@@ -329,14 +329,14 @@ export default function AiChat() {
         {/* ── Input ── */}
         <div
           className="px-6 py-4 flex-shrink-0"
-          style={{ borderTop: "1px solid rgba(139,124,255,0.08)" }}
+          style={{ borderTop: "1px solid rgba(91,139,208,0.08)" }}
         >
           <div
             className="flex items-center gap-3 rounded-2xl px-4 py-2 transition-all duration-200"
             style={{
               background: "rgba(255,255,255,0.03)",
               backdropFilter: "blur(24px)",
-              border: `1px solid ${isRecording ? "rgba(240,98,90,0.5)" : "rgba(139,124,255,0.15)"}`,
+              border: `1px solid ${isRecording ? "rgba(240,98,90,0.5)" : "rgba(91,139,208,0.15)"}`,
               boxShadow: isRecording
                 ? "inset 0 1px 0 rgba(255,255,255,0.04), 0 4px 20px rgba(240,98,90,0.08)"
                 : "inset 0 1px 0 rgba(255,255,255,0.03), 0 4px 20px rgba(0,0,0,0.25)",
@@ -369,8 +369,8 @@ export default function AiChat() {
               disabled={micBusy}
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 disabled:opacity-30"
               style={{
-                background: isRecording ? "rgba(240,98,90,0.18)" : "rgba(139,124,255,0.08)",
-                border: `1px solid ${isRecording ? "rgba(240,98,90,0.4)" : "rgba(139,124,255,0.2)"}`,
+                background: isRecording ? "rgba(240,98,90,0.18)" : "rgba(91,139,208,0.08)",
+                border: `1px solid ${isRecording ? "rgba(240,98,90,0.4)" : "rgba(91,139,208,0.2)"}`,
               }}
               title={isRecording ? `Остановить (${recordSeconds}с)` : "Голосовой ввод"}
             >
@@ -378,7 +378,7 @@ export default function AiChat() {
                 ? <Loader2 className="w-3.5 h-3.5 animate-spin" style={{ color: P }} />
                 : isRecording
                 ? <MicOff className="w-3.5 h-3.5 animate-pulse" style={{ color: "#f0625a" }} />
-                : <Mic className="w-3.5 h-3.5" style={{ color: "rgba(139,124,255,0.6)" }} />
+                : <Mic className="w-3.5 h-3.5" style={{ color: "rgba(91,139,208,0.6)" }} />
               }
             </button>
 
@@ -389,10 +389,10 @@ export default function AiChat() {
               className="w-8 h-8 rounded-xl flex items-center justify-center transition-all duration-200 flex-shrink-0 disabled:opacity-30"
               style={{
                 background: input.trim() && !isPending && !isRecording
-                  ? "rgba(139,124,255,0.25)"
+                  ? "rgba(91,139,208,0.25)"
                   : "rgba(255,255,255,0.04)",
                 border: `1px solid ${input.trim() && !isPending && !isRecording
-                  ? "rgba(139,124,255,0.5)"
+                  ? "rgba(91,139,208,0.5)"
                   : "rgba(255,255,255,0.08)"}`,
               }}
             >
