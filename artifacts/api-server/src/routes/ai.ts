@@ -31,12 +31,11 @@ function fmtNum(n: number, unit: string): string {
   }
 }
 
-function fmtDelta(plan: number, actual: number, lowerIsBetter = false): string {
-  if (plan === 0) return "";
+function fmtDelta(plan: number, actual: number): string {
+  if (plan === 0) return "—";
   const pct = ((actual - plan) / Math.abs(plan)) * 100;
-  const better = lowerIsBetter ? pct < 0 : pct > 0;
   const sign = pct > 0 ? "+" : "";
-  return `${sign}${pct.toFixed(0)}% ${better ? "✅" : "🔴"}`;
+  return `${sign}${pct.toFixed(0)}%`;
 }
 
 // ── Data builders ────────────────────────────────────────────────────────────
@@ -137,21 +136,25 @@ function ruContour(c?: string | null): string {
 
 // ── Build system prompt ──────────────────────────────────────────────────────
 
+function healthWord(h: string): string {
+  if (h === "green") return "норма";
+  if (h === "yellow") return "внимание";
+  return "критично";
+}
+
 function buildSystemPrompt(
   businesses: Awaited<ReturnType<typeof buildBusinessContext>>,
   tasks: Awaited<ReturnType<typeof buildTasksContext>>,
 ): string {
-  const healthIcon = (h: string) => h === "green" ? "🟢" : h === "yellow" ? "🟡" : "🔴";
-
   const bizLines = businesses.map(b => {
     const a = b.analytics;
     const cur = b.currency;
 
-    const planFactLines = a?.planFact?.map(pf => {
+    const planFactRows = a?.planFact?.map(pf => {
       const planFmt = fmtNum(pf.plan, pf.unit);
       const actualFmt = fmtNum(pf.actual, pf.unit);
-      const delta = fmtDelta(pf.plan, pf.actual, pf.lowerIsBetter);
-      return `    ${pf.metric}: план ${planFmt} → факт ${actualFmt} ${delta}`;
+      const delta = fmtDelta(pf.plan, pf.actual);
+      return `    ${pf.metric}: план ${planFmt} | факт ${actualFmt} | откл. ${delta}`;
     }).join("\n") ?? "    нет данных";
 
     const responsibleLine = a?.responsible
@@ -164,25 +167,25 @@ function buildSystemPrompt(
 
     return `
 ── ${b.name} ──
-  Статус: ${healthIcon(b.health)} | Причина: ${a?.whyColor ?? "нет данных"}
+  Статус: ${healthWord(b.health)} | Причина: ${a?.whyColor ?? "нет данных"}
   Ответственный: ${responsibleLine}
   Стадия: ${ruStage(a?.stage)} | Контур: ${ruContour(a?.contour)} | Сектор: ${b.sector}
   Локация: ${b.city}, ${b.country}
   Финансы (${cur}): Выручка ${fmtNum(b.revenue, cur === "RUB" ? "₽" : "$")} | Прибыль ${fmtNum(b.profit, cur === "RUB" ? "₽" : "$")} | Заказы ${b.orders}
   Отклонения план-факт:
-${planFactLines}
+${planFactRows}
   События: ${eventsLine}`.trim();
   }).join("\n\n");
 
   const taskStatusLabel = (s: string, stuck: number | null) => {
-    if (s === "stuck") return `🔴 застряла${stuck ? ` (${stuck} дн)` : ""}`;
-    if (s === "accepted") return "🟡 принята";
-    return "⬜ ожидает";
+    if (s === "stuck") return `застряла${stuck ? ` (${stuck} дн)` : ""}`;
+    if (s === "accepted") return "принята";
+    return "ожидает";
   };
 
   const taskLines = tasks.length > 0
     ? tasks.map(t =>
-        `  • [${taskStatusLabel(t.status, t.stuckDays)}] "${t.title}" — исполнитель: ${t.assigneeName} (${t.assigneeRole}), создана: ${t.createdAt}`
+        `  - "${t.title}" — исполнитель: ${t.assigneeName} (${t.assigneeRole}), статус: ${taskStatusLabel(t.status, t.stuckDays)}, создана: ${t.createdAt}`
       ).join("\n")
     : "  нет активных задач";
 
@@ -194,32 +197,44 @@ ${bizLines}
 ═══════════════════ ЗАДАЧИ ВНУТРЕННЕГО КРУГА ═══════════════════
 ${taskLines}
 
-═══════════════════ ПРАВИЛА ═══════════════════
-ФОРМАТ ОТВЕТА НА ВОПРОС О КОМПАНИИ — строго такой шаблон, каждый пункт на отдельной строке:
+═══════════════════ ПРАВИЛА ФОРМАТА ═══════════════════
+Отвечай СТРОГО чистым markdown, БЕЗ каких-либо эмодзи (не используй ✅ 🔴 🟢 🟡 📊 👤 📋 и любые другие).
+Цветовой статус передавай СЛОВОМ: критично / внимание / норма.
 
-🔴/🟡/🟢 [Краткая причина статуса одним предложением]
+При вопросе о конкретной компании используй ЭТОТ ШАБЛОН:
 
-👤 Ответственный: [Имя (Должность)] — или «не назначен, слепая зона»
-📍 Стадия: [стадия по-русски] | Контур: [контур по-русски]
+**[Название компании]** — [критично / внимание / норма]
 
-📊 Отклонения план-факт:
-• [Метрика]: план X → факт Y (+Z% ✅ / −Z% 🔴)
-• [Метрика]: план X → факт Y (+Z% ✅ / −Z% 🔴)
+[Одно предложение: ключевая причина статуса]
 
-[Если есть задачи с явным упоминанием компании:]
-📋 Задачи: • «[название]» — [исполнитель], [статус]
+**Ответственный:** [Имя (Должность)] — или «не назначен, слепая зона»
+**Последний отчёт:** [дата или «нет данных»]
 
-[Итоговый вывод одним предложением — ключевой риск или сигнал к действию]
+## План-факт
 
-ВАЖНО: Стадию и контур всегда пиши по-русски (операционная, внешний и т.д.)
-Задачи — ТОЛЬКО если в названии/описании задачи явно упоминается название компании.
+| Метрика | План | Факт | Откл. |
+|---------|------|------|-------|
+| [метрика] | [план] | [факт] | [+X% или −X%] |
+
+[Повторить строку для каждой метрики из данных]
+
+## Вывод
+
+[2–3 предложения: ключевой риск или сигнал к действию. Факты отдели от гипотез.]
+
+[Если в названии/описании задачи явно упоминается эта компания, добавь:]
+
+**Задачи:** [название] — [исполнитель], [статус]
 
 ОБЩИЕ ПРАВИЛА:
 - Отвечай ТОЛЬКО по-русски, уверенно и профессионально
 - Числа форматируй красиво: «5,46 млрд ₽», «$34,7M», не сырые числа
+- В колонке «Откл.» всегда пиши со знаком: +5% или −12% (минус — дефис, не тире)
 - Помни контекст диалога — на уточнения отвечай кратко, без повтора всего briefing'а
 - Если данных нет — честно скажи, не выдумывай цифры
-- Финансы Profimonsters в рублях (₽), остальные в долларах ($)`;
+- Стадию и контур всегда пиши по-русски (операционная, внешний и т.д.)
+- Финансы Profimonsters в рублях (₽), остальные в долларах ($)
+- Задачи — ТОЛЬКО если компания явно упомянута в названии/описании задачи`;
 }
 
 // ── Routes ───────────────────────────────────────────────────────────────────
@@ -255,9 +270,12 @@ router.get("/ai/summary", async (req, res): Promise<void> => {
 Данные:
 ${JSON.stringify(businessSummaries, null, 2)}
 
-ВАЖНО: Отвечай СТРОГО на русском языке. Никакого английского — ни в summary, ни в highlights.
+ВАЖНО:
+- Отвечай СТРОГО на русском языке. Никакого английского.
+- БЕЗ эмодзи — никаких ✅ 🔴 🟢 🟡 📊 и других символов. Только текст.
+- Статус передавай словом: критично / внимание / норма.
 
-Верни JSON: {"summary":"2-3 предложения — краткое резюме для собственника","highlights":["пункт 1","пункт 2","пункт 3","пункт 4","пункт 5"]}
+Верни JSON: {"summary":"2-3 предложения — краткое резюме для собственника, без эмодзи","highlights":["пункт 1 — без эмодзи","пункт 2","пункт 3","пункт 4","пункт 5"]}
 Будь конкретен, опирайся на цифры. Выдели лидеров, отстающих и ключевые зоны внимания.`;
 
   const completion = await client.chat.completions.create({
