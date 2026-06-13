@@ -37,12 +37,16 @@ import type {
   FetchLatestReportParams,
   GetAiSummaryParams,
   GetDashboardStatsParams,
+  GetFeedParams,
   GetTopBusinessesParams,
   HealthStatus,
   ListReportsParams,
+  MarkFeedSeenParams,
+  NewsItem,
   Person,
   Report,
   ReportInput,
+  SnoozeFeedItemParams,
   Task,
   TaskDraft,
   TaskDraftInput,
@@ -1579,6 +1583,244 @@ export const useDismissEvent = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDismissEventMutationOptions(options));
+    }
+
+export const getGetFeedUrl = (params?: GetFeedParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/feed?${stringifiedParams}` : `/api/feed`
+}
+
+/**
+ * @summary Get active news feed items (status=new OR snoozed+expired)
+ */
+export const getFeed = async (params?: GetFeedParams, options?: RequestInit): Promise<NewsItem[]> => {
+
+  return customFetch<NewsItem[]>(getGetFeedUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFeedQueryKey = (params?: GetFeedParams,) => {
+    return [
+    `/api/feed`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetFeedQueryOptions = <TData = Awaited<ReturnType<typeof getFeed>>, TError = ErrorType<unknown>>(params?: GetFeedParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFeed>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFeedQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeed>>> = ({ signal }) => getFeed(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFeed>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetFeedQueryResult = NonNullable<Awaited<ReturnType<typeof getFeed>>>
+export type GetFeedQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get active news feed items (status=new OR snoozed+expired)
+ */
+
+export function useGetFeed<TData = Awaited<ReturnType<typeof getFeed>>, TError = ErrorType<unknown>>(
+ params?: GetFeedParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getFeed>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetFeedQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getMarkFeedSeenUrl = (params: MarkFeedSeenParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/feed/seen?${stringifiedParams}` : `/api/feed/seen`
+}
+
+/**
+ * @summary Mark a news feed item as seen (done)
+ */
+export const markFeedSeen = async (params: MarkFeedSeenParams, options?: RequestInit): Promise<DismissResult> => {
+
+  return customFetch<DismissResult>(getMarkFeedSeenUrl(params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getMarkFeedSeenMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markFeedSeen>>, TError,{params: MarkFeedSeenParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof markFeedSeen>>, TError,{params: MarkFeedSeenParams}, TContext> => {
+
+const mutationKey = ['markFeedSeen'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof markFeedSeen>>, {params: MarkFeedSeenParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  markFeedSeen(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MarkFeedSeenMutationResult = NonNullable<Awaited<ReturnType<typeof markFeedSeen>>>
+
+    export type MarkFeedSeenMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Mark a news feed item as seen (done)
+ */
+export const useMarkFeedSeen = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof markFeedSeen>>, TError,{params: MarkFeedSeenParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof markFeedSeen>>,
+        TError,
+        {params: MarkFeedSeenParams},
+        TContext
+      > => {
+      return useMutation(getMarkFeedSeenMutationOptions(options));
+    }
+
+export const getSnoozeFeedItemUrl = (params: SnoozeFeedItemParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/feed/snooze?${stringifiedParams}` : `/api/feed/snooze`
+}
+
+/**
+ * @summary Snooze a news feed item for N hours
+ */
+export const snoozeFeedItem = async (params: SnoozeFeedItemParams, options?: RequestInit): Promise<DismissResult> => {
+
+  return customFetch<DismissResult>(getSnoozeFeedItemUrl(params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getSnoozeFeedItemMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof snoozeFeedItem>>, TError,{params: SnoozeFeedItemParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof snoozeFeedItem>>, TError,{params: SnoozeFeedItemParams}, TContext> => {
+
+const mutationKey = ['snoozeFeedItem'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof snoozeFeedItem>>, {params: SnoozeFeedItemParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  snoozeFeedItem(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SnoozeFeedItemMutationResult = NonNullable<Awaited<ReturnType<typeof snoozeFeedItem>>>
+
+    export type SnoozeFeedItemMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Snooze a news feed item for N hours
+ */
+export const useSnoozeFeedItem = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof snoozeFeedItem>>, TError,{params: SnoozeFeedItemParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof snoozeFeedItem>>,
+        TError,
+        {params: SnoozeFeedItemParams},
+        TContext
+      > => {
+      return useMutation(getSnoozeFeedItemMutationOptions(options));
     }
 
 export const getGetFeedItemsUrl = () => {

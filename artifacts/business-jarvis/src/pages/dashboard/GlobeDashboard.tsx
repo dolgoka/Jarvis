@@ -2,9 +2,10 @@ import { useEffect, useRef, useState, useMemo, useCallback, Component, type Reac
 import Globe from "react-globe.gl";
 import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
 import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
-import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, User, Mail, Zap, ChevronDown, ClipboardList } from "lucide-react";
+import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, User, Mail, Zap, ChevronDown, ClipboardList, Newspaper } from "lucide-react";
 import { EventsFeed } from "./EventsFeed";
 import { ChatWidget } from "./ChatWidget";
+import NewsFeedOverlay from "./NewsFeedOverlay";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 import { Shell } from "@/components/layout/Shell";
@@ -226,6 +227,7 @@ export default function GlobeDashboard() {
   const [countries, setCountries] = useState<any[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState<{ id: number; color: string } | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [feedOpen, setFeedOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const lastPolygonHoverRef = useRef(0);
@@ -465,25 +467,46 @@ export default function GlobeDashboard() {
           <div className="text-[10px] font-semibold uppercase tracking-widest mt-1" style={{ color: "rgba(228,232,255,0.28)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>Командный центр</div>
         </div>
 
-        {/* Quick task button */}
-        <a
-          href="/tasks"
-          className="jarvis-btn hidden md:flex absolute top-6 left-1/2 -translate-x-1/2 z-10 items-center gap-2 px-5 transition-all hover:scale-105 hover:opacity-90"
-          style={{
-            height: 36, borderRadius: 999,
-            background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)",
-            color: "#fff", fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
-            fontSize: 12, fontWeight: 600, letterSpacing: "0.05em",
-            boxShadow: "0 4px 16px rgba(0,212,255,0.28)",
-          }}
-        >
-          <ClipboardList className="w-3.5 h-3.5" /> Новая задача
-        </a>
+        {/* Quick task button + News feed button */}
+        <div className="hidden md:flex absolute top-6 left-1/2 -translate-x-1/2 z-10 items-center gap-2">
+          <a
+            href="/tasks"
+            className="jarvis-btn flex items-center gap-2 px-5 transition-all hover:scale-105 hover:opacity-90"
+            style={{
+              height: 36, borderRadius: 999,
+              background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)",
+              color: "#fff", fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+              fontSize: 12, fontWeight: 600, letterSpacing: "0.05em",
+              boxShadow: "0 4px 16px rgba(0,212,255,0.28)",
+            }}
+          >
+            <ClipboardList className="w-3.5 h-3.5" /> Новая задача
+          </a>
+          <button
+            onClick={() => { setFeedOpen(v => !v); setSelectedBusiness(null); }}
+            className="flex items-center gap-2 px-4 transition-all hover:scale-105"
+            style={{
+              height: 36, borderRadius: 999,
+              background: feedOpen ? "rgba(239,68,68,0.18)" : "rgba(255,255,255,0.07)",
+              border: feedOpen ? "1px solid rgba(239,68,68,0.55)" : "1px solid rgba(255,255,255,0.12)",
+              color: feedOpen ? "#ef4444" : "rgba(228,232,255,0.65)",
+              fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
+              fontSize: 12, fontWeight: 600, letterSpacing: "0.05em",
+              cursor: "pointer", backdropFilter: "blur(12px)",
+            }}
+          >
+            <Newspaper className="w-3.5 h-3.5" /> Лента
+          </button>
+        </div>
 
         {/* ── Desktop stats panel ── */}
         <div
           className="hidden md:flex absolute top-6 right-6 z-10 flex-col gap-3 w-72 pointer-events-auto transition-all duration-300"
-          style={{ transform: selectedBusiness ? "translateX(130%)" : "translateX(0)", opacity: selectedBusiness ? 0 : 1 }}
+          style={{
+            transform: (selectedBusiness || feedOpen) ? "translateX(130%)" : "translateX(0)",
+            opacity: (selectedBusiness || feedOpen) ? 0 : 1,
+            pointerEvents: (selectedBusiness || feedOpen) ? "none" : "auto",
+          }}
         >
           {/* Revenue */}
           <div className="glass strong" style={{ borderRadius: 22, padding: "20px 24px" }}>
@@ -607,6 +630,18 @@ export default function GlobeDashboard() {
               )}
             </div>
           </div>
+        )}
+
+        {/* News feed overlay */}
+        {feedOpen && !selectedBusiness && (
+          <NewsFeedOverlay
+            onClose={() => setFeedOpen(false)}
+            onSelectBusiness={(id) => {
+              const bColor = colorMap.get(id) ?? "#3ed9a0";
+              setSelectedBusiness({ id, color: bColor });
+              setFeedOpen(false);
+            }}
+          />
         )}
 
         {/* Chat widget */}

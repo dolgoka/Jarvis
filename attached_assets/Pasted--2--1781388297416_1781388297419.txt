@@ -1,0 +1,54 @@
+Задача (Шаг 2): Лента новостей поверх главного экрана-глобуса.
+
+КОНТЕКСТ: глобус с компаниями и светофором уже готов (GlobeDashboard.tsx).
+Нужно добавить ленту новостей-карточек: она появляется ПОВЕРХ глобуса при входе
+и листается «как ходы». Если в репозитории есть docs/ui-spec-step2-lenta.md — там
+полная спека с таблицами, сверяйся с ней.
+
+ЖЁСТКИЕ ПРАВИЛА:
+- Contract-first: схема БД → openapi.yaml → codegen → роут → фронт. После правки
+  openapi ОБЯЗАТЕЛЬНО прогнать codegen.
+- id передавать query-параметром, НЕ в path (иначе коллизия Zod/TS в barrel-файле).
+- Переиспользовать существующее: glass-классы, цвета светофора
+  (#22c55e/#f5b301/#ef4444), компонент BusinessSlideOver, lucide-иконки, Shell.
+  Новый дизайн не плодить.
+- Всё на русском. НИКАКИХ реальных имён людей/владельца в данных — только
+  согласованные вымышленные.
+- iPad landscape — основное; поддержать light/dark и prefers-reduced-motion.
+
+ЧТО СДЕЛАТЬ:
+1. БД: таблица feed_items (lib/db/src/schema/feed.ts) + регистрация в index.ts.
+   Поля: id, severity(enum critical/attention/info), type(enum
+   urgent/hr/corporate/task/external), title, body, businessId(nullable),
+   sourceLabel, isUrgentFlag(bool), actionable(bool), status(enum
+   new/snoozed/done), snoozedUntil(nullable), createdAt. Затем db push.
+2. Seed: 8–12 правдоподобных карточек разных type/severity на существующих
+   businesses (1–2 с isUrgentFlag, пара snoozed). Без реальных имён.
+3. openapi.yaml + codegen:
+   - GET /feed (query: severity?, includeExternal=false по умолчанию)
+   - POST /feed/seen?id   (→ status='done')
+   - POST /feed/snooze?id&hours?   (→ status='snoozed')
+   Правило активной ленты: status='new' ИЛИ (snoozed И snoozedUntil<=now).
+   Сортировка: isUrgentFlag DESC, severity (critical>attention>info),
+   createdAt DESC. type='external' по умолчанию исключать.
+4. Роут feed.ts, подключить в routes/index.ts.
+5. Фронт: компонент NewsFeedOverlay поверх GlobeDashboard. Глобус — фон, слегка
+   притемнён вуалью (rgba(2,6,14,0.45) + лёгкий blur), продолжает вращаться.
+   Панель сводки и легенду глобуса скрывать, пока лента активна (как уже сделано
+   для selectedBusiness).
+6. Карточка новости по центру со стопкой-тенями сзади: левый цветной кант по
+   severity (critical пульсирует), тег срочности, бейдж «СРОЧНО» при isUrgentFlag,
+   чип компании (тап → BusinessSlideOver), источник+время, заголовок, тело (тап
+   разворачивает). Сверху — фильтр-чипы [🔴 n][🟡 n][🟢 n] для оттегивания.
+   Кнопка ✕ закрыть ленту (непросмотренные остаются на следующий вход).
+7. Кнопки под карточкой:
+   - герой «● Ответить» (иконка микрофона; пока ЗАГЛУШКА-черновик с TODO) — над рядом
+   - ряд: [← Назад] (свайп вправо, к предыдущей) · (Вернуться позже) (свайп вниз,
+     snooze) · [Далее →] (свайп влево, seen)
+   - счётчик «3 / 13»
+   Колода карточек хранится в памяти сессии, чтобы «Назад» работал.
+8. Состояния: загрузка (скелет), пусто / фильтр пуст, «День разобран» (все
+   разобраны → спокойная плашка + глобус в фокус), ошибка (лента НЕ блокирует
+   глобус), возврат в течение дня (new + дозревшие snoozed).
+9. Проверить плавность на планшетном вьюпорте поверх крутящегося глобуса.
+   pnpm run typecheck → build. Коммит без реальных имён.

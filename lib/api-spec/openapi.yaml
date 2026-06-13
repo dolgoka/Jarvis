@@ -406,6 +406,76 @@ paths:
         "404":
           description: Not found
 
+  /feed:
+    get:
+      operationId: getFeed
+      tags: [feed]
+      summary: Get active news feed items (status=new OR snoozed+expired)
+      parameters:
+        - name: severity
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [critical, attention, info]
+        - name: includeExternal
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of active news items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NewsItem"
+
+  /feed/seen:
+    post:
+      operationId: markFeedSeen
+      tags: [feed]
+      summary: Mark a news feed item as seen (done)
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Marked as done
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DismissResult"
+
+  /feed/snooze:
+    post:
+      operationId: snoozeFeedItem
+      tags: [feed]
+      summary: Snooze a news feed item for N hours
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: hours
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Snoozed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DismissResult"
+
   /feed/items:
     get:
       operationId: getFeedItems
@@ -862,6 +932,40 @@ components:
           type: string
         feedItemId:
           type: integer
+
+    NewsItem:
+      type: object
+      required: [id, severity, type, title, body, sourceLabel, isUrgentFlag, actionable, status, createdAt]
+      properties:
+        id:
+          type: integer
+        severity:
+          type: string
+          enum: [critical, attention, info]
+        type:
+          type: string
+          enum: [urgent, hr, corporate, task, external]
+        title:
+          type: string
+        body:
+          type: string
+        businessId:
+          type: ["integer", "null"]
+        businessName:
+          type: ["string", "null"]
+        sourceLabel:
+          type: string
+        isUrgentFlag:
+          type: boolean
+        actionable:
+          type: boolean
+        status:
+          type: string
+          enum: [new, snoozed, done]
+        snoozedUntil:
+          type: ["string", "null"]
+        createdAt:
+          type: string
 
     FeedDraft:
       type: object

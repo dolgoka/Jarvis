@@ -322,6 +322,54 @@ export interface FeedDraftInput {
   feedItemId?: number;
 }
 
+export type NewsItemSeverity = typeof NewsItemSeverity[keyof typeof NewsItemSeverity];
+
+
+export const NewsItemSeverity = {
+  critical: 'critical',
+  attention: 'attention',
+  info: 'info',
+} as const;
+
+export type NewsItemType = typeof NewsItemType[keyof typeof NewsItemType];
+
+
+export const NewsItemType = {
+  urgent: 'urgent',
+  hr: 'hr',
+  corporate: 'corporate',
+  task: 'task',
+  external: 'external',
+} as const;
+
+export type NewsItemStatus = typeof NewsItemStatus[keyof typeof NewsItemStatus];
+
+
+export const NewsItemStatus = {
+  new: 'new',
+  snoozed: 'snoozed',
+  done: 'done',
+} as const;
+
+export interface NewsItem {
+  id: number;
+  severity: NewsItemSeverity;
+  type: NewsItemType;
+  title: string;
+  body: string;
+  /** @nullable */
+  businessId?: number | null;
+  /** @nullable */
+  businessName?: string | null;
+  sourceLabel: string;
+  isUrgentFlag: boolean;
+  actionable: boolean;
+  status: NewsItemStatus;
+  /** @nullable */
+  snoozedUntil?: string | null;
+  createdAt: string;
+}
+
 export interface FeedDraft {
   title: string;
   description: string;
@@ -403,4 +451,27 @@ export const GetAiSummaryPeriod = {
   week: 'week',
   month: 'month',
 } as const;
+
+export type GetFeedParams = {
+severity?: GetFeedSeverity;
+includeExternal?: boolean;
+};
+
+export type GetFeedSeverity = typeof GetFeedSeverity[keyof typeof GetFeedSeverity];
+
+
+export const GetFeedSeverity = {
+  critical: 'critical',
+  attention: 'attention',
+  info: 'info',
+} as const;
+
+export type MarkFeedSeenParams = {
+id: number;
+};
+
+export type SnoozeFeedItemParams = {
+id: number;
+hours?: number;
+};
 

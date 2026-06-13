@@ -380,6 +380,57 @@ export const DismissEventResponse = zod.object({
 
 
 /**
+ * @summary Get active news feed items (status=new OR snoozed+expired)
+ */
+export const GetFeedQueryParams = zod.object({
+  "severity": zod.enum(['critical', 'attention', 'info']).optional(),
+  "includeExternal": zod.coerce.boolean().optional()
+})
+
+export const GetFeedResponseItem = zod.object({
+  "id": zod.number(),
+  "severity": zod.enum(['critical', 'attention', 'info']),
+  "type": zod.enum(['urgent', 'hr', 'corporate', 'task', 'external']),
+  "title": zod.string(),
+  "body": zod.string(),
+  "businessId": zod.number().nullish(),
+  "businessName": zod.string().nullish(),
+  "sourceLabel": zod.string(),
+  "isUrgentFlag": zod.boolean(),
+  "actionable": zod.boolean(),
+  "status": zod.enum(['new', 'snoozed', 'done']),
+  "snoozedUntil": zod.string().nullish(),
+  "createdAt": zod.string()
+})
+export const GetFeedResponse = zod.array(GetFeedResponseItem)
+
+
+/**
+ * @summary Mark a news feed item as seen (done)
+ */
+export const MarkFeedSeenQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const MarkFeedSeenResponse = zod.object({
+  "dismissed": zod.number()
+})
+
+
+/**
+ * @summary Snooze a news feed item for N hours
+ */
+export const SnoozeFeedItemQueryParams = zod.object({
+  "id": zod.coerce.number(),
+  "hours": zod.coerce.number().optional()
+})
+
+export const SnoozeFeedItemResponse = zod.object({
+  "dismissed": zod.number()
+})
+
+
+/**
  * @summary Get pending morning feed items sorted by severity
  */
 export const GetFeedItemsResponseItem = zod.object({
