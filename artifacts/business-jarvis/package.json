@@ -77,6 +77,8 @@
   },
   "dependencies": {
     "@types/three": "^0.184.1",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "three": "^0.184.0"
   }
 }

@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { useAiChat } from "@workspace/api-client-react";
 import { MessageSquare, Send, X, ChevronUp, Loader2, Mic, MicOff, Volume2, Square } from "lucide-react";
+import { AiAnswer } from "@/components/ui/AiAnswer";
 
 interface Message {
   role: "user" | "assistant";
@@ -212,22 +213,32 @@ export function ChatWidget() {
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 <div
-                  className="rounded-xl px-3 py-2 max-w-[85%] text-sm leading-relaxed font-mono"
+                  className="rounded-xl"
                   style={
                     m.role === "user"
                       ? {
+                          maxWidth: "82%",
                           background: "rgba(0,212,255,0.12)",
                           border: "1px solid rgba(0,212,255,0.2)",
                           color: "rgba(255,255,255,0.9)",
+                          padding: "7px 12px",
+                          fontSize: "13px",
+                          lineHeight: 1.5,
+                          fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
                         }
                       : {
+                          maxWidth: "88%",
                           background: "rgba(255,255,255,0.04)",
                           border: "1px solid rgba(255,255,255,0.08)",
-                          color: "rgba(255,255,255,0.75)",
+                          padding: "10px 13px 8px",
                         }
                   }
                 >
-                  {m.text}
+                  {m.role === "assistant" ? (
+                    <AiAnswer markdown={m.text} compact />
+                  ) : (
+                    m.text
+                  )}
                   {m.role === "assistant" && (
                     <div className="mt-1.5 flex justify-end">
                       <button

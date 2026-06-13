@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Shell } from "@/components/layout/Shell";
 import { useAiChat } from "@workspace/api-client-react";
 import { Send, Bot, User, Loader2, Mic, MicOff, Volume2, Square } from "lucide-react";
+import { AiAnswer } from "@/components/ui/AiAnswer";
 
 interface Message {
   role: "user" | "assistant";
@@ -237,22 +238,30 @@ export default function AiChat() {
 
               {/* Bubble */}
               <div
-                className="max-w-[75%] rounded-2xl px-4 py-3"
+                className="rounded-2xl"
                 style={msg.role === "assistant" ? {
+                  maxWidth: "78%",
                   background: "linear-gradient(135deg, rgba(12,14,20,0.92) 0%, rgba(8,9,16,0.96) 100%)",
                   backdropFilter: "blur(20px)",
                   border: "1px solid rgba(91,139,208,0.12)",
                   boxShadow: "inset 0 1px 0 rgba(91,139,208,0.06), 0 4px 16px rgba(0,0,0,0.3)",
+                  padding: "14px 18px 10px",
                 } : {
+                  maxWidth: "70%",
                   background: "linear-gradient(135deg, rgba(91,139,208,0.13) 0%, rgba(61,106,173,0.08) 100%)",
                   backdropFilter: "blur(20px)",
                   border: "1px solid rgba(91,139,208,0.25)",
                   boxShadow: "inset 0 1px 0 rgba(91,139,208,0.1)",
+                  padding: "10px 14px",
                 }}
               >
-                <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.85)", whiteSpace: "pre-wrap" }}>
-                  {msg.content}
-                </p>
+                {msg.role === "assistant" ? (
+                  <AiAnswer markdown={msg.content} />
+                ) : (
+                  <p className="text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.85)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
+                    {msg.content}
+                  </p>
+                )}
                 <div className={`flex items-center mt-2 gap-2 ${msg.role === "assistant" ? "" : "flex-row-reverse"}`}>
                   <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.22)" }}>
                     {new Date(msg.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}

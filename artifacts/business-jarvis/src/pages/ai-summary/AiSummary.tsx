@@ -3,6 +3,7 @@ import { Shell } from "@/components/layout/Shell";
 import { useGetAiSummary, getGetAiSummaryQueryKey, GetAiSummaryPeriod } from "@workspace/api-client-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Brain, Sparkles, Loader2, RefreshCw, AlertTriangle } from "lucide-react";
+import { AiAnswer } from "@/components/ui/AiAnswer";
 import { useQueryClient } from "@tanstack/react-query";
 
 const P = "#5b8bd0";
@@ -164,9 +165,7 @@ export default function AiSummary() {
                     Исполнительный синтез
                   </span>
                 </div>
-                <p className="text-base leading-relaxed" style={{ color: "rgba(255,255,255,0.88)" }}>
-                  {summary.summary}
-                </p>
+                <AiAnswer markdown={summary.summary} />
                 <p
                   className="mt-5 text-xs"
                   style={{
