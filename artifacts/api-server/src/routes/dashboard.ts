@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, businessesTable, reportsTable } from "@workspace/db";
 import {
   GetDashboardStatsQueryParams,
@@ -74,7 +74,7 @@ router.get("/dashboard/top-businesses", async (req, res): Promise<void> => {
 
   for (const b of businesses) {
     const reports = await db.select().from(reportsTable)
-      .where(eq(reportsTable.businessId, b.id) && eq(reportsTable.period, period))
+      .where(and(eq(reportsTable.businessId, b.id), eq(reportsTable.period, period)))
       .orderBy(reportsTable.date)
       .limit(1);
 

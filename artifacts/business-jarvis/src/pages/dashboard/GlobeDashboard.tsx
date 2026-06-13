@@ -239,6 +239,7 @@ export default function GlobeDashboard() {
   const [countries, setCountries] = useState<any[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState<{ id: number; color: string } | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [rankingOpen, setRankingOpen] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
   const [feedDismissed, setFeedDismissed] = useState(false);
   const [dockPanel, setDockPanel] = useState<DockPanel>(null);
@@ -343,8 +344,8 @@ export default function GlobeDashboard() {
     setSelectedBusiness(null);
   }, [feedOpen]);
 
-  /* Right panels: hide when dock/feed/selection active */
-  const rightPanelsVisible = !selectedBusiness && !feedOpen && dockPanel === null;
+  /* Corners: hide when dock/feed/selection active */
+  const cornersVisible = !selectedBusiness && !feedOpen && dockPanel === null;
 
   /* 2D fallback */
   const Fallback2D = useMemo(() => (
@@ -513,10 +514,27 @@ export default function GlobeDashboard() {
           </div>
         )}
 
-        {/* ── Top-left: title ── */}
-        <div className="absolute top-4 md:top-6 left-4 md:left-6 z-10 pointer-events-none">
+        {/* ── Top-left: title + health chips ── */}
+        <div
+          className="absolute top-4 md:top-6 left-4 md:left-6 z-10 pointer-events-none"
+          style={{
+            transition: "opacity 300ms ease",
+            opacity: cornersVisible ? 1 : 0,
+          }}
+        >
           <h1 className="text-base md:text-xl font-bold leading-none" style={{ color: "rgba(228,232,255,0.90)", fontFamily: HF }}>Глобальный центр</h1>
           <div className="text-[10px] font-semibold uppercase tracking-widest mt-1" style={{ color: "rgba(228,232,255,0.26)", fontFamily: HF }}>Командный центр</div>
+          {/* Traffic-light chips */}
+          <div className="hidden md:flex items-center gap-3 mt-3">
+            {(["green", "yellow", "red"] as const).map(h => (
+              <div key={h} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                <div style={{ width: 8, height: 8, borderRadius: "50%", background: HEALTH_COLORS[h], boxShadow: `0 0 5px 2px ${HEALTH_COLORS[h]}66`, flexShrink: 0 }} />
+                <span style={{ fontSize: 11, color: "rgba(228,232,255,0.48)", fontFamily: HF }}>
+                  {healthCounts[h]} {HEALTH_LABELS[h]}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ── Top-center: Лента button ── */}
@@ -537,80 +555,106 @@ export default function GlobeDashboard() {
           </button>
         </div>
 
-        {/* ── Desktop: right stats panels ── */}
+        {/* ── Desktop: top-right compact HUD (revenue + ranking) ── */}
         <div
-          className="hidden md:flex absolute top-6 right-6 z-10 flex-col gap-3 w-72 pointer-events-auto"
+          className="hidden md:flex absolute top-6 right-6 z-10 flex-col items-end gap-2 pointer-events-auto"
           style={{
             transition: "transform 300ms cubic-bezier(0.4,0,0.2,1), opacity 300ms ease",
-            transform: rightPanelsVisible ? "translateX(0)" : "translateX(130%)",
-            opacity: rightPanelsVisible ? 1 : 0,
-            pointerEvents: rightPanelsVisible ? "auto" : "none",
+            transform: cornersVisible ? "translateX(0)" : "translateX(120%)",
+            opacity: cornersVisible ? 1 : 0,
+            pointerEvents: cornersVisible ? "auto" : "none",
           }}
         >
-          {/* Revenue */}
-          <div className="glass" style={{ borderRadius: 22, padding: "20px 24px" }}>
-            <div className="uppercase tracking-widest font-semibold mb-3" style={{ fontSize: 11, color: "rgba(228,232,255,0.35)", fontFamily: HF }}>
+          {/* Revenue readout */}
+          <div className="glass" style={{ borderRadius: 18, padding: "14px 20px", minWidth: 190 }}>
+            <div className="uppercase tracking-widest font-semibold" style={{ fontSize: 10, color: "rgba(228,232,255,0.30)", fontFamily: HF, marginBottom: 8 }}>
               Выручка · 30 дн
             </div>
             {isLoadingStats
-              ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--jarvis-accent)" }} />
+              ? <Loader2 className="h-5 w-5 animate-spin" style={{ color: "var(--jarvis-accent)" }} />
               : <>
-                  <div className="tabular-nums" style={{ fontSize: 38, fontWeight: 800, lineHeight: 1, color: "rgba(228,232,255,0.95)", fontFamily: HF }}>
+                  <div className="tabular-nums" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, color: "rgba(228,232,255,0.95)", fontFamily: HF }}>
                     {formatCurrency(stats?.totalRevenue || 0)}
                   </div>
-                  <div className="inline-flex items-center gap-1 mt-3 px-2 py-0.5 rounded-full text-xs font-semibold" style={{ background: "rgba(62,217,160,0.13)", color: "#3ed9a0", fontFamily: HF }}>
+                  <div className="inline-flex items-center gap-1 mt-2.5" style={{ fontSize: 11, fontWeight: 600, color: "#3ed9a0", fontFamily: HF }}>
                     ↑ Активно
                   </div>
                 </>
             }
           </div>
 
-          {/* Traffic light */}
-          <div className="glass" style={{ borderRadius: 22, padding: "20px 24px" }}>
-            <div className="uppercase tracking-widest font-semibold mb-4" style={{ fontSize: 11, color: "rgba(228,232,255,0.35)", fontFamily: HF }}>
-              Статус узлов
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {(["green", "yellow", "red"] as const).map(h => (
-                <div key={h} style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ width: 12, height: 12, borderRadius: "50%", flexShrink: 0, background: HEALTH_COLORS[h], boxShadow: `0 0 6px 2px ${HEALTH_COLORS[h]}55` }} />
-                    <span style={{ color: "rgba(228,232,255,0.68)", fontSize: 14, fontFamily: HF }}>{HEALTH_LABELS[h]}</span>
+          {/* Рейтинг toggle chip */}
+          <button
+            onClick={() => setRankingOpen(v => !v)}
+            style={{
+              display: "flex", alignItems: "center", gap: 6,
+              height: 30, paddingInline: 14, borderRadius: 999,
+              background: rankingOpen ? "rgba(0,212,255,0.14)" : "rgba(255,255,255,0.06)",
+              border: rankingOpen ? "1px solid rgba(0,212,255,0.45)" : "1px solid rgba(255,255,255,0.10)",
+              color: rankingOpen ? "var(--jarvis-accent)" : "rgba(228,232,255,0.45)",
+              fontFamily: HF, fontSize: 11, fontWeight: 600, letterSpacing: "0.04em",
+              cursor: "pointer", backdropFilter: "blur(12px)",
+              transition: "background 200ms, border-color 200ms, color 200ms",
+            }}
+          >
+            <Zap className="w-3 h-3" />
+            Рейтинг
+          </button>
+
+          {/* Top nodes slide-down */}
+          {rankingOpen && (
+            <div className="glass" style={{ borderRadius: 18, padding: "16px 20px", width: 248 }}>
+              <div className="uppercase tracking-widest font-semibold mb-3" style={{ fontSize: 10, color: "rgba(228,232,255,0.30)", fontFamily: HF }}>
+                Топ узлов
+              </div>
+              {isLoadingTop
+                ? <Loader2 className="h-5 w-5 animate-spin" style={{ color: "var(--jarvis-accent)" }} />
+                : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    {topBusinesses?.map(b => {
+                      const bColor = colorMap.get(b.id) ?? "#3ed9a0";
+                      return (
+                        <div key={b.id}
+                          style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", minHeight: 40, borderRadius: 10, padding: "0 6px", margin: "0 -6px", transition: "background 150ms" }}
+                          onClick={() => { setSelectedBusiness({ id: b.id, color: bColor }); setRankingOpen(false); }}
+                          onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+                        >
+                          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                            <div style={{ width: 7, height: 7, borderRadius: "50%", flexShrink: 0, background: bColor, boxShadow: `0 0 5px 2px ${bColor}55` }} />
+                            <span style={{ color: "rgba(228,232,255,0.60)", fontSize: 13, fontFamily: HF, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</span>
+                          </div>
+                          <span style={{ color: "rgba(228,232,255,0.32)", fontSize: 11, fontFamily: HF, marginLeft: 8, flexShrink: 0 }}>{formatCurrency(b.revenue)}</span>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <span style={{ color: "rgba(228,232,255,0.48)", fontSize: 15, fontFamily: HF, fontWeight: 600 }}>{healthCounts[h]}</span>
+                )}
+            </div>
+          )}
+        </div>
+
+        {/* ── Desktop: bottom-left currency stub ── */}
+        <div
+          className="hidden md:block absolute left-6 z-10 pointer-events-none"
+          style={{
+            bottom: 88,
+            transition: "opacity 300ms ease",
+            opacity: cornersVisible ? 0.7 : 0,
+          }}
+        >
+          <div className="glass" style={{ borderRadius: 16, padding: "10px 16px" }}>
+            <div className="uppercase tracking-widest font-semibold mb-2" style={{ fontSize: 9, color: "rgba(228,232,255,0.22)", fontFamily: HF }}>
+              Валюты · Ключевое
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+              {([["USD/EUR", "0.924"], ["USD/RUB", "89.4"], ["BTC", "$67 240"]] as const).map(([k, v]) => (
+                <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 22 }}>
+                  <span style={{ fontSize: 11, color: "rgba(228,232,255,0.26)", fontFamily: HF }}>{k}</span>
+                  <span style={{ fontSize: 11, color: "rgba(228,232,255,0.38)", fontFamily: HF, fontVariantNumeric: "tabular-nums" }}>{v}</span>
                 </div>
               ))}
             </div>
-          </div>
-
-          {/* Top nodes */}
-          <div className="glass" style={{ borderRadius: 22, padding: "20px 24px" }}>
-            <div className="uppercase tracking-widest font-semibold mb-4" style={{ fontSize: 11, color: "rgba(228,232,255,0.35)", fontFamily: HF }}>
-              Топ узлов
-            </div>
-            {isLoadingTop
-              ? <Loader2 className="h-6 w-6 animate-spin" style={{ color: "var(--jarvis-accent)" }} />
-              : (
-                <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  {topBusinesses?.map(b => {
-                    const bColor = colorMap.get(b.id) ?? "#3ed9a0";
-                    return (
-                      <div key={b.id}
-                        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", minHeight: 46, borderRadius: 12, padding: "0 8px", margin: "0 -8px", transition: "background 150ms" }}
-                        onClick={() => setSelectedBusiness({ id: b.id, color: bColor })}
-                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
-                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-                      >
-                        <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-                          <div style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: bColor, boxShadow: `0 0 5px 2px ${bColor}55` }} />
-                          <span style={{ color: "rgba(228,232,255,0.63)", fontSize: 14, fontFamily: HF, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</span>
-                        </div>
-                        <span style={{ color: "rgba(228,232,255,0.36)", fontSize: 12, fontFamily: HF, marginLeft: 8, flexShrink: 0 }}>{formatCurrency(b.revenue)}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
           </div>
         </div>
 
