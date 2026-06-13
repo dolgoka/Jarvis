@@ -13,7 +13,6 @@ import {
   Loader2, X, MapPin, User, Mail,
   Zap, ChevronDown, Newspaper, Globe as GlobeIcon,
 } from "lucide-react";
-import { EventsFeed } from "./EventsFeed";
 import NewsFeedOverlay from "./NewsFeedOverlay";
 import { BottomDock, type DockPanel } from "./BottomDock";
 import { CornerMenu } from "./CornerMenu";
@@ -494,9 +493,6 @@ export default function GlobeDashboard() {
             onClick={() => { setFeedOpen(false); setFeedDismissed(true); }}
           />
         )}
-
-        {/* Events feed ribbon */}
-        <EventsFeed />
 
         {/* Country tooltip */}
         {hoveredPolygon && !hoveredPoint && !selectedBusiness && (
