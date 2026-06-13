@@ -1,10 +1,33 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, Mic, ExternalLink } from "lucide-react";
 import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem } from "@workspace/api-client-react";
 import type { NewsItem } from "@workspace/api-client-react";
 
+/* ─── CSS animations (injected once) ─────────────────────────────────────── */
+const ANIM_ID = "nf-keyframes";
+if (typeof document !== "undefined" && !document.getElementById(ANIM_ID)) {
+  const s = document.createElement("style");
+  s.id = ANIM_ID;
+  s.textContent = `
+    @keyframes nf-pulse-stripe {
+      0%,100% { opacity:1; box-shadow:0 0 10px 3px #ef444455; }
+      50%      { opacity:.65; box-shadow:0 0 20px 8px #ef444488; }
+    }
+    @keyframes nf-pulse-badge {
+      0%,100% { transform:scale(1);   opacity:1;    box-shadow:0 0 0 0 #ef444440; }
+      50%      { transform:scale(1.07); opacity:.9; box-shadow:0 0 0 6px #ef444400; }
+    }
+    @keyframes nf-card-in {
+      from { opacity:0; transform:translateY(10px) scale(.98); }
+      to   { opacity:1; transform:translateY(0)    scale(1);   }
+    }
+  `;
+  document.head.appendChild(s);
+}
+
+/* ─── Constants ──────────────────────────────────────────────────────────── */
 const SEV_COLOR: Record<string, string> = {
-  critical: "#ef4444",
+  critical:  "#ef4444",
   attention: "#f5b301",
   info:      "#22c55e",
 };
@@ -23,338 +46,507 @@ const TYPE_LABEL: Record<string, string> = {
 
 function timeAgo(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
-  if (diff < 60)  return `${diff} мин назад`;
+  if (diff < 1)  return "только что";
+  if (diff < 60) return `${diff} мин назад`;
   const h = Math.floor(diff / 60);
   if (h < 24) return `${h} ч назад`;
   return `${Math.floor(h / 24)} дн назад`;
 }
 
+/* ─── Props ──────────────────────────────────────────────────────────────── */
 interface Props {
   onClose: () => void;
   onSelectBusiness?: (id: number) => void;
 }
 
+/* ─── Component ──────────────────────────────────────────────────────────── */
 export default function NewsFeedOverlay({ onClose, onSelectBusiness }: Props) {
+  const prefersReducedMotion = useMemo(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false,
+  []);
+
+  /* Filters */
   const [severityFilter, setSeverityFilter] = useState<string | undefined>(undefined);
   const [includeExternal, setIncludeExternal] = useState(false);
-  const [index, setIndex] = useState(0);
-  const [expanded, setExpanded] = useState(false);
 
-  const { data, isLoading, refetch } = useGetFeed({
-    severity: severityFilter as any,
+  /* Session deck — never cleared mid-session; resets only on filter change */
+  const [deck,         setDeck]         = useState<NewsItem[]>([]);
+  const [localActions, setLocalActions] = useState<Map<number, "done" | "snoozed">>(() => new Map());
+  const [index,        setIndex]        = useState(0);
+  const [expanded,     setExpanded]     = useState(false);
+  const lastFilterRef = useRef<string | null>(null);
+
+  /* Touch swipe */
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  /* API */
+  const { data, isLoading } = useGetFeed({
+    severity:        severityFilter as any,
     includeExternal: includeExternal || undefined,
   });
+  const { mutate: markSeen } = useMarkFeedSeen();
+  const { mutate: snooze   } = useSnoozeFeedItem();
 
-  const { mutate: markSeen  } = useMarkFeedSeen({ mutation: { onSuccess: () => { refetch(); setExpanded(false); } } });
-  const { mutate: snooze    } = useSnoozeFeedItem({ mutation: { onSuccess: () => { refetch(); setExpanded(false); } } });
+  /* Initialize / reset deck when filter changes */
+  useEffect(() => {
+    if (!data) return;
+    const fk = `${severityFilter ?? ""}|${includeExternal}`;
+    if (lastFilterRef.current !== fk) {
+      lastFilterRef.current = fk;
+      setDeck(data);
+      setIndex(0);
+      setExpanded(false);
+      setLocalActions(new Map());
+    }
+  }, [data, severityFilter, includeExternal]);
 
-  const items: NewsItem[] = data ?? [];
+  /* Safe index */
+  const safeIdx = Math.min(index, Math.max(deck.length - 1, 0));
+  const item     = deck[safeIdx];
+  const sevColor = item ? (SEV_COLOR[item.severity] ?? "#22c55e") : "#22c55e";
 
-  const safeIndex = Math.min(index, Math.max(items.length - 1, 0));
+  /* Counts (deck totals — includes already-actioned for filter chips context) */
+  const critCount = deck.filter(i => i.severity === "critical").length;
+  const attCount  = deck.filter(i => i.severity === "attention").length;
+  const infoCount = deck.filter(i => i.severity === "info").length;
+  /* Remaining (not yet actioned) */
+  const remaining = deck.filter(i => !localActions.has(i.id)).length;
 
-  const handleNext = useCallback(() => {
-    if (safeIndex < items.length - 1) { setIndex(safeIndex + 1); setExpanded(false); }
-  }, [safeIndex, items.length]);
-
+  /* Navigation */
   const handlePrev = useCallback(() => {
-    if (safeIndex > 0) { setIndex(safeIndex - 1); setExpanded(false); }
-  }, [safeIndex]);
+    if (safeIdx > 0) { setIndex(safeIdx - 1); setExpanded(false); }
+  }, [safeIdx]);
+
+  const advanceDeck = useCallback(() => {
+    if (safeIdx < deck.length - 1) { setIndex(safeIdx + 1); setExpanded(false); }
+    else                            { onClose(); }
+  }, [safeIdx, deck.length, onClose]);
 
   const handleSeen = useCallback(() => {
-    if (!items[safeIndex]) return;
-    markSeen({ params: { id: items[safeIndex].id } });
-    if (safeIndex >= items.length - 1 && safeIndex > 0) setIndex(safeIndex - 1);
-  }, [items, safeIndex, markSeen]);
+    if (!item) return;
+    markSeen({ params: { id: item.id } });
+    setLocalActions(prev => new Map(prev).set(item.id, "done"));
+    advanceDeck();
+  }, [item, markSeen, advanceDeck]);
 
   const handleSnooze = useCallback(() => {
-    if (!items[safeIndex]) return;
-    snooze({ params: { id: items[safeIndex].id, hours: 8 } });
-    if (safeIndex >= items.length - 1 && safeIndex > 0) setIndex(safeIndex - 1);
-  }, [items, safeIndex, snooze]);
+    if (!item) return;
+    snooze({ params: { id: item.id, hours: 8 } });
+    setLocalActions(prev => new Map(prev).set(item.id, "snoozed"));
+    advanceDeck();
+  }, [item, snooze, advanceDeck]);
 
-  const critCount = items.filter(i => i.severity === "critical").length;
-  const attCount  = items.filter(i => i.severity === "attention").length;
-  const infoCount = items.filter(i => i.severity === "info").length;
+  /* Touch handlers */
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+  }, []);
 
-  const item = items[safeIndex];
-  const sevColor = item ? SEV_COLOR[item.severity] : "#22c55e";
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    const start = touchStartRef.current;
+    if (!start) return;
+    touchStartRef.current = null;
+    const dx = e.changedTouches[0].clientX - start.x;
+    const dy = e.changedTouches[0].clientY - start.y;
+    if (prefersReducedMotion) return;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 48) {
+      if (dx < 0) handleSeen();
+      else         handlePrev();
+    } else if (dy > 55 && Math.abs(dy) > Math.abs(dx)) {
+      handleSnooze();
+    }
+  }, [prefersReducedMotion, handleSeen, handlePrev, handleSnooze]);
 
-  const fontFamily = "'Hanken Grotesk', system-ui, sans-serif";
+  const ff = "'Hanken Grotesk', system-ui, sans-serif";
 
+  /* ── Empty / loading states ───────────────────────────────────────────── */
+  const cardContent = () => {
+    if (isLoading && deck.length === 0) {
+      return (
+        <div className="flex items-center justify-center" style={{ minHeight: 220, background: "rgba(8,12,28,0.90)", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(20px)" }}>
+          <div className="flex gap-2 items-center" style={{ color: "rgba(228,232,255,0.35)", fontSize: 13, fontFamily: ff }}>
+            <div className="animate-spin w-4 h-4 border-2 rounded-full" style={{ borderColor: "#00d4ff", borderTopColor: "transparent" }} />
+            Загрузка…
+          </div>
+        </div>
+      );
+    }
+    if (remaining === 0 && deck.length > 0) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-3 py-12" style={{ background: "rgba(8,12,28,0.90)", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(20px)" }}>
+          <div style={{ fontSize: 34 }}>✓</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "rgba(228,232,255,0.75)", fontFamily: ff }}>День разобран</div>
+          <div style={{ fontSize: 12, color: "rgba(228,232,255,0.32)", fontFamily: ff }}>Нет активных уведомлений</div>
+        </div>
+      );
+    }
+    if (deck.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-3 py-12" style={{ background: "rgba(8,12,28,0.90)", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(20px)" }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: "rgba(228,232,255,0.55)", fontFamily: ff }}>Нет уведомлений</div>
+        </div>
+      );
+    }
+    return null; // render the main card
+  };
+
+  const emptyOrLoadingCard = cardContent();
+
+  const isActioned = item ? localActions.has(item.id) : false;
+  const actionedType = item ? localActions.get(item.id) : undefined;
+
+  /* ─────────────────────────────────────────────────────────────────────── */
   return (
     <div
       className="absolute inset-0 z-30 flex flex-col items-center justify-center pointer-events-none"
-      style={{ fontFamily }}
+      style={{ fontFamily: ff }}
     >
-      {/* Semi-transparent backdrop (just for the panel area, globe stays visible) */}
-      <div className="pointer-events-auto w-full max-w-lg mx-auto px-4 flex flex-col gap-3">
+      <div
+        className="pointer-events-auto w-full max-w-lg mx-auto px-4 flex flex-col gap-3"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
 
-        {/* ── Header bar ── */}
-        <div
-          className="flex items-center justify-between px-5 py-3"
-          style={{ background: "rgba(8,12,28,0.88)", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(16px)" }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-            <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: "0.08em", color: "rgba(228,232,255,0.55)", textTransform: "uppercase" }}>
-              Лента новостей
+        {/* ── Header ── */}
+        <div className="flex items-center justify-between px-4 py-2.5" style={{
+          background: "rgba(8,12,28,0.88)", borderRadius: 20,
+          border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(18px)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.09em", color: "rgba(228,232,255,0.45)", textTransform: "uppercase" }}>
+              Лента
             </span>
 
-            {/* Severity chips */}
+            {/* Severity filter chips */}
             {(["critical","attention","info"] as const).map(s => {
-              const count = s === "critical" ? critCount : s === "attention" ? attCount : infoCount;
+              const cnt   = s === "critical" ? critCount : s === "attention" ? attCount : infoCount;
               const active = severityFilter === s;
               return (
-                <button key={s} onClick={() => setSeverityFilter(active ? undefined : s)} style={{
-                  display: "flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 999,
-                  background: active ? `${SEV_COLOR[s]}22` : "rgba(255,255,255,0.05)",
-                  border: `1px solid ${active ? SEV_COLOR[s] : "rgba(255,255,255,0.1)"}`,
+                <button key={s} onClick={() => { setSeverityFilter(active ? undefined : s); }} style={{
+                  display: "flex", alignItems: "center", gap: 4, padding: "2px 9px", borderRadius: 999,
+                  background: active ? `${SEV_COLOR[s]}20` : "rgba(255,255,255,0.05)",
+                  border: `1px solid ${active ? SEV_COLOR[s] : "rgba(255,255,255,0.09)"}`,
                   cursor: "pointer", transition: "all 150ms",
                 }}>
-                  <div style={{ width: 7, height: 7, borderRadius: "50%", background: SEV_COLOR[s], boxShadow: `0 0 6px 2px ${SEV_COLOR[s]}88` }} />
-                  <span style={{ fontSize: 11, fontWeight: 600, color: active ? SEV_COLOR[s] : "rgba(228,232,255,0.45)" }}>{count}</span>
+                  <div style={{ width: 6, height: 6, borderRadius: "50%", background: SEV_COLOR[s], boxShadow: `0 0 5px 2px ${SEV_COLOR[s]}88` }} />
+                  <span style={{ fontSize: 10, fontWeight: 700, color: active ? SEV_COLOR[s] : "rgba(228,232,255,0.40)" }}>{cnt}</span>
                 </button>
               );
             })}
 
-            <button onClick={() => { setIncludeExternal(v => !v); setIndex(0); }} style={{
-              padding: "3px 10px", borderRadius: 999, cursor: "pointer",
+            {/* External toggle */}
+            <button onClick={() => { setIncludeExternal(v => !v); }} style={{
+              display: "flex", alignItems: "center", gap: 3, padding: "2px 8px", borderRadius: 999, cursor: "pointer",
               background: includeExternal ? "rgba(0,212,255,0.12)" : "rgba(255,255,255,0.05)",
-              border: `1px solid ${includeExternal ? "rgba(0,212,255,0.5)" : "rgba(255,255,255,0.1)"}`,
-              fontSize: 11, fontWeight: 600,
-              color: includeExternal ? "#00d4ff" : "rgba(228,232,255,0.4)",
+              border: `1px solid ${includeExternal ? "rgba(0,212,255,0.5)" : "rgba(255,255,255,0.09)"}`,
+              fontSize: 10, fontWeight: 600,
+              color: includeExternal ? "#00d4ff" : "rgba(228,232,255,0.38)",
               transition: "all 150ms",
             }}>
-              <ExternalLink style={{ display: "inline", width: 10, height: 10, marginRight: 4 }} />
-              Внешн
+              <ExternalLink style={{ width: 9, height: 9 }} /> Внешн
             </button>
           </div>
 
-          <button onClick={onClose} style={{
-            width: 28, height: 28, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)",
-            background: "rgba(255,255,255,0.04)", cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: "rgba(228,232,255,0.5)", transition: "all 150ms",
-          }}>
-            <X style={{ width: 14, height: 14 }} />
-          </button>
+          {/* Counter + close */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
+            {deck.length > 0 && (
+              <span style={{ fontSize: 10, color: "rgba(228,232,255,0.28)", fontVariantNumeric: "tabular-nums" }}>
+                {safeIdx + 1} / {deck.length}
+              </span>
+            )}
+            <button onClick={onClose} style={{
+              width: 26, height: 26, borderRadius: "50%",
+              border: "1px solid rgba(255,255,255,0.10)",
+              background: "rgba(255,255,255,0.04)",
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              color: "rgba(228,232,255,0.45)",
+            }}>
+              <X style={{ width: 13, height: 13 }} />
+            </button>
+          </div>
         </div>
 
-        {/* ── Main card ── */}
-        {isLoading ? (
-          <div
-            className="flex items-center justify-center"
-            style={{ minHeight: 260, background: "rgba(8,12,28,0.88)", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(16px)" }}
-          >
-            <div className="flex gap-2 items-center" style={{ color: "rgba(228,232,255,0.35)", fontSize: 13 }}>
-              <div className="animate-spin w-4 h-4 border-2 rounded-full" style={{ borderColor: "#00d4ff", borderTopColor: "transparent" }} />
-              Загрузка…
-            </div>
-          </div>
-        ) : items.length === 0 ? (
-          <div
-            className="flex flex-col items-center justify-center gap-3 py-10"
-            style={{ background: "rgba(8,12,28,0.88)", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(16px)" }}
-          >
-            <div style={{ fontSize: 32 }}>✓</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: "rgba(228,232,255,0.7)" }}>День разобран</div>
-            <div style={{ fontSize: 12, color: "rgba(228,232,255,0.35)" }}>Нет активных уведомлений</div>
-          </div>
-        ) : (
-          <div
-            style={{
-              background: "rgba(8,12,28,0.90)",
-              borderRadius: 22,
-              border: `1px solid rgba(255,255,255,0.08)`,
-              backdropFilter: "blur(20px)",
-              overflow: "hidden",
-              position: "relative",
-            }}
-          >
-            {/* Left severity stripe */}
-            <div style={{
-              position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
-              background: sevColor,
-              boxShadow: `0 0 14px 4px ${sevColor}66`,
-              ...(item?.severity === "critical" ? {} : {}),
-            }} />
+        {/* ── Card area ── */}
+        {emptyOrLoadingCard ?? (
+          <div style={{ position: "relative" }}>
 
-            <div style={{ padding: "20px 24px 20px 28px" }}>
-              {/* Top meta row */}
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-                {/* Severity badge */}
-                <span style={{
-                  padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em",
-                  background: `${sevColor}22`, color: sevColor, textTransform: "uppercase",
-                  border: `1px solid ${sevColor}44`,
+            {/* Ghost stack cards (behind) */}
+            {deck.length > 1 && !prefersReducedMotion && (
+              <>
+                <div style={{
+                  position: "absolute", inset: 0,
+                  background: "rgba(8,12,28,0.70)",
+                  borderRadius: 22, border: "1px solid rgba(255,255,255,0.05)",
+                  transform: "translateY(12px) scaleX(0.92)",
+                  opacity: 0.20, pointerEvents: "none",
+                }} />
+                <div style={{
+                  position: "absolute", inset: 0,
+                  background: "rgba(8,12,28,0.80)",
+                  borderRadius: 22, border: "1px solid rgba(255,255,255,0.06)",
+                  transform: "translateY(6px) scaleX(0.96)",
+                  opacity: 0.35, pointerEvents: "none",
+                }} />
+              </>
+            )}
+
+            {/* Main card */}
+            <div
+              key={item?.id}
+              style={{
+                background: "rgba(8,12,28,0.92)",
+                borderRadius: 22,
+                border: `1px solid rgba(255,255,255,0.09)`,
+                backdropFilter: "blur(22px)",
+                overflow: "hidden",
+                position: "relative",
+                opacity: isActioned ? 0.55 : 1,
+                animation: prefersReducedMotion ? undefined : "nf-card-in 220ms ease",
+                transition: "opacity 300ms",
+              }}
+            >
+              {/* Left severity stripe */}
+              <div style={{
+                position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
+                background: sevColor,
+                animation: (!prefersReducedMotion && item?.severity === "critical" && !isActioned)
+                  ? "nf-pulse-stripe 2.4s ease-in-out infinite"
+                  : undefined,
+                boxShadow: `0 0 10px 3px ${sevColor}44`,
+              }} />
+
+              <div style={{ padding: "18px 22px 16px 26px" }}>
+
+                {/* Meta row */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+                  <span style={{
+                    padding: "2px 7px", borderRadius: 5, fontSize: 9, fontWeight: 700,
+                    letterSpacing: "0.07em", textTransform: "uppercase",
+                    background: `${sevColor}20`, color: sevColor, border: `1px solid ${sevColor}40`,
+                  }}>
+                    {SEV_LABEL[item?.severity ?? "info"]}
+                  </span>
+
+                  {item && (
+                    <span style={{
+                      padding: "2px 7px", borderRadius: 5, fontSize: 9, fontWeight: 600,
+                      background: "rgba(255,255,255,0.05)", color: "rgba(228,232,255,0.40)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                    }}>
+                      {TYPE_LABEL[item.type]}
+                    </span>
+                  )}
+
+                  {/* СРОЧНО badge — pulsing, always red */}
+                  {item?.isUrgentFlag && !isActioned && (
+                    <span style={{
+                      padding: "2px 8px", borderRadius: 5, fontSize: 9, fontWeight: 800,
+                      letterSpacing: "0.08em", textTransform: "uppercase",
+                      background: "rgba(239,68,68,0.18)", color: "#ef4444",
+                      border: "1px solid rgba(239,68,68,0.45)",
+                      display: "inline-flex", alignItems: "center", gap: 3,
+                      animation: prefersReducedMotion ? undefined : "nf-pulse-badge 1.8s ease-in-out infinite",
+                    }}>
+                      <AlertTriangle style={{ width: 8, height: 8 }} /> СРОЧНО
+                    </span>
+                  )}
+
+                  {/* Actioned indicator */}
+                  {isActioned && (
+                    <span style={{
+                      padding: "2px 7px", borderRadius: 5, fontSize: 9, fontWeight: 600,
+                      background: "rgba(255,255,255,0.04)", color: "rgba(228,232,255,0.28)",
+                      border: "1px solid rgba(255,255,255,0.06)",
+                    }}>
+                      {actionedType === "done" ? "✓ готово" : "⏰ позже"}
+                    </span>
+                  )}
+
+                  <div style={{ flexGrow: 1 }} />
+                </div>
+
+                {/* Business chip */}
+                {item?.businessName && (
+                  <button
+                    onClick={() => item.businessId != null && onSelectBusiness?.(item.businessId!)}
+                    style={{
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      padding: "2px 9px", borderRadius: 999, marginBottom: 8, cursor: "pointer",
+                      background: "rgba(0,212,255,0.07)", border: "1px solid rgba(0,212,255,0.18)",
+                      fontSize: 10, fontWeight: 600, color: "#00d4ff", transition: "all 150ms",
+                    }}
+                  >
+                    <div style={{ width: 4, height: 4, borderRadius: "50%", background: "#00d4ff" }} />
+                    {item.businessName}
+                  </button>
+                )}
+
+                {/* Title */}
+                <div style={{
+                  fontSize: 14, fontWeight: 700, lineHeight: 1.35, marginBottom: 7,
+                  color: isActioned ? "rgba(228,232,255,0.45)" : "rgba(228,232,255,0.92)",
                 }}>
-                  {item ? SEV_LABEL[item.severity] : ""}
-                </span>
+                  {item?.title}
+                </div>
 
-                {/* Type badge */}
-                {item && (
-                  <span style={{
-                    padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 600, letterSpacing: "0.04em",
-                    background: "rgba(255,255,255,0.05)", color: "rgba(228,232,255,0.45)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                  }}>
-                    {TYPE_LABEL[item.type]}
-                  </span>
-                )}
-
-                {/* URGENT badge */}
-                {item?.isUrgentFlag && (
-                  <span style={{
-                    padding: "2px 8px", borderRadius: 6, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em",
-                    background: "rgba(239,68,68,0.15)", color: "#ef4444",
-                    border: "1px solid rgba(239,68,68,0.4)",
-                    display: "flex", alignItems: "center", gap: 4,
-                  }}>
-                    <AlertTriangle style={{ width: 9, height: 9 }} /> URGENT
-                  </span>
-                )}
-
-                <div style={{ flexGrow: 1 }} />
-
-                {/* Counter */}
-                <span style={{ fontSize: 11, color: "rgba(228,232,255,0.30)", fontVariantNumeric: "tabular-nums" }}>
-                  {safeIndex + 1} / {items.length}
-                </span>
-              </div>
-
-              {/* Business chip */}
-              {item?.businessName && (
-                <button
-                  onClick={() => item.businessId != null && onSelectBusiness?.(item.businessId!)}
+                {/* Body (expandable) */}
+                <div
                   style={{
-                    display: "inline-flex", alignItems: "center", gap: 5,
-                    padding: "3px 10px", borderRadius: 999, marginBottom: 10, cursor: "pointer",
-                    background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.2)",
-                    fontSize: 11, fontWeight: 600, color: "#00d4ff", transition: "all 150ms",
+                    fontSize: 12.5, color: "rgba(228,232,255,0.52)", lineHeight: 1.65,
+                    overflow: expanded ? undefined : "hidden",
+                    display: expanded ? undefined : "-webkit-box",
+                    WebkitLineClamp: expanded ? undefined : 3,
+                    WebkitBoxOrient: "vertical" as any,
+                    cursor: "pointer",
                   }}
+                  onClick={() => setExpanded(v => !v)}
                 >
-                  <div style={{ width: 5, height: 5, borderRadius: "50%", background: "#00d4ff" }} />
-                  {item.businessName}
-                </button>
-              )}
+                  {item?.body}
+                </div>
+                {!expanded && item?.body && item.body.length > 140 && (
+                  <button
+                    onClick={() => setExpanded(true)}
+                    style={{ fontSize: 10, color: "#00d4ff", marginTop: 4, cursor: "pointer", background: "none", border: "none", padding: 0, fontFamily: ff }}
+                  >
+                    Читать далее →
+                  </button>
+                )}
 
-              {/* Title */}
-              <div style={{ fontSize: 15, fontWeight: 700, color: "rgba(228,232,255,0.92)", lineHeight: 1.35, marginBottom: 8 }}>
-                {item?.title}
+                {/* Source + time */}
+                <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 10 }}>
+                  <span style={{ fontSize: 10, color: "rgba(228,232,255,0.25)" }}>{item?.sourceLabel}</span>
+                  <span style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(228,232,255,0.18)", flexShrink: 0 }} />
+                  <span style={{ fontSize: 10, color: "rgba(228,232,255,0.25)" }}>{item ? timeAgo(item.createdAt) : ""}</span>
+                </div>
               </div>
 
-              {/* Body (expandable) */}
-              <div
-                style={{
-                  fontSize: 13, color: "rgba(228,232,255,0.55)", lineHeight: 1.6,
-                  overflow: expanded ? undefined : "hidden",
-                  display: expanded ? undefined : "-webkit-box",
-                  WebkitLineClamp: expanded ? undefined : 2,
-                  WebkitBoxOrient: "vertical" as any,
-                  cursor: "pointer",
-                  transition: "all 200ms",
-                }}
-                onClick={() => setExpanded(v => !v)}
-              >
-                {item?.body}
-              </div>
-              {!expanded && item?.body && item.body.length > 120 && (
+              {/* ── Action zone ── */}
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "10px 22px 14px" }}>
+
+                {/* Hero "Ответить" button — stub, full width */}
                 <button
-                  onClick={() => setExpanded(true)}
-                  style={{ fontSize: 11, color: "#00d4ff", marginTop: 4, cursor: "pointer", background: "none", border: "none", padding: 0 }}
+                  title="TODO: Шаг 5 — голосовой ответ"
+                  style={{
+                    width: "100%", height: 38, borderRadius: 12, marginBottom: 10,
+                    display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.12)",
+                    cursor: "pointer", transition: "all 150ms",
+                    fontSize: 12, fontWeight: 700, fontFamily: ff,
+                    color: "rgba(228,232,255,0.55)",
+                    letterSpacing: "0.04em",
+                  }}
+                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.09)")}
+                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
                 >
-                  Читать далее →
+                  <Mic style={{ width: 13, height: 13 }} />
+                  ● Ответить
+                  <span style={{ fontSize: 9, opacity: 0.45, fontWeight: 400 }}>(Шаг 5)</span>
                 </button>
-              )}
 
-              {/* Source + time */}
-              <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 12 }}>
-                <span style={{ fontSize: 11, color: "rgba(228,232,255,0.28)" }}>{item?.sourceLabel}</span>
-                <span style={{ width: 3, height: 3, borderRadius: "50%", background: "rgba(228,232,255,0.2)" }} />
-                <span style={{ fontSize: 11, color: "rgba(228,232,255,0.28)" }}>{item ? timeAgo(item.createdAt) : ""}</span>
+                {/* 3-button row */}
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+
+                  {/* ← Назад */}
+                  <button
+                    onClick={handlePrev}
+                    disabled={safeIdx === 0}
+                    style={{
+                      flex: 1, height: 34, borderRadius: 10,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.09)",
+                      cursor: safeIdx === 0 ? "not-allowed" : "pointer",
+                      opacity: safeIdx === 0 ? 0.35 : 1,
+                      fontSize: 11, fontWeight: 600, fontFamily: ff,
+                      color: "rgba(228,232,255,0.50)",
+                      transition: "all 150ms",
+                    }}
+                  >
+                    <ChevronLeft style={{ width: 13, height: 13 }} /> Назад
+                  </button>
+
+                  {/* Вернуться позже */}
+                  <button
+                    onClick={handleSnooze}
+                    style={{
+                      flex: 1.2, height: 34, borderRadius: 10,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.09)",
+                      cursor: "pointer",
+                      fontSize: 11, fontWeight: 600, fontFamily: ff,
+                      color: "rgba(228,232,255,0.45)",
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                  >
+                    <Clock style={{ width: 12, height: 12 }} /> Позже
+                  </button>
+
+                  {/* Далее → */}
+                  <button
+                    onClick={handleSeen}
+                    style={{
+                      flex: 1, height: 34, borderRadius: 10,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                      background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)",
+                      border: "none",
+                      cursor: "pointer",
+                      fontSize: 11, fontWeight: 700, fontFamily: ff,
+                      color: "#fff",
+                      boxShadow: "0 3px 12px rgba(0,212,255,0.28)",
+                      transition: "all 150ms",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 18px rgba(0,212,255,0.45)")}
+                    onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 3px 12px rgba(0,212,255,0.28)")}
+                  >
+                    Далее <ChevronRight style={{ width: 13, height: 13 }} />
+                  </button>
+                </div>
               </div>
-            </div>
-
-            {/* ── Action bar ── */}
-            <div style={{
-              display: "flex", alignItems: "center", gap: 8, padding: "12px 24px 16px",
-              borderTop: "1px solid rgba(255,255,255,0.06)",
-            }}>
-              {/* Voice (stub) */}
-              <button title="Голосовой комментарий" style={{
-                width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)",
-                background: "rgba(255,255,255,0.04)", cursor: "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "rgba(228,232,255,0.4)",
-              }}>
-                <Mic style={{ width: 14, height: 14 }} />
-              </button>
-
-              {/* Prev */}
-              <button onClick={handlePrev} disabled={safeIndex === 0} style={{
-                width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)",
-                background: "rgba(255,255,255,0.04)", cursor: safeIndex === 0 ? "not-allowed" : "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: safeIndex === 0 ? "rgba(228,232,255,0.15)" : "rgba(228,232,255,0.5)",
-              }}>
-                <ChevronLeft style={{ width: 15, height: 15 }} />
-              </button>
-
-              <div style={{ flexGrow: 1 }} />
-
-              {/* Snooze */}
-              <button onClick={handleSnooze} style={{
-                display: "flex", alignItems: "center", gap: 5,
-                padding: "6px 14px", borderRadius: 999, cursor: "pointer",
-                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)",
-                fontSize: 12, fontWeight: 600, color: "rgba(228,232,255,0.45)",
-                transition: "all 150ms", fontFamily,
-              }}>
-                <Clock style={{ width: 12, height: 12 }} />
-                Позже
-              </button>
-
-              {/* Seen / Done */}
-              <button onClick={handleSeen} style={{
-                display: "flex", alignItems: "center", gap: 5,
-                padding: "6px 16px", borderRadius: 999, cursor: "pointer",
-                background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)",
-                border: "none",
-                fontSize: 12, fontWeight: 700, color: "#fff",
-                boxShadow: "0 4px 14px rgba(0,212,255,0.3)",
-                transition: "all 150ms", fontFamily,
-              }}>
-                Ок
-              </button>
-
-              <div style={{ flexGrow: 1 }} />
-
-              {/* Next */}
-              <button onClick={handleNext} disabled={safeIndex >= items.length - 1} style={{
-                width: 32, height: 32, borderRadius: "50%", border: "1px solid rgba(255,255,255,0.1)",
-                background: "rgba(255,255,255,0.04)", cursor: safeIndex >= items.length - 1 ? "not-allowed" : "pointer",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: safeIndex >= items.length - 1 ? "rgba(228,232,255,0.15)" : "rgba(228,232,255,0.5)",
-              }}>
-                <ChevronRight style={{ width: 15, height: 15 }} />
-              </button>
             </div>
           </div>
         )}
 
-        {/* Progress dots */}
-        {items.length > 1 && (
-          <div className="flex justify-center gap-1.5">
-            {items.slice(0, Math.min(items.length, 12)).map((it, i) => (
-              <button key={it.id} onClick={() => { setIndex(i); setExpanded(false); }} style={{
-                width: i === safeIndex ? 18 : 6,
-                height: 6, borderRadius: 999, cursor: "pointer", border: "none",
-                background: i === safeIndex
-                  ? SEV_COLOR[it.severity]
-                  : `${SEV_COLOR[it.severity]}44`,
-                transition: "all 200ms",
-                boxShadow: i === safeIndex ? `0 0 8px 2px ${SEV_COLOR[it.severity]}66` : "none",
-              }} />
-            ))}
+        {/* ── Progress dots + counter ── */}
+        {deck.length > 1 && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+            {deck.slice(0, Math.min(deck.length, 14)).map((it, i) => {
+              const actioned = localActions.has(it.id);
+              const isCurrent = i === safeIdx;
+              return (
+                <button
+                  key={it.id}
+                  onClick={() => { setIndex(i); setExpanded(false); }}
+                  style={{
+                    width: isCurrent ? 20 : 6, height: 6, borderRadius: 999,
+                    cursor: "pointer", border: "none",
+                    background: actioned
+                      ? "rgba(228,232,255,0.15)"
+                      : isCurrent
+                        ? SEV_COLOR[it.severity]
+                        : `${SEV_COLOR[it.severity]}55`,
+                    transition: "all 220ms",
+                    boxShadow: isCurrent && !actioned
+                      ? `0 0 8px 2px ${SEV_COLOR[it.severity]}66`
+                      : "none",
+                    opacity: actioned ? 0.5 : 1,
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Swipe hint — fades out after first interaction */}
+        {!prefersReducedMotion && deck.length > 1 && (
+          <div style={{ textAlign: "center", pointerEvents: "none" }}>
+            <span style={{ fontSize: 9, color: "rgba(228,232,255,0.18)", letterSpacing: "0.05em", fontFamily: ff }}>
+              ← свайп: вперёд · → назад · ↓ позже
+            </span>
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useMemo, useCallback, Component, type ReactNode } from "react";
 import Globe from "react-globe.gl";
-import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod } from "@workspace/api-client-react";
+import { useListBusinesses, getListBusinessesQueryKey, useGetDashboardStats, getGetDashboardStatsQueryKey, useGetTopBusinesses, getGetTopBusinessesQueryKey, useFetchLatestReport, getFetchLatestReportQueryKey, FetchLatestReportPeriod, useGetFeed, getGetFeedQueryKey } from "@workspace/api-client-react";
 import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
 import { Loader2, X, Activity, MapPin, TrendingUp, ShoppingCart, User, Mail, Zap, ChevronDown, ClipboardList, Newspaper } from "lucide-react";
 import { EventsFeed } from "./EventsFeed";
@@ -228,7 +228,24 @@ export default function GlobeDashboard() {
   const [selectedBusiness, setSelectedBusiness] = useState<{ id: number; color: string } | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
+  const [feedDismissed, setFeedDismissed] = useState(false);
+  const feedAutoOpenedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const prefersReducedMotion = useMemo(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
+      : false,
+  []);
+
+  /* Auto-open feed on load if there are active items */
+  const { data: feedPrecheck } = useGetFeed({}, { query: { queryKey: getGetFeedQueryKey({}), staleTime: 30_000 } });
+  useEffect(() => {
+    if (feedPrecheck && feedPrecheck.length > 0 && !feedAutoOpenedRef.current && !feedDismissed) {
+      feedAutoOpenedRef.current = true;
+      setFeedOpen(true);
+    }
+  }, [feedPrecheck, feedDismissed]);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const lastPolygonHoverRef = useRef(0);
 
@@ -439,6 +456,21 @@ export default function GlobeDashboard() {
           )}
         </div>
 
+        {/* News feed backdrop veil */}
+        {feedOpen && !selectedBusiness && (
+          <div
+            className="absolute inset-0"
+            style={{
+              zIndex: 25,
+              background: "rgba(2,6,14,0.45)",
+              backdropFilter: prefersReducedMotion ? undefined : "blur(3px)",
+              WebkitBackdropFilter: prefersReducedMotion ? undefined : "blur(3px)",
+              cursor: "pointer",
+            }}
+            onClick={() => { setFeedOpen(false); setFeedDismissed(true); }}
+          />
+        )}
+
         {/* Events feed */}
         <EventsFeed />
 
@@ -483,7 +515,7 @@ export default function GlobeDashboard() {
             <ClipboardList className="w-3.5 h-3.5" /> Новая задача
           </a>
           <button
-            onClick={() => { setFeedOpen(v => !v); setSelectedBusiness(null); }}
+            onClick={() => { const next = !feedOpen; setFeedOpen(next); if (!next) setFeedDismissed(true); setSelectedBusiness(null); }}
             className="flex items-center gap-2 px-4 transition-all hover:scale-105"
             style={{
               height: 36, borderRadius: 999,
@@ -635,7 +667,7 @@ export default function GlobeDashboard() {
         {/* News feed overlay */}
         {feedOpen && !selectedBusiness && (
           <NewsFeedOverlay
-            onClose={() => setFeedOpen(false)}
+            onClose={() => { setFeedOpen(false); setFeedDismissed(true); }}
             onSelectBusiness={(id) => {
               const bColor = colorMap.get(id) ?? "#3ed9a0";
               setSelectedBusiness({ id, color: bColor });
