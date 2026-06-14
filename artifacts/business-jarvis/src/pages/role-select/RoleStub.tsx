@@ -59,7 +59,7 @@ export default function RoleStub({ role, onBack }: RoleStubProps) {
             className="text-sm"
             style={{ color: "rgba(228,232,255,0.30)" }}
           >
-            в разработке
+            В разработке
           </div>
         </div>
 

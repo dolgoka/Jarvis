@@ -198,7 +198,7 @@ export default function RoleSelect({ onSelect }: RoleSelectProps) {
                       color: "rgba(220,235,255,0.40)",
                     }}
                   >
-                    в разработке
+                    В разработке
                   </span>
                 )}
 
