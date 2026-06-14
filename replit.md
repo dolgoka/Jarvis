@@ -2,6 +2,10 @@
 
 Global business intelligence command center — a real-time dashboard where an owner monitors all their worldwide businesses from a single interface, featuring an interactive 3D globe with clickable business nodes, AI executive briefings, and per-period financial reports.
 
+## Quick start (new Replit)
+
+Новый Replit: импорт из гита → вставить `OPENAI_API_KEY` в Secrets → Run.
+
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)

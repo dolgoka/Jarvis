@@ -1,3 +1,4 @@
+import { count } from "drizzle-orm";
 import { db, peopleTable, tasksTable } from "@workspace/db";
 
 const PEOPLE = [
@@ -74,10 +75,11 @@ const PEOPLE = [
 ];
 
 async function seed() {
-  console.log("Clearing tasks and people...");
-  await db.delete(tasksTable);
-  await db.delete(peopleTable);
-  console.log("  Cleared.");
+  const [row] = await db.select({ n: count() }).from(peopleTable);
+  if ((row?.n ?? 0) > 0) {
+    console.log(`People already seeded (${row!.n} rows) — skipping.`);
+    process.exit(0);
+  }
 
   console.log("Seeding people (roles only, no real names)...");
   for (const p of PEOPLE) {

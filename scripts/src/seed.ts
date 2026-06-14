@@ -1,3 +1,4 @@
+import { count } from "drizzle-orm";
 import { db, businessesTable, reportsTable, eventsTable } from "@workspace/db";
 
 type PlanFactItem = {
@@ -587,11 +588,13 @@ const EVENT_SEEDS: Array<{
 ];
 
 async function seed() {
-  console.log("Clearing existing data...");
-  await db.delete(eventsTable);
-  await db.delete(reportsTable);
-  await db.delete(businessesTable);
-  console.log("  Cleared events, reports and businesses.");
+  const [row] = await db.select({ n: count() }).from(businessesTable);
+  if ((row?.n ?? 0) > 0) {
+    console.log(`Businesses already seeded (${row!.n} rows) — skipping.`);
+    process.exit(0);
+  }
+
+  console.log("Seeding fresh DB...");
 
   console.log("Seeding businesses...");
   const nameToId = new Map<string, number>();
