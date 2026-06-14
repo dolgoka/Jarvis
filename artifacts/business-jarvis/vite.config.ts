@@ -4,12 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
-// PORT is only needed for the dev server — fall back to 5000 at build time
-const rawPort = process.env.PORT ?? "3000";
-const port = Number(rawPort);
-if (Number.isNaN(port) || port <= 0) {
-  throw new Error(`Invalid PORT value: "${rawPort}"`);
-}
+const port = Number(process.env.PORT ?? "24644");
 
 // BASE_PATH is the URL prefix for the app.
 // On Replit: set by the workflow (e.g. "/").
@@ -58,7 +53,7 @@ export default defineConfig({
     },
     proxy: {
       "/api": {
-        target: "http://localhost:8080",
+        target: `http://localhost:${process.env.API_PORT ?? "8080"}`,
         changeOrigin: true,
       },
     },
