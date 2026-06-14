@@ -9,9 +9,6 @@ import { AiAnswer } from "@/components/ui/AiAnswer";
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 const ACCENT = "var(--jarvis-accent)";
-const GLASS_BG = "rgba(4, 10, 22, 0.84)";
-const GLASS_BLUR = "blur(24px) saturate(170%)";
-const GLASS_BORDER = "rgba(0,212,255,0.15)";
 
 interface Message {
   role: "user" | "assistant";
@@ -173,13 +170,9 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
       {/* ── Chat panel (expands upward) ── */}
       {chatOpen && (
         <div
-          className="w-full mb-2 flex flex-col rounded-2xl overflow-hidden"
+          className="glass w-full mb-2 flex flex-col overflow-hidden"
           style={{
-            background: GLASS_BG,
-            backdropFilter: GLASS_BLUR,
-            WebkitBackdropFilter: GLASS_BLUR,
-            border: `1px solid ${isRecording ? "rgba(239,68,68,0.4)" : GLASS_BORDER}`,
-            boxShadow: "0 0 48px rgba(0,212,255,0.07), 0 8px 32px rgba(0,0,0,0.55)",
+            border: isRecording ? "1px solid rgba(239,68,68,0.4)" : undefined,
             height: 360,
           }}
         >
@@ -328,15 +321,8 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
       {/* ── Thought panel (stub) ── */}
       {thoughtOpen && (
         <div
-          className="w-full mb-2 flex flex-col items-center justify-center rounded-2xl"
-          style={{
-            height: 160,
-            background: GLASS_BG,
-            backdropFilter: GLASS_BLUR,
-            WebkitBackdropFilter: GLASS_BLUR,
-            border: `1px solid rgba(149,165,245,0.14)`,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.45)",
-          }}
+          className="glass relative w-full mb-2 flex flex-col items-center justify-center"
+          style={{ height: 160 }}
         >
           <button
             onClick={() => onPanelChange(null)}
@@ -356,16 +342,7 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
       )}
 
       {/* ── Pill row ── */}
-      <div
-        className="flex items-center gap-1.5 rounded-2xl p-1.5"
-        style={{
-          background: GLASS_BG,
-          backdropFilter: GLASS_BLUR,
-          WebkitBackdropFilter: GLASS_BLUR,
-          border: "1px solid rgba(255,255,255,0.09)",
-          boxShadow: "0 4px 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04)",
-        }}
-      >
+      <div className="glass flex items-center gap-1.5 p-1.5">
         {/* Спросить */}
         <DockPill
           icon={<MessageSquare className="w-4 h-4" />}

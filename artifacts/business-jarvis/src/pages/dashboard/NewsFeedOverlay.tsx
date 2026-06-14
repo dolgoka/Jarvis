@@ -164,7 +164,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness }: Props) {
   const cardContent = () => {
     if (isLoading && deck.length === 0) {
       return (
-        <div className="flex items-center justify-center" style={{ minHeight: 220, background: "rgba(8,12,28,0.90)", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(20px)" }}>
+        <div className="glass flex items-center justify-center" style={{ minHeight: 220 }}>
           <div className="flex gap-2 items-center" style={{ color: "rgba(228,232,255,0.35)", fontSize: 13, fontFamily: ff }}>
             <div className="animate-spin w-4 h-4 border-2 rounded-full" style={{ borderColor: "#00d4ff", borderTopColor: "transparent" }} />
             Загрузка…
@@ -174,7 +174,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness }: Props) {
     }
     if (remaining === 0 && deck.length > 0) {
       return (
-        <div className="flex flex-col items-center justify-center gap-3 py-12" style={{ background: "rgba(8,12,28,0.90)", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(20px)" }}>
+        <div className="glass flex flex-col items-center justify-center gap-3 py-12">
           <div style={{ fontSize: 34 }}>✓</div>
           <div style={{ fontSize: 15, fontWeight: 700, color: "rgba(228,232,255,0.75)", fontFamily: ff }}>День разобран</div>
           <div style={{ fontSize: 12, color: "rgba(228,232,255,0.32)", fontFamily: ff }}>Нет активных уведомлений</div>
@@ -183,7 +183,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness }: Props) {
     }
     if (deck.length === 0) {
       return (
-        <div className="flex flex-col items-center justify-center gap-3 py-12" style={{ background: "rgba(8,12,28,0.90)", borderRadius: 22, border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(20px)" }}>
+        <div className="glass flex flex-col items-center justify-center gap-3 py-12">
           <div style={{ fontSize: 15, fontWeight: 600, color: "rgba(228,232,255,0.55)", fontFamily: ff }}>Нет уведомлений</div>
         </div>
       );
@@ -209,10 +209,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness }: Props) {
       >
 
         {/* ── Header ── */}
-        <div className="flex items-center justify-between px-4 py-2.5" style={{
-          background: "rgba(8,12,28,0.88)", borderRadius: 20,
-          border: "1px solid rgba(255,255,255,0.08)", backdropFilter: "blur(18px)",
-        }}>
+        <div className="glass flex items-center justify-between px-4 py-2.5">
           <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.09em", color: "rgba(228,232,255,0.45)", textTransform: "uppercase" }}>
               Лента
@@ -294,16 +291,12 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness }: Props) {
             {/* Main card */}
             <div
               key={item?.id}
+              className="glass overflow-hidden"
               style={{
-                background: "rgba(8,12,28,0.92)",
-                borderRadius: 22,
-                border: `1px solid rgba(255,255,255,0.09)`,
-                backdropFilter: "blur(22px)",
-                overflow: "hidden",
                 position: "relative",
                 opacity: isActioned ? 0.55 : 1,
                 animation: prefersReducedMotion ? undefined : "nf-card-in 220ms ease",
-                transition: "opacity 300ms",
+                transition: "opacity 300ms, background 200ms ease, border-color 200ms ease",
               }}
             >
               {/* Left severity stripe */}

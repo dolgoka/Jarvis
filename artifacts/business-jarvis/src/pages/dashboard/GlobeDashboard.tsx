@@ -72,8 +72,8 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: {
   const statusLabel = STATUS_LABELS[business?.status ?? ""] ?? (business?.status ?? "—");
   const statusColor = business?.status === "active" ? "#3ed9a0" : "#f0625a";
   const DIVIDER = "rgba(255,255,255,0.07)";
-  const PANEL_BG = "rgba(4,8,16,0.92)";
-  const PANEL_BLUR = "blur(22px) saturate(165%)";
+  const PANEL_BG = "rgba(8, 14, 28, 0.88)";
+  const PANEL_BLUR = "blur(22px) saturate(120%)";
   const marginNum = margin !== null ? parseFloat(margin) : null;
 
   const Badges = () => (
@@ -91,7 +91,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: {
   );
 
   const StatCard = ({ label, value, showMargin }: { label: string; value: string; showMargin?: boolean }) => (
-    <div className="glass" style={{ borderRadius: 16, padding: "14px 16px" }}>
+    <div className="glass" style={{ padding: "14px 16px" }}>
       <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(228,232,255,0.45)", fontFamily: HF, marginBottom: 8 }}>{label}</div>
       <div style={{ fontSize: 20, fontWeight: 800, color: "rgba(228,232,255,0.95)", fontFamily: HF, lineHeight: 1 }}>{value}</div>
       {showMargin && marginNum !== null && (
@@ -143,7 +143,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: {
                     <StatCard label="Прибыль" value={formatMoney(report.profit, business?.currency ?? "USD")} showMargin />
                     <StatCard label="Заказы" value={formatNumber(report.orders)} />
                   </div>
-                  {report.notes && <div className="glass" style={{ borderRadius: 16, padding: "12px 14px" }}>
+                  {report.notes && <div className="glass" style={{ padding: "12px 14px" }}>
                     <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(228,232,255,0.45)", fontFamily: HF, marginBottom: 6 }}>Заметки</div>
                     <p style={{ fontSize: 12, color: "rgba(228,232,255,0.55)", lineHeight: 1.6, fontFamily: HF }}>{report.notes}</p>
                   </div>}
@@ -211,7 +211,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: {
                 <StatCard label="Выручка" value={formatMoney(report.revenue, business?.currency ?? "USD")} />
                 <StatCard label="Прибыль" value={formatMoney(report.profit, business?.currency ?? "USD")} showMargin />
                 <StatCard label="Заказы" value={formatNumber(report.orders)} />
-                {report.notes && <div className="glass" style={{ borderRadius: 16, padding: "16px 18px" }}>
+                {report.notes && <div className="glass" style={{ padding: "16px 18px" }}>
                   <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(228,232,255,0.45)", fontFamily: HF, marginBottom: 8 }}>Заметки</div>
                   <p style={{ fontSize: 13, color: "rgba(228,232,255,0.55)", lineHeight: 1.65, fontFamily: HF }}>{report.notes}</p>
                 </div>}
@@ -497,8 +497,8 @@ export default function GlobeDashboard() {
 
         {/* Country tooltip */}
         {hoveredPolygon && !hoveredPoint && !selectedBusiness && (
-          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 pointer-events-none glass"
-            style={{ padding: "8px 20px", borderRadius: 999 }}>
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-10 pointer-events-none glass pill"
+            style={{ padding: "8px 20px" }}>
             <div className="text-[13px] font-semibold tracking-wide" style={{ color: "rgba(228,232,255,0.85)", fontFamily: HF }}>
               {hoveredPolygon.properties?.NAME || hoveredPolygon.properties?.name || ""}
             </div>
@@ -508,7 +508,7 @@ export default function GlobeDashboard() {
         {/* Point hover tooltip */}
         {hoveredPoint && !selectedBusiness && (
           <div className="hidden md:block absolute z-10 pointer-events-none glass"
-            style={{ top: "50%", left: "50%", transform: "translate(20px, -28px)", padding: "12px 18px", borderRadius: 16 }}>
+            style={{ top: "50%", left: "50%", transform: "translate(20px, -28px)", padding: "12px 18px" }}>
             <div className="font-semibold text-sm" style={{ color: hoveredPoint.color, fontFamily: HF }}>{hoveredPoint.business.name}</div>
             <div className="mt-0.5 text-[12px]" style={{ color: "rgba(228,232,255,0.38)", fontFamily: HF }}>{hoveredPoint.business.city}, {hoveredPoint.business.country}</div>
           </div>
@@ -544,11 +544,15 @@ export default function GlobeDashboard() {
             className="flex items-center gap-2 px-4 transition-all hover:scale-105"
             style={{
               height: 36, borderRadius: 999,
-              background: feedOpen ? "rgba(239,68,68,0.18)" : "rgba(255,255,255,0.07)",
-              border: feedOpen ? "1px solid rgba(239,68,68,0.55)" : "1px solid rgba(255,255,255,0.12)",
+              background: feedOpen ? "rgba(239,68,68,0.14)" : "rgba(12,20,36,0.55)",
+              backdropFilter: "blur(22px) saturate(120%)",
+              WebkitBackdropFilter: "blur(22px) saturate(120%)",
+              border: feedOpen ? "1px solid rgba(239,68,68,0.50)" : "1px solid rgba(255,255,255,0.10)",
               color: feedOpen ? "#ef4444" : "rgba(228,232,255,0.65)",
               fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em",
-              cursor: "pointer", backdropFilter: "blur(12px)",
+              cursor: "pointer",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07)",
+              transition: "background 200ms, border-color 200ms, color 200ms, transform 200ms",
             }}
           >
             <Newspaper className="w-3.5 h-3.5" /> Лента
@@ -566,7 +570,7 @@ export default function GlobeDashboard() {
           }}
         >
           {/* Revenue readout */}
-          <div className="glass" style={{ borderRadius: 18, padding: "14px 20px", minWidth: 190 }}>
+          <div className="glass" style={{ padding: "14px 20px", minWidth: 190 }}>
             <div className="uppercase tracking-widest font-semibold" style={{ fontSize: 10, color: "rgba(228,232,255,0.30)", fontFamily: HF, marginBottom: 8 }}>
               Выручка · 30 дн
             </div>
@@ -603,7 +607,7 @@ export default function GlobeDashboard() {
 
           {/* Top nodes slide-down */}
           {rankingOpen && (
-            <div className="glass" style={{ borderRadius: 18, padding: "16px 20px", width: 248 }}>
+            <div className="glass" style={{ padding: "16px 20px", width: 248 }}>
               <div className="uppercase tracking-widest font-semibold mb-3" style={{ fontSize: 10, color: "rgba(228,232,255,0.30)", fontFamily: HF }}>
                 Топ узлов
               </div>
@@ -643,7 +647,7 @@ export default function GlobeDashboard() {
             opacity: cornersVisible ? 0.7 : 0,
           }}
         >
-          <div className="glass" style={{ borderRadius: 16, padding: "10px 16px" }}>
+          <div className="glass" style={{ padding: "10px 16px" }}>
             <div className="uppercase tracking-widest font-semibold mb-2" style={{ fontSize: 9, color: "rgba(228,232,255,0.22)", fontFamily: HF }}>
               Валюты · Ключевое
             </div>
@@ -661,7 +665,7 @@ export default function GlobeDashboard() {
         {/* ── Mobile: revenue badge + collapsible nodes ── */}
         {!selectedBusiness && (
           <div className="md:hidden absolute top-14 right-3 z-10 pointer-events-auto flex flex-col items-end gap-2">
-            <div className="glass text-right" style={{ borderRadius: 18, padding: "10px 16px" }}>
+            <div className="glass text-right" style={{ padding: "10px 16px" }}>
               <div className="uppercase tracking-widest font-semibold" style={{ fontSize: 9, color: "rgba(228,232,255,0.38)", fontFamily: HF }}>Выручка 30Д</div>
               <div className="tabular-nums mt-0.5" style={{ fontSize: 14, fontWeight: 700, color: "rgba(228,232,255,0.90)", fontFamily: HF }}>
                 {isLoadingStats ? "…" : formatCurrency(stats?.totalRevenue || 0)}
@@ -675,7 +679,7 @@ export default function GlobeDashboard() {
                 </div>
               ))}
             </div>
-            <div className="glass overflow-hidden w-44" style={{ borderRadius: 18 }}>
+            <div className="glass overflow-hidden w-44">
               <button className="w-full flex items-center justify-between px-3 min-h-[48px] text-left" onClick={() => setStatsOpen(v => !v)}>
                 <span className="uppercase tracking-widest font-semibold" style={{ fontSize: 10, color: "rgba(228,232,255,0.35)", fontFamily: HF }}>Узлы</span>
                 <ChevronDown className="w-3.5 h-3.5 transition-transform" style={{ color: "rgba(228,232,255,0.28)", transform: statsOpen ? "rotate(180deg)" : "none" }} />

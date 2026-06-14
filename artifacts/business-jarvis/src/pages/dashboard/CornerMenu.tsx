@@ -39,15 +39,8 @@ export function CornerMenu() {
       {/* Dropdown menu */}
       {open && (
         <div
-          className="flex flex-col rounded-2xl overflow-hidden mb-1"
-          style={{
-            background: "rgba(4, 10, 22, 0.90)",
-            backdropFilter: "blur(24px) saturate(170%)",
-            WebkitBackdropFilter: "blur(24px) saturate(170%)",
-            border: "1px solid rgba(255,255,255,0.09)",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04)",
-            minWidth: 188,
-          }}
+          className="glass flex flex-col overflow-hidden mb-1"
+          style={{ minWidth: 188 }}
         >
           {/* Nav section */}
           <div className="py-1.5">
@@ -131,14 +124,15 @@ export function CornerMenu() {
         style={{
           width: 40,
           height: 40,
-          borderRadius: 14,
-          background: open ? "rgba(0,212,255,0.12)" : "rgba(4, 10, 22, 0.78)",
-          backdropFilter: "blur(20px) saturate(160%)",
-          WebkitBackdropFilter: "blur(20px) saturate(160%)",
-          border: open ? "1px solid rgba(0,212,255,0.30)" : "1px solid rgba(255,255,255,0.09)",
+          borderRadius: 12,
+          background: open ? "rgba(0,212,255,0.12)" : "rgba(12,20,36,0.55)",
+          backdropFilter: "blur(22px) saturate(120%)",
+          WebkitBackdropFilter: "blur(22px) saturate(120%)",
+          border: open ? "1px solid rgba(0,212,255,0.30)" : "1px solid rgba(255,255,255,0.10)",
           color: open ? "var(--jarvis-accent)" : "rgba(228,232,255,0.38)",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.40)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07)",
           cursor: "pointer",
+          transition: "background 200ms, border-color 200ms",
         }}
         aria-label={open ? "Закрыть меню" : "Навигация"}
         title={open ? "Закрыть" : "Навигация"}

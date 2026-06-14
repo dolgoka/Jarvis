@@ -115,31 +115,15 @@
   --radius: .5rem;
 
   /* ─── Liquid Glass токены (тёмная тема) ─── */
-  --glass-tint:   rgba(255, 255, 255, 0.045);
-  --glass-edge:   rgba(255, 255, 255, 0.08);
-  --glass-blur:   16px;
-  --glass-sat:    165%;
-  /* Мягкий блик сверху — деликатно, не 0.26 */
+  --glass-tint:       rgba(12, 20, 36, 0.55);
+  --glass-tint-hover: rgba(20, 32, 52, 0.62);
+  --glass-edge:       rgba(255, 255, 255, 0.10);
+  --glass-edge-hover: rgba(255, 255, 255, 0.16);
+  --glass-blur:       22px;
+  --glass-sat:        120%;
   --glass-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.50),
-    inset 0 1px 1.5px rgba(255, 255, 255, 0.13),
-    inset 0 -1px 1px  rgba(255, 255, 255, 0.04);
-  /* Диагональный отблик — статик */
-  --glass-sheen: linear-gradient(
-    135deg,
-    rgba(255,255,255,0.13) 0%,
-    rgba(255,255,255,0.03) 38%,
-    rgba(255,255,255,0)    65%,
-    rgba(255,255,255,0.05) 100%
-  );
-  /* Блик при наведении — ярче */
-  --glass-sheen-hover: linear-gradient(
-    135deg,
-    rgba(255,255,255,0.26) 0%,
-    rgba(255,255,255,0.06) 38%,
-    rgba(255,255,255,0)    65%,
-    rgba(255,255,255,0.09) 100%
-  );
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
 
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -173,62 +157,44 @@
 
 /* ═══════════════════════════════════════════════════════════════
    LIQUID GLASS — эталонный рецепт (буквально по файлу образца)
-   Три части:
+   Два слоя:
      (1) Цветной фон сцены — radial-glow + drift анимация
-     (2) Сам материал .glass + ::after блик
-     (3) SVG-фильтры #liquid / #liquid-strong — в LiquidFilters.tsx
-   -webkit-backdrop-filter: без url() — запас для Safari.
-   url(#liquid) — Chrome/Edge only; искажает только фон под стеклом,
-   текст и иконки остаются чёткими.
+     (2) Единый материал .glass — blur/saturate, тёмный тинт, hover-переход
+   Нет SVG-фильтров, нет radужного ::after — только один канонический класс.
 ════════════════════════════════════════════════════════════════ */
 
-/* (2) ГЛАВНЫЙ КЛАСС — копировать буквально */
+/* ── Единый жидкий материал ── */
 .glass {
   position: relative;
-  border-radius: 22px;
+  border-radius: 16px;
   background: var(--glass-tint);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) url(#liquid);
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   border: 1px solid var(--glass-edge);
   box-shadow: var(--glass-shadow);
   isolation: isolate;
+  transition: background 200ms ease, border-color 200ms ease;
 }
 
-/* Зеркальный диагональный отблик поверх */
-.glass::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--glass-sheen);
-  pointer-events: none;
-  transition: background 0.25s ease, opacity 0.25s ease;
+.glass:hover {
+  background: var(--glass-tint-hover);
+  border-color: var(--glass-edge-hover);
 }
 
-/* Усиление блика при наведении */
-.glass:hover::after {
-  background: var(--glass-sheen-hover);
-}
-
-/* Контент над бликом */
+/* Контент над слоями */
 .glass > * {
   position: relative;
   z-index: 1;
 }
 
-/* Витринное преломление — для крупных акцентных панелей */
-.glass.strong {
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat)) url(#liquid-strong);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.55),
-    inset 0 1px 1.5px rgba(255, 255, 255, 0.15),
-    inset 0 -1px 1px  rgba(255, 255, 255, 0.04);
-}
-
 /* Пилюля — навбар, кнопки */
 .glass.pill {
   border-radius: 999px;
+}
+
+/* Мелкий чип */
+.glass.chip {
+  border-radius: 12px;
 }
 
 /* ─── Кнопки с градиентным фоном — блик через ::before ─── */
