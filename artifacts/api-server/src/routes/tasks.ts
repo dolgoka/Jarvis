@@ -76,6 +76,12 @@ router.post("/tasks/draft", async (req, res): Promise<void> => {
   }
 
   const people = await db.select().from(peopleTable).orderBy(peopleTable.id);
+
+  if (people.length === 0) {
+    res.status(503).json({ error: "Справочник сотрудников пуст — запустите seed:tasks" });
+    return;
+  }
+
   const directory = people
     .map(p => `id=${p.id}: ${p.role}${p.isInnerCircle ? " (приближённый)" : ""}${p.isAssistant ? " (дефолтный)" : ""}`)
     .join("\n");
@@ -156,8 +162,9 @@ ${directory}
       rationale: parsed.rationale ?? "",
     });
   } catch (err) {
-    console.error("draft task AI error", err);
-    res.status(500).json({ error: "AI error" });
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("[tasks/draft] AI error:", msg, err);
+    res.status(500).json({ error: "Не удалось оформить задачу", detail: msg });
   }
 });
 
