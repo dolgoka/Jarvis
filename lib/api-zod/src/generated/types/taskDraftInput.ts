@@ -8,4 +8,5 @@
 
 export interface TaskDraftInput {
   text: string;
+  businessId?: number;
 }

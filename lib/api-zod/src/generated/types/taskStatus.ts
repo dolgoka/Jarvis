@@ -10,7 +10,10 @@ export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
 
 
 export const TaskStatus = {
-  waiting: 'waiting',
-  accepted: 'accepted',
-  stuck: 'stuck',
+  draft: 'draft',
+  sent: 'sent',
+  in_progress: 'in_progress',
+  review: 'review',
+  done: 'done',
+  returned: 'returned',
 } as const;

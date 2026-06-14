@@ -6,21 +6,26 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Person } from './person';
+import type { TaskPriority } from './taskPriority';
 import type { TaskStatus } from './taskStatus';
 
 export interface Task {
   id: number;
   title: string;
-  description: string;
+  body: string;
   assigneeId: number;
   assigneeName: string;
   assigneeRole: string;
-  linkedPeopleIds: number[];
-  linkedPeople: Person[];
+  watchers: Person[];
+  priority: TaskPriority;
+  /** @nullable */
+  dueDate?: string | null;
+  /** @nullable */
+  businessId?: number | null;
   status: TaskStatus;
+  createdBy?: string;
+  /** @nullable */
+  returnComment?: string | null;
+  lastActivityAt: string;
   createdAt: string;
-  /** @nullable */
-  acceptedAt?: string | null;
-  /** @nullable */
-  stuckDays?: number | null;
 }

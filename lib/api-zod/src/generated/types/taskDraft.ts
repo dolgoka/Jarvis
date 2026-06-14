@@ -6,13 +6,17 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { Person } from './person';
+import type { TaskDraftPriority } from './taskDraftPriority';
 
 export interface TaskDraft {
   title: string;
-  description: string;
+  body: string;
   assigneeId: number;
   assigneeName: string;
   assigneeRole: string;
-  linkedPeopleIds: number[];
-  linkedPeople: Person[];
+  watchers: Person[];
+  priority: TaskDraftPriority;
+  /** @nullable */
+  dueDate?: string | null;
+  rationale: string;
 }

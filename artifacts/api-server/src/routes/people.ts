@@ -9,6 +9,9 @@ router.get("/people", async (_req, res): Promise<void> => {
     id: p.id,
     name: p.name,
     role: p.role,
+    groupLabel: p.groupLabel ?? null,
+    isInnerCircle: p.isInnerCircle,
+    isAssistant: p.isAssistant,
     email: p.email ?? null,
   })));
 });

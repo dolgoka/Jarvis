@@ -1,5 +1,4 @@
 import { Router, type IRouter } from "express";
-import { eq, inArray } from "drizzle-orm";
 import { db, peopleTable, tasksTable } from "@workspace/db";
 import OpenAI from "openai";
 
@@ -12,11 +11,16 @@ function makeClient() {
   return new OpenAI({ ...(baseURL ? { baseURL } : {}), apiKey });
 }
 
-function resolveLinked(ids: number[], allPeople: typeof peopleTable.$inferSelect[]) {
-  return ids
-    .map(id => allPeople.find(p => p.id === id))
-    .filter(Boolean)
-    .map(p => ({ id: p!.id, name: p!.name, role: p!.role, email: p!.email ?? null }));
+function personDto(p: typeof peopleTable.$inferSelect) {
+  return {
+    id: p.id,
+    name: p.name,
+    role: p.role,
+    groupLabel: p.groupLabel ?? null,
+    isInnerCircle: p.isInnerCircle,
+    isAssistant: p.isAssistant,
+    email: p.email ?? null,
+  };
 }
 
 function taskToResponse(
@@ -24,20 +28,28 @@ function taskToResponse(
   assignee: typeof peopleTable.$inferSelect,
   allPeople: typeof peopleTable.$inferSelect[],
 ) {
-  const ids = (task.linkedPeopleIds ?? []) as number[];
+  const watcherIds = (task.watchers ?? []) as number[];
+  const watcherPeople = watcherIds
+    .map(id => allPeople.find(p => p.id === id))
+    .filter(Boolean)
+    .map(p => personDto(p!));
+
   return {
     id: task.id,
     title: task.title,
-    description: task.description,
+    body: task.body,
     assigneeId: task.assigneeId,
     assigneeName: assignee.name,
     assigneeRole: assignee.role,
-    linkedPeopleIds: ids,
-    linkedPeople: resolveLinked(ids, allPeople),
+    watchers: watcherPeople,
+    priority: task.priority,
+    dueDate: task.dueDate ?? null,
+    businessId: task.businessId ?? null,
     status: task.status,
+    createdBy: task.createdBy,
+    returnComment: task.returnComment ?? null,
+    lastActivityAt: task.lastActivityAt.toISOString(),
     createdAt: task.createdAt.toISOString(),
-    acceptedAt: task.acceptedAt?.toISOString() ?? null,
-    stuckDays: task.stuckDays ?? null,
   };
 }
 
@@ -64,23 +76,35 @@ router.post("/tasks/draft", async (req, res): Promise<void> => {
   }
 
   const people = await db.select().from(peopleTable).orderBy(peopleTable.id);
-  const directory = people.map(p => `id=${p.id}: ${p.name} — ${p.role}`).join("\n");
+  const directory = people
+    .map(p => `id=${p.id}: ${p.role}${p.isInnerCircle ? " (приближённый)" : ""}${p.isAssistant ? " (дефолтный)" : ""}`)
+    .join("\n");
 
-  const systemPrompt = `Ты — умный ассистент для постановки задач. У тебя есть справочник сотрудников:
+  const today = new Date().toISOString().slice(0, 10);
+
+  const systemPrompt = `Ты — умный ассистент для постановки задач в команде собственника бизнеса.
+Сегодняшняя дата: ${today}.
+
+Справочник сотрудников (только роли, без имён):
 ${directory}
 
-Проанализируй текст пользователя и верни JSON строго такого вида:
+Проанализируй текст задачи и верни JSON строго такого вида:
 {
   "title": "краткое название задачи (до 8 слов)",
-  "description": "развёрнутое описание задачи",
-  "assigneeId": <id исполнителя из справочника или 1 если непонятно>,
-  "linkedPeopleIds": [<id доп. участников если упомянуты, иначе []>]
+  "body": "развёрнутое описание задачи с контекстом",
+  "assigneeId": <id исполнителя из справочника>,
+  "watcherIds": [<id соисполнителей если упомянуты, иначе []>],
+  "priority": "<high|medium|low>",
+  "dueDate": "<ISO date YYYY-MM-DD или null>",
+  "rationale": "1–2 предложения: почему именно эта роль"
 }
 
 Правила:
-- Имена сопоставляй гибко: «Ане» → Аня (id=1), «по безопасности» → Виктор, «зам» → Саша Батов и т.д.
-- linkedPeopleIds — только те, кто упомянут как дополнительные участники, не исполнитель
-- Верни только валидный JSON, без markdown-обёртки`;
+- Если роль исполнителя неясна — выбери Ассистент (помечен дефолтным).
+- Приоритет: слова «срочно», «срочная», «ASAP», «немедленно» → high; «важно», «приоритет» → medium; иначе → low.
+- Срок: распознай дату из текста и переведи в ISO. Если срок не указан — null.
+- watcherIds: только упомянутые дополнительные участники, не исполнитель.
+- Верни только валидный JSON, без markdown-обёртки.`;
 
   try {
     const completion = await makeClient().chat.completions.create({
@@ -96,27 +120,40 @@ ${directory}
     const raw = completion.choices[0]?.message?.content ?? "{}";
     const parsed = JSON.parse(raw) as {
       title?: string;
-      description?: string;
+      body?: string;
       assigneeId?: number;
-      linkedPeopleIds?: number[];
+      watcherIds?: number[];
+      priority?: string;
+      dueDate?: string | null;
+      rationale?: string;
     };
 
-    const assigneeId = parsed.assigneeId ?? people[0]?.id ?? 1;
-    const linkedIds: number[] = (parsed.linkedPeopleIds ?? []).filter(
+    const assistantPerson = people.find(p => p.isAssistant) ?? people[0]!;
+    const assigneeId = parsed.assigneeId ?? assistantPerson.id;
+    const watcherIds: number[] = (parsed.watcherIds ?? []).filter(
       (id): id is number => typeof id === "number" && id !== assigneeId,
     );
 
-    const assignee = people.find(p => p.id === assigneeId) ?? people[0]!;
-    const linked = resolveLinked(linkedIds, people);
+    const assignee = people.find(p => p.id === assigneeId) ?? assistantPerson;
+    const watcherPeople = watcherIds
+      .map(id => people.find(p => p.id === id))
+      .filter(Boolean)
+      .map(p => personDto(p!));
+
+    const priority = (["high", "medium", "low"] as const).includes(parsed.priority as "high" | "medium" | "low")
+      ? (parsed.priority as "high" | "medium" | "low")
+      : "medium";
 
     res.json({
       title: parsed.title ?? "Новая задача",
-      description: parsed.description ?? text,
+      body: parsed.body ?? text,
       assigneeId: assignee.id,
       assigneeName: assignee.name,
       assigneeRole: assignee.role,
-      linkedPeopleIds: linkedIds,
-      linkedPeople: linked,
+      watchers: watcherPeople,
+      priority,
+      dueDate: parsed.dueDate ?? null,
+      rationale: parsed.rationale ?? "",
     });
   } catch (err) {
     console.error("draft task AI error", err);
@@ -125,11 +162,22 @@ ${directory}
 });
 
 router.post("/tasks", async (req, res): Promise<void> => {
-  const { title, description, assigneeId, linkedPeopleIds } = req.body as {
+  const {
+    title,
+    body,
+    assigneeId,
+    watchers,
+    priority,
+    dueDate,
+    businessId,
+  } = req.body as {
     title?: string;
-    description?: string;
+    body?: string;
     assigneeId?: number;
-    linkedPeopleIds?: number[];
+    watchers?: number[];
+    priority?: string;
+    dueDate?: string | null;
+    businessId?: number | null;
   };
 
   if (!title?.trim() || !assigneeId) {
@@ -144,12 +192,19 @@ router.post("/tasks", async (req, res): Promise<void> => {
     return;
   }
 
+  const validPriority = (["high", "medium", "low"] as const).includes(priority as "high" | "medium" | "low")
+    ? (priority as "high" | "medium" | "low")
+    : "medium";
+
   const [task] = await db.insert(tasksTable).values({
     title: title.trim(),
-    description: (description ?? "").trim(),
+    body: (body ?? "").trim(),
     assigneeId,
-    linkedPeopleIds: linkedPeopleIds ?? [],
-    status: "waiting",
+    watchers: watchers ?? [],
+    priority: validPriority,
+    dueDate: dueDate ?? null,
+    businessId: businessId ?? null,
+    status: "sent",
   }).returning();
 
   res.status(201).json(taskToResponse(task!, assignee, allPeople));

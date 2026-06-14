@@ -11,5 +11,9 @@ export interface Person {
   name: string;
   role: string;
   /** @nullable */
+  groupLabel?: string | null;
+  isInnerCircle: boolean;
+  isAssistant: boolean;
+  /** @nullable */
   email?: string | null;
 }

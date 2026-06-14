@@ -5,10 +5,16 @@
  * Business Jarvis API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { TaskInputPriority } from './taskInputPriority';
 
 export interface TaskInput {
   title: string;
-  description: string;
+  body: string;
   assigneeId: number;
-  linkedPeopleIds?: number[];
+  watchers?: number[];
+  priority?: TaskInputPriority;
+  /** @nullable */
+  dueDate?: string | null;
+  /** @nullable */
+  businessId?: number | null;
 }

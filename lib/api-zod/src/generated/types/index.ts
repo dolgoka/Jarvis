@@ -57,5 +57,8 @@ export * from './snoozeFeedItemParams';
 export * from './task';
 export * from './taskDraft';
 export * from './taskDraftInput';
+export * from './taskDraftPriority';
 export * from './taskInput';
+export * from './taskInputPriority';
+export * from './taskPriority';
 export * from './taskStatus';

@@ -806,7 +806,7 @@ components:
 
     Person:
       type: object
-      required: [id, name, role]
+      required: [id, name, role, isInnerCircle, isAssistant]
       properties:
         id:
           type: integer
@@ -814,18 +814,24 @@ components:
           type: string
         role:
           type: string
+        groupLabel:
+          type: ["string", "null"]
+        isInnerCircle:
+          type: boolean
+        isAssistant:
+          type: boolean
         email:
           type: ["string", "null"]
 
     Task:
       type: object
-      required: [id, title, description, assigneeId, assigneeName, assigneeRole, linkedPeopleIds, linkedPeople, status, createdAt]
+      required: [id, title, body, assigneeId, assigneeName, assigneeRole, watchers, priority, status, createdAt, lastActivityAt]
       properties:
         id:
           type: integer
         title:
           type: string
-        description:
+        body:
           type: string
         assigneeId:
           type: integer
@@ -833,38 +839,50 @@ components:
           type: string
         assigneeRole:
           type: string
-        linkedPeopleIds:
-          type: array
-          items:
-            type: integer
-        linkedPeople:
+        watchers:
           type: array
           items:
             $ref: "#/components/schemas/Person"
+        priority:
+          type: string
+          enum: [high, medium, low]
+        dueDate:
+          type: ["string", "null"]
+        businessId:
+          type: ["integer", "null"]
         status:
           type: string
-          enum: [waiting, accepted, stuck]
+          enum: [draft, sent, in_progress, review, done, returned]
+        createdBy:
+          type: string
+        returnComment:
+          type: ["string", "null"]
+        lastActivityAt:
+          type: string
         createdAt:
           type: string
-        acceptedAt:
-          type: ["string", "null"]
-        stuckDays:
-          type: ["integer", "null"]
 
     TaskInput:
       type: object
-      required: [title, description, assigneeId]
+      required: [title, body, assigneeId]
       properties:
         title:
           type: string
-        description:
+        body:
           type: string
         assigneeId:
           type: integer
-        linkedPeopleIds:
+        watchers:
           type: array
           items:
             type: integer
+        priority:
+          type: string
+          enum: [high, medium, low]
+        dueDate:
+          type: ["string", "null"]
+        businessId:
+          type: ["integer", "null"]
 
     TaskDraftInput:
       type: object
@@ -872,14 +890,16 @@ components:
       properties:
         text:
           type: string
+        businessId:
+          type: integer
 
     TaskDraft:
       type: object
-      required: [title, description, assigneeId, assigneeName, assigneeRole, linkedPeopleIds, linkedPeople]
+      required: [title, body, assigneeId, assigneeName, assigneeRole, watchers, priority, rationale]
       properties:
         title:
           type: string
-        description:
+        body:
           type: string
         assigneeId:
           type: integer
@@ -887,14 +907,17 @@ components:
           type: string
         assigneeRole:
           type: string
-        linkedPeopleIds:
-          type: array
-          items:
-            type: integer
-        linkedPeople:
+        watchers:
           type: array
           items:
             $ref: "#/components/schemas/Person"
+        priority:
+          type: string
+          enum: [high, medium, low]
+        dueDate:
+          type: ["string", "null"]
+        rationale:
+          type: string
 
     FeedItem:
       type: object

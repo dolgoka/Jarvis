@@ -297,6 +297,9 @@ export const ListPeopleResponseItem = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
   "email": zod.string().nullish()
 })
 export const ListPeopleResponse = zod.array(ListPeopleResponseItem)
@@ -306,22 +309,28 @@ export const ListPeopleResponse = zod.array(ListPeopleResponseItem)
  * @summary Parse free text into a task draft via AI (does not save)
  */
 export const DraftTaskBody = zod.object({
-  "text": zod.string()
+  "text": zod.string(),
+  "businessId": zod.number().optional()
 })
 
 export const DraftTaskResponse = zod.object({
   "title": zod.string(),
-  "description": zod.string(),
+  "body": zod.string(),
   "assigneeId": zod.number(),
   "assigneeName": zod.string(),
   "assigneeRole": zod.string(),
-  "linkedPeopleIds": zod.array(zod.number()),
-  "linkedPeople": zod.array(zod.object({
+  "watchers": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
   "email": zod.string().nullish()
-}))
+})),
+  "priority": zod.enum(['high', 'medium', 'low']),
+  "dueDate": zod.string().nullish(),
+  "rationale": zod.string()
 })
 
 
@@ -331,21 +340,27 @@ export const DraftTaskResponse = zod.object({
 export const ListTasksResponseItem = zod.object({
   "id": zod.number(),
   "title": zod.string(),
-  "description": zod.string(),
+  "body": zod.string(),
   "assigneeId": zod.number(),
   "assigneeName": zod.string(),
   "assigneeRole": zod.string(),
-  "linkedPeopleIds": zod.array(zod.number()),
-  "linkedPeople": zod.array(zod.object({
+  "watchers": zod.array(zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
   "email": zod.string().nullish()
 })),
-  "status": zod.enum(['waiting', 'accepted', 'stuck']),
-  "createdAt": zod.string(),
-  "acceptedAt": zod.string().nullish(),
-  "stuckDays": zod.number().nullish()
+  "priority": zod.enum(['high', 'medium', 'low']),
+  "dueDate": zod.string().nullish(),
+  "businessId": zod.number().nullish(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "createdBy": zod.string().optional(),
+  "returnComment": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "createdAt": zod.string()
 })
 export const ListTasksResponse = zod.array(ListTasksResponseItem)
 
@@ -355,9 +370,12 @@ export const ListTasksResponse = zod.array(ListTasksResponseItem)
  */
 export const CreateTaskBody = zod.object({
   "title": zod.string(),
-  "description": zod.string(),
+  "body": zod.string(),
   "assigneeId": zod.number(),
-  "linkedPeopleIds": zod.array(zod.number()).optional()
+  "watchers": zod.array(zod.number()).optional(),
+  "priority": zod.enum(['high', 'medium', 'low']).optional(),
+  "dueDate": zod.string().nullish(),
+  "businessId": zod.number().nullish()
 })
 
 
@@ -479,6 +497,9 @@ export const FeedDraftTaskResponse = zod.object({
   "id": zod.number(),
   "name": zod.string(),
   "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
   "email": zod.string().nullish()
 })),
   "businessId": zod.number().nullish(),

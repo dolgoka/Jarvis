@@ -223,54 +223,101 @@ export interface Person {
   name: string;
   role: string;
   /** @nullable */
+  groupLabel?: string | null;
+  isInnerCircle: boolean;
+  isAssistant: boolean;
+  /** @nullable */
   email?: string | null;
 }
+
+export type TaskPriority = typeof TaskPriority[keyof typeof TaskPriority];
+
+
+export const TaskPriority = {
+  high: 'high',
+  medium: 'medium',
+  low: 'low',
+} as const;
 
 export type TaskStatus = typeof TaskStatus[keyof typeof TaskStatus];
 
 
 export const TaskStatus = {
-  waiting: 'waiting',
-  accepted: 'accepted',
-  stuck: 'stuck',
+  draft: 'draft',
+  sent: 'sent',
+  in_progress: 'in_progress',
+  review: 'review',
+  done: 'done',
+  returned: 'returned',
 } as const;
 
 export interface Task {
   id: number;
   title: string;
-  description: string;
+  body: string;
   assigneeId: number;
   assigneeName: string;
   assigneeRole: string;
-  linkedPeopleIds: number[];
-  linkedPeople: Person[];
+  watchers: Person[];
+  priority: TaskPriority;
+  /** @nullable */
+  dueDate?: string | null;
+  /** @nullable */
+  businessId?: number | null;
   status: TaskStatus;
+  createdBy?: string;
+  /** @nullable */
+  returnComment?: string | null;
+  lastActivityAt: string;
   createdAt: string;
-  /** @nullable */
-  acceptedAt?: string | null;
-  /** @nullable */
-  stuckDays?: number | null;
 }
+
+export type TaskInputPriority = typeof TaskInputPriority[keyof typeof TaskInputPriority];
+
+
+export const TaskInputPriority = {
+  high: 'high',
+  medium: 'medium',
+  low: 'low',
+} as const;
 
 export interface TaskInput {
   title: string;
-  description: string;
+  body: string;
   assigneeId: number;
-  linkedPeopleIds?: number[];
+  watchers?: number[];
+  priority?: TaskInputPriority;
+  /** @nullable */
+  dueDate?: string | null;
+  /** @nullable */
+  businessId?: number | null;
 }
 
 export interface TaskDraftInput {
   text: string;
+  businessId?: number;
 }
+
+export type TaskDraftPriority = typeof TaskDraftPriority[keyof typeof TaskDraftPriority];
+
+
+export const TaskDraftPriority = {
+  high: 'high',
+  medium: 'medium',
+  low: 'low',
+} as const;
 
 export interface TaskDraft {
   title: string;
-  description: string;
+  body: string;
   assigneeId: number;
   assigneeName: string;
   assigneeRole: string;
-  linkedPeopleIds: number[];
-  linkedPeople: Person[];
+  watchers: Person[];
+  priority: TaskDraftPriority;
+  /** @nullable */
+  dueDate?: string | null;
+  rationale: string;
 }
 
 export type FeedItemType = typeof FeedItemType[keyof typeof FeedItemType];

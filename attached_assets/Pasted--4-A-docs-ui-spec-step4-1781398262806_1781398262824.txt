@@ -1,0 +1,41 @@
+Задача (Шаг 4, часть A): постановщик задач — данные + черновик + отправка.
+Спека: docs/ui-spec-step4-tasks.md. Приёмку, голос, декомпозицию — СЛЕДУЮЩИМИ
+подшагами. Сейчас только: текст → ИИ-черновик → отправка.
+ПРАВИЛА: contract-first (схема → openapi → codegen → роут → фронт); после правки
+openapi прогнать codegen. id — query-параметром, не в path. Всё на русском.
+Единое .glass. БЕЗ реальных имён — карта людей ТОЛЬКО РОЛИ.
+1. БД (lib/db/src/schema):
+   - people.ts: id, name, role, groupLabel, isInnerCircle(bool), isAssistant(bool),
+     businessId(nullable), createdAt.
+   - tasks.ts: id, title, body, assigneeId(→people), watchers(jsonb int[]),
+     priority(enum high/medium/low), dueDate(nullable), businessId(nullable),
+     status(enum draft/sent/in_progress/review/done/returned, default draft),
+     createdBy(text default 'owner'), parentId(nullable), returnComment(nullable),
+     lastActivityAt, createdAt.
+   Регистрация в index.ts → db push.
+2. SEED карты людей — ТОЛЬКО РОЛИ (name = роль), без имён:
+   Ассистент (isAssistant=true, дефолтный маршрут), Зам / развитие, Методолог,
+   Юрист, Юрист-партнёр, Безопасность, IT-директор, ИО коммерческого,
+   Финдиректор, Внешний партнёр. Часть пометить isInnerCircle=true.
+3. openapi.yaml + codegen:
+   - GET /people — для выбора исполнителя.
+   - POST /tasks/draft  body {text, businessId?} → {title, body, assigneeId,
+     assigneeName, watchers:[{id,name}], priority, dueDate, rationale}.
+     Внутри OpenAI (makeClient из ai.ts), РУССКИЙ промпт: разбери задачу, выбери
+     исполнителя из переданного списка людей ПО РОЛИ; если неясно — Ассистент;
+     приоритет по словам (срочно→high); распознай срок и соисполнителей; верни
+     краткое rationale. В контекст подмешать список people (id, role).
+   - POST /tasks  body {title, body, assigneeId, watchers, priority, dueDate,
+     businessId?} → создаёт задачу со status 'sent'.
+4. ФРОНТ: TaskComposer — лист ПОВЕРХ глобуса (как плашки дока; «один фокус»:
+   открытие закрывает ленту/другие плашки). Плашку «Задача» в доке переключить
+   на открытие этого листа ВМЕСТО перехода на старую /tasks.
+   - Ввод: textarea «Опишите задачу обычными словами…» + кнопка «Оформить»
+     (микрофон — ЗАГЛУШКА, Шаг 5). Снизу подсказка-пример.
+   - Карточка-ЧЕРНОВИК (всё редактируемо): суть; исполнитель (чип-роль, тап →
+     выбор из /people); причина выбора ИИ (мелко); «Подключить» (чипы + «+»);
+     приоритет (сегмент 🔴 Срочно / 🟡 Важно / 🟢 Обычное); срок (чип).
+     Кнопки «Отправить» (POST /tasks → тост «Отправлено → <роль>», лист
+     закрывается) и «Отмена».
+   - PeoplePicker: список из /people, приближённые сверху, поиск по роли.
+5. Единое .glass, light/dark, плавность на планшете. pnpm run typecheck → build.
