@@ -13,15 +13,15 @@ const HF = "'Hanken Grotesk', system-ui, sans-serif";
 // ── Types (inferred from codegen) ─────────────────────────────────────────────
 type Person = { id: number; name: string; role: string; email?: string | null };
 type Task = {
-  id: number; title: string; description: string;
+  id: number; title: string; body: string;
   assigneeId: number; assigneeName: string; assigneeRole: string;
-  linkedPeople: Person[]; status: string;
+  linkedPeople?: Person[]; status: string;
   createdAt: string; acceptedAt?: string | null; stuckDays?: number | null;
 };
 type TaskDraft = {
-  title: string; description: string;
+  title: string; body: string;
   assigneeId: number; assigneeName: string; assigneeRole: string;
-  linkedPeopleIds: number[]; linkedPeople: Person[];
+  watchers: number[]; linkedPeople?: Person[];
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -94,12 +94,12 @@ function TaskCard({ task }: { task: Task }) {
       </div>
 
       {/* Description */}
-      {task.description && (
+      {task.body && (
         <p
           className="text-xs leading-relaxed line-clamp-2"
           style={{ fontFamily: HF, color: "rgba(228,232,255,0.48)" }}
         >
-          {task.description}
+          {task.body}
         </p>
       )}
 
@@ -270,7 +270,7 @@ function TaskComposer({ people, onClose, onCreated }: {
       const typed = d as unknown as TaskDraft;
       setDraft(typed);
       setDraftTitle(typed.title);
-      setDraftDesc(typed.description);
+      setDraftDesc(typed.body);
       setDraftAssigneeId(typed.assigneeId);
       setState("draft");
     } catch {
@@ -282,7 +282,7 @@ function TaskComposer({ people, onClose, onCreated }: {
     if (!draftTitle.trim() || !draftAssigneeId) return;
     setState("saving");
     try {
-      await createTask({ data: { title: draftTitle, description: draftDesc, assigneeId: draftAssigneeId, linkedPeopleIds: draft?.linkedPeopleIds ?? [] } });
+      await createTask({ data: { title: draftTitle, body: draftDesc, assigneeId: draftAssigneeId, watchers: draft?.watchers ?? [] } });
       onCreated();
       onClose();
     } catch {
@@ -343,7 +343,7 @@ function TaskComposer({ people, onClose, onCreated }: {
               <div className="relative">
                 <textarea
                   className="w-full rounded-xl px-4 py-3 text-sm resize-none"
-                  style={{ ...fieldStyle(), minHeight: 100, placeholder: "color: rgba(228,232,255,0.25)" }}
+                  style={{ ...fieldStyle(), minHeight: 100 }}
                   rows={4}
                   placeholder="Надиктуйте или напишите задачу в свободной форме…"
                   value={rawText}
@@ -577,10 +577,10 @@ function SectionHeader({ color, pulse, label, count }: {
 export default function TasksPage() {
   const [composerOpen, setComposerOpen] = useState(false);
 
-  const { data: tasks, isLoading, refetch } = useListTasks({ query: {} });
-  const { data: people } = useListPeople({ query: {} });
+  const { data: tasks, isLoading, refetch } = useListTasks();
+  const { data: people } = useListPeople();
 
-  const typedTasks = (tasks ?? []) as Task[];
+  const typedTasks = (tasks ?? []) as unknown as Task[];
   const typedPeople = (people ?? []) as Person[];
 
   const waiting  = typedTasks.filter(t => t.status === "waiting");

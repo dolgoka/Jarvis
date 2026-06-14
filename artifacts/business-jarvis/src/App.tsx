@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
-import { useRole } from "./hooks/useRole";
+import { useRole, type Role } from "./hooks/useRole";
 import { AuthContext } from "./hooks/AuthContext";
 import { LiquidFilters } from "./components/liquid/LiquidFilters";
 import RoleSelect from "./pages/role-select/RoleSelect";

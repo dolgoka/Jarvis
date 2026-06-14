@@ -43,7 +43,7 @@ function fmtDelta(plan: number, actual: number): string {
 async function buildBusinessContext(period = "month") {
   const [businesses, reports, events] = await Promise.all([
     db.select().from(businessesTable),
-    db.select().from(reportsTable).where(eq(reportsTable.period, period)),
+    db.select().from(reportsTable).where(eq(reportsTable.period, period as "day" | "week" | "month")),
     db.select().from(eventsTable).where(isNull(eventsTable.dismissedAt)),
   ]);
 
@@ -93,11 +93,10 @@ async function buildTasksContext() {
     return {
       id: t.id,
       title: t.title,
-      description: t.description,
+      body: t.body,
       assigneeName: assignee?.name ?? "—",
       assigneeRole: assignee?.role ?? "—",
       status: t.status,
-      stuckDays: t.stuckDays ?? null,
       createdAt: t.createdAt.toISOString().slice(0, 10),
     };
   });
@@ -185,7 +184,7 @@ ${planFactRows}
 
   const taskLines = tasks.length > 0
     ? tasks.map(t =>
-        `  - "${t.title}" — исполнитель: ${t.assigneeName} (${t.assigneeRole}), статус: ${taskStatusLabel(t.status, t.stuckDays)}, создана: ${t.createdAt}`
+        `  - "${t.title}" — исполнитель: ${t.assigneeName} (${t.assigneeRole}), статус: ${taskStatusLabel(t.status, null)}, создана: ${t.createdAt}`
       ).join("\n")
     : "  нет активных задач";
 

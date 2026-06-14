@@ -147,6 +147,8 @@ router.post("/feed/confirm-task", async (req, res): Promise<void> => {
     feedItemId?: number;
     businessId?: number;
   };
+  const body = (description ?? "").trim();
+  const watchers = linkedPeopleIds ?? [];
 
   if (!title?.trim() || !assigneeId) {
     res.status(400).json({ error: "title and assigneeId are required" });
@@ -159,10 +161,9 @@ router.post("/feed/confirm-task", async (req, res): Promise<void> => {
 
   const [task] = await db.insert(tasksTable).values({
     title: title.trim(),
-    description: (description ?? "").trim(),
+    body,
     assigneeId,
-    linkedPeopleIds: linkedPeopleIds ?? [],
-    status: "waiting",
+    watchers,
     feedItemId: feedItemId ?? null,
     businessId: businessId ?? null,
   }).returning();
@@ -173,7 +174,7 @@ router.post("/feed/confirm-task", async (req, res): Promise<void> => {
       .where(eq(feedItemsTable.id, feedItemId));
   }
 
-  const ids = (task!.linkedPeopleIds ?? []) as number[];
+  const ids = (task!.watchers ?? []) as number[];
   const linked = ids
     .map(id => allPeople.find(p => p.id === id))
     .filter(Boolean)
@@ -182,11 +183,11 @@ router.post("/feed/confirm-task", async (req, res): Promise<void> => {
   res.status(201).json({
     id: task!.id,
     title: task!.title,
-    description: task!.description,
+    body: task!.body,
     assigneeId: task!.assigneeId,
     assigneeName: assignee.name,
     assigneeRole: assignee.role,
-    linkedPeopleIds: ids,
+    watchers: ids,
     linkedPeople: linked,
     status: task!.status,
     createdAt: task!.createdAt.toISOString(),

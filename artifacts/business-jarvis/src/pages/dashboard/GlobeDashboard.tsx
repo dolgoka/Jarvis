@@ -476,11 +476,10 @@ export default function GlobeDashboard() {
                   const cls = d.health === "red" ? "beacon-red" : d.health === "yellow" ? "beacon-yellow" : "";
                   el.className = cls;
                   el.style.cssText = `width:9px;height:9px;border-radius:50%;background:${d.color};box-shadow:0 0 8px 4px ${d.color}cc,0 0 18px 7px ${d.color}44;border:1.5px solid rgba(255,255,255,0.7);cursor:pointer;pointer-events:auto;`;
-                  el.addEventListener("click", (e) => { e.stopPropagation(); });
+                  el.addEventListener("click", (e) => { e.stopPropagation(); setSelectedBusiness({ id: d.business.id, color: d.color }); });
                   return el;
                 }}
                 htmlAltitude={(d: any) => d.alt + 0.005}
-                onHtmlElementClick={(d: any) => setSelectedBusiness({ id: d.business.id, color: d.color })}
               />
             </GlobeErrorBoundary>
           )}

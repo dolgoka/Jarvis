@@ -498,7 +498,6 @@ export default function MorningFeed() {
                   style={{
                     flex: 1, background: "none", border: "none", outline: "none", resize: "none",
                     fontFamily: HF, fontSize: 15, color: "#fff",
-                    "::placeholder": { color: "rgba(255,255,255,0.3)" } as never,
                   }}
                 />
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>

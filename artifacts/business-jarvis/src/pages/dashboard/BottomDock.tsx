@@ -4,8 +4,8 @@ import {
   Send, X, Loader2, Mic, MicOff, Volume2, Square,
   MessageSquare, Lightbulb, ClipboardList,
 } from "lucide-react";
-import { Link } from "wouter";
 import { AiAnswer } from "@/components/ui/AiAnswer";
+import { TaskComposer } from "./TaskComposer";
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 const ACCENT = "var(--jarvis-accent)";
@@ -27,7 +27,7 @@ const QUICK = [
   "Топ-3 по выручке",
 ];
 
-export type DockPanel = "chat" | "thought" | null;
+export type DockPanel = "chat" | "thought" | "task" | null;
 
 interface BottomDockProps {
   activePanel: DockPanel;
@@ -154,6 +154,7 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
   const micBusy = isTranscribing || isPending;
   const chatOpen = activePanel === "chat";
   const thoughtOpen = activePanel === "thought";
+  const taskOpen = activePanel === "task";
 
   function togglePanel(panel: DockPanel) {
     onPanelChange(activePanel === panel ? null : panel);
@@ -318,6 +319,11 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
         </div>
       )}
 
+      {/* ── Task panel ── */}
+      {taskOpen && (
+        <TaskComposer onClose={() => onPanelChange(null)} />
+      )}
+
       {/* ── Thought panel (stub) ── */}
       {thoughtOpen && (
         <div
@@ -361,17 +367,14 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
           onClick={() => togglePanel("thought")}
         />
 
-        {/* Задача → navigates to /tasks */}
-        <Link href="/tasks">
-          <DockPill
-            icon={<ClipboardList className="w-4 h-4" />}
-            label="Задача"
-            active={false}
-            accentColor="rgba(62,217,160,0.9)"
-            onClick={() => {}}
-            isLink
-          />
-        </Link>
+        {/* Задача → opens TaskComposer sheet */}
+        <DockPill
+          icon={<ClipboardList className="w-4 h-4" />}
+          label="Задача"
+          active={taskOpen}
+          accentColor="rgba(62,217,160,0.9)"
+          onClick={() => togglePanel("task")}
+        />
       </div>
     </div>
   );
@@ -383,10 +386,9 @@ interface DockPillProps {
   active: boolean;
   accentColor: string;
   onClick: () => void;
-  isLink?: boolean;
 }
 
-function DockPill({ icon, label, active, accentColor, onClick, isLink }: DockPillProps) {
+function DockPill({ icon, label, active, accentColor, onClick }: DockPillProps) {
   return (
     <button
       onClick={onClick}
@@ -401,7 +403,7 @@ function DockPill({ icon, label, active, accentColor, onClick, isLink }: DockPil
         fontFamily: HF,
         fontSize: 13,
         fontWeight: 500,
-        cursor: isLink ? "pointer" : "pointer",
+        cursor: "pointer",
         whiteSpace: "nowrap",
         transition: "background 150ms, border-color 150ms, color 150ms",
       }}
