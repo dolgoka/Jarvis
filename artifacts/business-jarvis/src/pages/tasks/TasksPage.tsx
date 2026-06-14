@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import { Shell } from "@/components/layout/Shell";
 import { useListTasks, useListPeople, useCreateTask, useDraftTask } from "@workspace/api-client-react";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
@@ -21,7 +22,7 @@ type Task = {
 type TaskDraft = {
   title: string; body: string;
   assigneeId: number; assigneeName: string; assigneeRole: string;
-  watchers: number[]; linkedPeople?: Person[];
+  watchers: Person[]; linkedPeople?: Person[];
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -281,11 +282,28 @@ function TaskComposer({ people, onClose, onCreated }: {
   async function handleSend() {
     if (!draftTitle.trim() || !draftAssigneeId) return;
     setState("saving");
+    setError("");
     try {
-      await createTask({ data: { title: draftTitle, body: draftDesc, assigneeId: draftAssigneeId, watchers: draft?.watchers ?? [] } });
+      const watcherIds = (draft?.watchers ?? []).map(w => w.id);
+      const result = await createTask({
+        data: {
+          title: draftTitle,
+          body: draftDesc,
+          assigneeId: draftAssigneeId,
+          watchers: watcherIds,
+        },
+      });
+      toast.success(`Отправлено → ${result.assigneeRole}`, {
+        description: result.title,
+        duration: 4000,
+      });
       onCreated();
       onClose();
-    } catch {
+    } catch (err) {
+      console.error("[TasksPage] createTask failed:", err);
+      toast.error("Не удалось отправить задачу", {
+        description: err instanceof Error ? err.message : String(err),
+      });
       setError("Ошибка сохранения");
       setState("draft");
     }
