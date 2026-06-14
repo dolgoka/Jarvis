@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './acceptTaskParams';
 export * from './aiChatInput';
 export * from './aiChatInputHistoryItem';
 export * from './aiChatInputHistoryItemRole';
@@ -43,6 +44,8 @@ export * from './getTopBusinessesPeriod';
 export * from './healthStatus';
 export * from './listReportsParams';
 export * from './listReportsPeriod';
+export * from './listTasksBox';
+export * from './listTasksParams';
 export * from './markFeedSeenParams';
 export * from './newsItem';
 export * from './newsItemSeverity';
@@ -53,6 +56,8 @@ export * from './report';
 export * from './reportInput';
 export * from './reportInputPeriod';
 export * from './reportPeriod';
+export * from './returnTaskInput';
+export * from './returnTaskParams';
 export * from './snoozeFeedItemParams';
 export * from './task';
 export * from './taskDraft';

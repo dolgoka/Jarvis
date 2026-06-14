@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import { eq, inArray } from "drizzle-orm";
 import { db, peopleTable, tasksTable } from "@workspace/db";
 import OpenAI from "openai";
 
@@ -53,19 +54,83 @@ function taskToResponse(
   };
 }
 
-router.get("/tasks", async (_req, res): Promise<void> => {
+const ACTIVE_STATUSES = ["sent", "in_progress", "returned"] as const;
+const REVIEW_STATUSES = ["review"] as const;
+
+router.get("/tasks", async (req, res): Promise<void> => {
+  const box = req.query["box"] as string | undefined;
+
   const [tasks, allPeople] = await Promise.all([
     db.select().from(tasksTable).orderBy(tasksTable.createdAt),
     db.select().from(peopleTable),
   ]);
 
-  const result = tasks.map(task => {
+  let filtered = tasks;
+  if (box === "review") {
+    filtered = tasks.filter(t => (REVIEW_STATUSES as readonly string[]).includes(t.status));
+  } else if (box === "active") {
+    filtered = tasks.filter(t => (ACTIVE_STATUSES as readonly string[]).includes(t.status));
+  }
+
+  const result = filtered.map(task => {
     const assignee = allPeople.find(p => p.id === task.assigneeId);
     if (!assignee) return null;
     return taskToResponse(task, assignee, allPeople);
   }).filter(Boolean);
 
   res.json(result);
+});
+
+router.post("/tasks/accept", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id || isNaN(id)) {
+    res.status(400).json({ error: "id query param required" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(tasksTable)
+    .set({ status: "done", lastActivityAt: new Date() })
+    .where(eq(tasksTable.id, id))
+    .returning();
+
+  if (!updated) {
+    res.status(404).json({ error: "Task not found" });
+    return;
+  }
+
+  const allPeople = await db.select().from(peopleTable);
+  const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
+  res.json(taskToResponse(updated, assignee, allPeople));
+});
+
+router.post("/tasks/return", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id || isNaN(id)) {
+    res.status(400).json({ error: "id query param required" });
+    return;
+  }
+
+  const { comment } = req.body as { comment?: string };
+  if (!comment?.trim()) {
+    res.status(400).json({ error: "comment is required" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(tasksTable)
+    .set({ status: "returned", returnComment: comment.trim(), lastActivityAt: new Date() })
+    .where(eq(tasksTable.id, id))
+    .returning();
+
+  if (!updated) {
+    res.status(404).json({ error: "Task not found" });
+    return;
+  }
+
+  const allPeople = await db.select().from(peopleTable);
+  const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
+  res.json(taskToResponse(updated, assignee, allPeople));
 });
 
 router.post("/tasks/draft", async (req, res): Promise<void> => {

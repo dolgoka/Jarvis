@@ -335,8 +335,84 @@ export const DraftTaskResponse = zod.object({
 
 
 /**
+ * @summary Accept a review task — marks it done
+ */
+export const AcceptTaskQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AcceptTaskResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "watchers": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
+  "email": zod.string().nullish()
+})),
+  "priority": zod.enum(['high', 'medium', 'low']),
+  "dueDate": zod.string().nullish(),
+  "businessId": zod.number().nullish(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "createdBy": zod.string().optional(),
+  "returnComment": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Return a task to the assignee with a comment
+ */
+export const ReturnTaskQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ReturnTaskBody = zod.object({
+  "comment": zod.string()
+})
+
+export const ReturnTaskResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "watchers": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
+  "email": zod.string().nullish()
+})),
+  "priority": zod.enum(['high', 'medium', 'low']),
+  "dueDate": zod.string().nullish(),
+  "businessId": zod.number().nullish(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "createdBy": zod.string().optional(),
+  "returnComment": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary List all tasks with assignee info
  */
+export const ListTasksQueryParams = zod.object({
+  "box": zod.enum(['active', 'review']).optional()
+})
+
 export const ListTasksResponseItem = zod.object({
   "id": zod.number(),
   "title": zod.string(),

@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AcceptTaskParams,
   AiChatInput,
   AiChatReply,
   AiSummary,
@@ -41,11 +42,14 @@ import type {
   GetTopBusinessesParams,
   HealthStatus,
   ListReportsParams,
+  ListTasksParams,
   MarkFeedSeenParams,
   NewsItem,
   Person,
   Report,
   ReportInput,
+  ReturnTaskInput,
+  ReturnTaskParams,
   SnoozeFeedItemParams,
   Task,
   TaskDraft,
@@ -1367,20 +1371,183 @@ export const useDraftTask = <TError = ErrorType<unknown>,
       return useMutation(getDraftTaskMutationOptions(options));
     }
 
-export const getListTasksUrl = () => {
+export const getAcceptTaskUrl = (params: AcceptTaskParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/accept?${stringifiedParams}` : `/api/tasks/accept`
+}
+
+/**
+ * @summary Accept a review task — marks it done
+ */
+export const acceptTask = async (params: AcceptTaskParams, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getAcceptTaskUrl(params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
 
 
 
 
-  return `/api/tasks`
+export const getAcceptTaskMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptTask>>, TError,{params: AcceptTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof acceptTask>>, TError,{params: AcceptTaskParams}, TContext> => {
+
+const mutationKey = ['acceptTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof acceptTask>>, {params: AcceptTaskParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  acceptTask(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AcceptTaskMutationResult = NonNullable<Awaited<ReturnType<typeof acceptTask>>>
+
+    export type AcceptTaskMutationError = ErrorType<void>
+
+    /**
+ * @summary Accept a review task — marks it done
+ */
+export const useAcceptTask = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof acceptTask>>, TError,{params: AcceptTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof acceptTask>>,
+        TError,
+        {params: AcceptTaskParams},
+        TContext
+      > => {
+      return useMutation(getAcceptTaskMutationOptions(options));
+    }
+
+export const getReturnTaskUrl = (params: ReturnTaskParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/return?${stringifiedParams}` : `/api/tasks/return`
+}
+
+/**
+ * @summary Return a task to the assignee with a comment
+ */
+export const returnTask = async (returnTaskInput: ReturnTaskInput,
+    params: ReturnTaskParams, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getReturnTaskUrl(params),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      returnTaskInput,)
+  }
+);}
+
+
+
+
+export const getReturnTaskMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof returnTask>>, TError,{data: BodyType<ReturnTaskInput>;params: ReturnTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof returnTask>>, TError,{data: BodyType<ReturnTaskInput>;params: ReturnTaskParams}, TContext> => {
+
+const mutationKey = ['returnTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof returnTask>>, {data: BodyType<ReturnTaskInput>;params: ReturnTaskParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  returnTask(data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReturnTaskMutationResult = NonNullable<Awaited<ReturnType<typeof returnTask>>>
+    export type ReturnTaskMutationBody = BodyType<ReturnTaskInput>
+    export type ReturnTaskMutationError = ErrorType<void>
+
+    /**
+ * @summary Return a task to the assignee with a comment
+ */
+export const useReturnTask = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof returnTask>>, TError,{data: BodyType<ReturnTaskInput>;params: ReturnTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof returnTask>>,
+        TError,
+        {data: BodyType<ReturnTaskInput>;params: ReturnTaskParams},
+        TContext
+      > => {
+      return useMutation(getReturnTaskMutationOptions(options));
+    }
+
+export const getListTasksUrl = (params?: ListTasksParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks?${stringifiedParams}` : `/api/tasks`
 }
 
 /**
  * @summary List all tasks with assignee info
  */
-export const listTasks = async ( options?: RequestInit): Promise<Task[]> => {
+export const listTasks = async (params?: ListTasksParams, options?: RequestInit): Promise<Task[]> => {
 
-  return customFetch<Task[]>(getListTasksUrl(),
+  return customFetch<Task[]>(getListTasksUrl(params),
   {
     ...options,
     method: 'GET'
@@ -1393,23 +1560,23 @@ export const listTasks = async ( options?: RequestInit): Promise<Task[]> => {
 
 
 
-export const getListTasksQueryKey = () => {
+export const getListTasksQueryKey = (params?: ListTasksParams,) => {
     return [
-    `/api/tasks`
+    `/api/tasks`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListTasksQueryOptions = <TData = Awaited<ReturnType<typeof listTasks>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTasks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+export const getListTasksQueryOptions = <TData = Awaited<ReturnType<typeof listTasks>>, TError = ErrorType<unknown>>(params?: ListTasksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTasks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListTasksQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getListTasksQueryKey(params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTasks>>> = ({ signal }) => listTasks({ signal, ...requestOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listTasks>>> = ({ signal }) => listTasks(params, { signal, ...requestOptions });
 
 
 
@@ -1427,11 +1594,11 @@ export type ListTasksQueryError = ErrorType<unknown>
  */
 
 export function useListTasks<TData = Awaited<ReturnType<typeof listTasks>>, TError = ErrorType<unknown>>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTasks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+ params?: ListTasksParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof listTasks>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
 
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getListTasksQueryOptions(options)
+  const queryOptions = getListTasksQueryOptions(params,options)
 
   const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 

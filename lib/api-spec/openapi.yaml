@@ -353,11 +353,66 @@ paths:
               schema:
                 $ref: "#/components/schemas/TaskDraft"
 
+  /tasks/accept:
+    post:
+      operationId: acceptTask
+      tags: [tasks]
+      summary: Accept a review task — marks it done
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+
+  /tasks/return:
+    post:
+      operationId: returnTask
+      tags: [tasks]
+      summary: Return a task to the assignee with a comment
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReturnTaskInput"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+
   /tasks:
     get:
       operationId: listTasks
       tags: [tasks]
       summary: List all tasks with assignee info
+      parameters:
+        - name: box
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [active, review]
       responses:
         "200":
           description: List of tasks
@@ -883,6 +938,13 @@ components:
           type: ["string", "null"]
         businessId:
           type: ["integer", "null"]
+
+    ReturnTaskInput:
+      type: object
+      required: [comment]
+      properties:
+        comment:
+          type: string
 
     TaskDraftInput:
       type: object

@@ -293,6 +293,10 @@ export interface TaskInput {
   businessId?: number | null;
 }
 
+export interface ReturnTaskInput {
+  comment: string;
+}
+
 export interface TaskDraftInput {
   text: string;
   businessId?: number;
@@ -497,6 +501,26 @@ export const GetAiSummaryPeriod = {
   day: 'day',
   week: 'week',
   month: 'month',
+} as const;
+
+export type AcceptTaskParams = {
+id: number;
+};
+
+export type ReturnTaskParams = {
+id: number;
+};
+
+export type ListTasksParams = {
+box?: ListTasksBox;
+};
+
+export type ListTasksBox = typeof ListTasksBox[keyof typeof ListTasksBox];
+
+
+export const ListTasksBox = {
+  active: 'active',
+  review: 'review',
 } as const;
 
 export type GetFeedParams = {
