@@ -76,8 +76,11 @@ export function TaskComposer({ onClose }: TaskComposerProps) {
         });
         onClose();
       },
-      onError() {
-        toast.error("Ошибка при отправке задачи");
+      onError(err) {
+        console.error("[TaskComposer] createTask failed:", err);
+        toast.error("Не удалось отправить задачу", {
+          description: err instanceof Error ? err.message : String(err),
+        });
       },
     },
   });

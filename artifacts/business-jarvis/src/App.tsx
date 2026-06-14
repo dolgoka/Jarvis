@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
+import { Toaster as SonnerToaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import { useRole, type Role } from "./hooks/useRole";
@@ -84,6 +85,7 @@ function App() {
           <LiquidFilters />
           <AppInner />
           <Toaster />
+          <SonnerToaster richColors position="top-right" />
         </TooltipProvider>
       </QueryClientProvider>
     </ThemeProvider>
