@@ -642,9 +642,10 @@ export default function GlobeDashboard() {
         <div
           className="hidden md:block absolute left-6 z-10 pointer-events-none"
           style={{
-            bottom: 88,
-            transition: "opacity 300ms ease",
-            opacity: cornersVisible ? 0.7 : 0,
+            bottom: 20,
+            transition: "transform 300ms cubic-bezier(0.4,0,0.2,1), opacity 300ms ease",
+            opacity: cornersVisible ? 1 : 0,
+            transform: cornersVisible ? "translateX(0)" : "translateX(-120%)",
           }}
         >
           <div className="glass" style={{ padding: "10px 16px" }}>
