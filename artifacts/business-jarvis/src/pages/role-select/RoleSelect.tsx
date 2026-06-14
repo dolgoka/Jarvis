@@ -190,7 +190,7 @@ export default function RoleSelect({ onSelect }: RoleSelectProps) {
                 {/* WIP badge */}
                 {wip && (
                   <span
-                    className="absolute top-3.5 right-3.5 text-[9px] font-semibold uppercase tracking-widest px-2 py-0.5"
+                    className="absolute top-3.5 right-3.5 text-[9px] font-semibold tracking-wide px-2 py-0.5"
                     style={{
                       borderRadius: 6,
                       background: "rgba(255,255,255,0.07)",
