@@ -11,11 +11,12 @@ import {
 import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
 import {
   Loader2, X, MapPin, User, Mail,
-  Zap, ChevronDown, Newspaper, Globe as GlobeIcon,
+  Zap, ChevronDown, Newspaper, Globe as GlobeIcon, ExternalLink,
 } from "lucide-react";
 import NewsFeedOverlay from "./NewsFeedOverlay";
 import { BottomDock, type DockPanel } from "./BottomDock";
 import { CornerMenu } from "./CornerMenu";
+import BusinessCardOverlay from "./BusinessCardOverlay";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link } from "wouter";
 
@@ -54,8 +55,8 @@ const STATUS_LABELS: Record<string, string> = {
 
 /* ── BusinessSlideOver ─────────────────────────────────────────────────────── */
 
-function BusinessSlideOver({ businessId, color: _color, onClose }: {
-  businessId: number; color: string; onClose: () => void;
+function BusinessSlideOver({ businessId, color: _color, onClose, onOpenCard }: {
+  businessId: number; color: string; onClose: () => void; onOpenCard: () => void;
 }) {
   const [period, setPeriod] = useState<FetchLatestReportPeriod>("month");
   const { data: report, isLoading } = useFetchLatestReport(
@@ -151,10 +152,10 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: {
               : <div style={{ textAlign: "center", padding: "28px 0", color: "rgba(228,232,255,0.20)", fontSize: 14, fontFamily: HF }}>Нет данных телеметрии</div>}
           </div>
           <div style={{ padding: "10px 20px 14px", borderTop: `1px solid ${DIVIDER}` }}>
-            <Link href={`/businesses/${businessId}`} className="jarvis-btn relative"
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,212,255,0.25)", textDecoration: "none" }}>
-              <Zap className="w-3.5 h-3.5" /> Полный анализ
-            </Link>
+            <button onClick={onOpenCard}
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,212,255,0.25)", width: "100%", cursor: "pointer", border: "none" }}>
+              <ExternalLink className="w-3.5 h-3.5" /> Открыть полностью
+            </button>
           </div>
         </div>
       </div>
@@ -219,10 +220,10 @@ function BusinessSlideOver({ businessId, color: _color, onClose }: {
             : <div style={{ textAlign: "center", padding: "64px 0", color: "rgba(228,232,255,0.20)", fontSize: 14, fontFamily: HF }}>Нет данных телеметрии</div>}
         </div>
         <div style={{ padding: "16px 24px 20px", borderTop: `1px solid ${DIVIDER}` }}>
-          <Link href={`/businesses/${businessId}`} className="jarvis-btn relative"
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, textDecoration: "none", background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,212,255,0.25)" }}>
-            <Zap className="w-3.5 h-3.5" /> Полный анализ
-          </Link>
+          <button onClick={onOpenCard}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, minHeight: 44, borderRadius: 14, background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)", color: "#fff", fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em", boxShadow: "0 4px 16px rgba(0,212,255,0.25)", width: "100%", cursor: "pointer", border: "none" }}>
+            <ExternalLink className="w-3.5 h-3.5" /> Открыть полностью
+          </button>
         </div>
       </div>
     </>
@@ -238,6 +239,7 @@ export default function GlobeDashboard() {
   const [hoveredPolygon, setHoveredPolygon] = useState<any | null>(null);
   const [countries, setCountries] = useState<any[]>([]);
   const [selectedBusiness, setSelectedBusiness] = useState<{ id: number; color: string } | null>(null);
+  const [cardBusinessId, setCardBusinessId] = useState<number | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
   const [rankingOpen, setRankingOpen] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
@@ -723,11 +725,20 @@ export default function GlobeDashboard() {
         <CornerMenu />
 
         {/* Slide-over / bottom sheet */}
-        {selectedBusiness && (
+        {selectedBusiness && !cardBusinessId && (
           <BusinessSlideOver
             businessId={selectedBusiness.id}
             color={selectedBusiness.color}
             onClose={() => setSelectedBusiness(null)}
+            onOpenCard={() => setCardBusinessId(selectedBusiness.id)}
+          />
+        )}
+
+        {/* Full-screen deep card overlay */}
+        {cardBusinessId !== null && (
+          <BusinessCardOverlay
+            businessId={cardBusinessId}
+            onClose={() => { setCardBusinessId(null); }}
           />
         )}
       </div>

@@ -29,6 +29,13 @@ function getMimeType(): string {
 }
 
 export default function AiChat() {
+  const initialMessage = (() => {
+    try {
+      const v = new URLSearchParams(window.location.search).get("message");
+      return v ? decodeURIComponent(v) : "";
+    } catch { return ""; }
+  })();
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
@@ -36,7 +43,7 @@ export default function AiChat() {
       timestamp: new Date().toISOString(),
     },
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(initialMessage);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
