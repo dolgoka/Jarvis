@@ -49,6 +49,7 @@ function taskToResponse(
     status: task.status,
     createdBy: task.createdBy,
     returnComment: task.returnComment ?? null,
+    resultNote: task.resultNote ?? null,
     lastActivityAt: task.lastActivityAt.toISOString(),
     createdAt: task.createdAt.toISOString(),
   };

@@ -451,6 +451,7 @@ export const AcceptTaskResponse = zod.object({
   "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
   "createdBy": zod.string().optional(),
   "returnComment": zod.string().nullish(),
+  "resultNote": zod.string().nullish(),
   "lastActivityAt": zod.string(),
   "createdAt": zod.string()
 })
@@ -489,6 +490,7 @@ export const ReturnTaskResponse = zod.object({
   "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
   "createdBy": zod.string().optional(),
   "returnComment": zod.string().nullish(),
+  "resultNote": zod.string().nullish(),
   "lastActivityAt": zod.string(),
   "createdAt": zod.string()
 })
@@ -523,6 +525,7 @@ export const ListTasksResponseItem = zod.object({
   "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
   "createdBy": zod.string().optional(),
   "returnComment": zod.string().nullish(),
+  "resultNote": zod.string().nullish(),
   "lastActivityAt": zod.string(),
   "createdAt": zod.string()
 })

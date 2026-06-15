@@ -94,18 +94,34 @@ async function seedPeople(): Promise<typeof peopleTable.$inferSelect[]> {
 }
 
 async function seedDemoTasks(people: typeof peopleTable.$inferSelect[]): Promise<void> {
-  const [row] = await db.select({ n: count() }).from(tasksTable).where(eq(tasksTable.status, "review"));
-  if ((row?.n ?? 0) > 0) {
-    console.log(`Demo tasks already seeded (${row!.n} review rows) — skipping.`);
-    return;
-  }
-
   const findRole = (role: string) => people.find(p => p.role === role);
   const assistant = people.find(p => p.isAssistant) ?? people[0]!;
   const lawyer = findRole("Юрист") ?? assistant;
   const cfo = findRole("Финдиректор") ?? assistant;
   const itDir = findRole("IT-директор") ?? assistant;
   const security = findRole("Безопасность") ?? assistant;
+  const zamDev = findRole("Зам / развитие") ?? assistant;
+
+  const [row] = await db.select({ n: count() }).from(tasksTable).where(eq(tasksTable.status, "review"));
+  if ((row?.n ?? 0) > 0) {
+    console.log(`Demo tasks already seeded (${row!.n} review rows) — patching resultNote if needed...`);
+    const existing = await db.select().from(tasksTable).where(eq(tasksTable.status, "review"));
+    const RESULT_NOTES: Record<string, string> = {
+      "Подготовить отчёт Q2 для совета":
+        "Отчёт подготовлен и сверстан. Включены все 4 направления, динамика выручки EBITDA по месяцам, прогноз Q3 с двумя сценариями. Файл загружен в общую папку /reports/Q2-2026, ссылка отправлена совету.",
+      "Согласовать NDA с партнёром":
+        "NDA согласован. Правки в разделы 4 и 7 внесены совместно с юрист-партнёром. Сингапурская сторона подтвердила принятие версии v3.2. Подписанный документ передан в архив.",
+    };
+    for (const t of existing) {
+      if (t.resultNote === null && RESULT_NOTES[t.title]) {
+        await db.update(tasksTable)
+          .set({ resultNote: RESULT_NOTES[t.title]! })
+          .where(eq(tasksTable.id, t.id));
+        console.log(`  Patched resultNote for #${t.id}: ${t.title}`);
+      }
+    }
+    return;
+  }
 
   const staleDate = new Date(Date.now() - 26 * 60 * 60 * 1000);
 
@@ -118,6 +134,7 @@ async function seedDemoTasks(people: typeof peopleTable.$inferSelect[]): Promise
       priority: "high" as const,
       status: "review" as const,
       dueDate: "2026-06-18",
+      resultNote: "Отчёт подготовлен и сверстан. Включены все 4 направления, динамика выручки EBITDA по месяцам, прогноз Q3 с двумя сценариями. Файл загружен в общую папку /reports/Q2-2026, ссылка отправлена совету.",
       lastActivityAt: staleDate,
     },
     {
@@ -128,7 +145,19 @@ async function seedDemoTasks(people: typeof peopleTable.$inferSelect[]): Promise
       priority: "high" as const,
       status: "review" as const,
       dueDate: "2026-06-16",
+      resultNote: "NDA согласован. Правки в разделы 4 и 7 внесены совместно с юрист-партнёром. Сингапурская сторона подтвердила принятие версии v3.2. Подписанный документ передан в архив.",
       lastActivityAt: new Date(),
+    },
+    {
+      title: "Провести ревью конкурентов — Q2",
+      body: "Собрать данные по 5 ключевым конкурентам: цены, новые продукты, рекламные кампании, изменения в команде. Оформить в сравнительную таблицу.",
+      assigneeId: zamDev.id,
+      watchers: [assistant.id, cfo.id],
+      priority: "medium" as const,
+      status: "review" as const,
+      dueDate: "2026-06-19",
+      resultNote: "Ревью завершено. Проанализировано 5 конкурентов. Главное: Конкурент А снизил цены на 8%, Конкурент Б запустил мобильное приложение. Сравнительная таблица в /analytics/competitors-Q2-2026.xlsx.",
+      lastActivityAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
     },
     {
       title: "Аудит доступов к продакшн-серверам",
@@ -138,15 +167,17 @@ async function seedDemoTasks(people: typeof peopleTable.$inferSelect[]): Promise
       priority: "medium" as const,
       status: "in_progress" as const,
       dueDate: "2026-06-20",
+      resultNote: null,
       lastActivityAt: new Date(),
     },
   ];
 
   console.log("Seeding demo tasks...");
   for (const d of demos) {
-    const { lastActivityAt, ...rest } = d;
+    const { lastActivityAt, resultNote, ...rest } = d;
     const [ins] = await db.insert(tasksTable).values({
       ...rest,
+      resultNote: resultNote ?? null,
       createdBy: "owner",
     }).returning();
 

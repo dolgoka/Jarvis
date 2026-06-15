@@ -1063,6 +1063,8 @@ components:
           type: string
         returnComment:
           type: ["string", "null"]
+        resultNote:
+          type: ["string", "null"]
         lastActivityAt:
           type: string
         createdAt:

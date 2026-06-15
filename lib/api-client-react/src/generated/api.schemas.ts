@@ -268,6 +268,8 @@ export interface Task {
   createdBy?: string;
   /** @nullable */
   returnComment?: string | null;
+  /** @nullable */
+  resultNote?: string | null;
   lastActivityAt: string;
   createdAt: string;
 }
