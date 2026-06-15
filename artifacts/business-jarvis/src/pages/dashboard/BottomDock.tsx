@@ -30,9 +30,11 @@ interface BottomDockProps {
   onPanelChange: (p: DockPanel) => void;
   chatPrefill?: { bizName: string; msg: string } | null;
   onChatPrefillConsumed?: () => void;
+  taskOpenRequest?: { text: string } | null;
+  onTaskOpenConsumed?: () => void;
 }
 
-export function BottomDock({ activePanel, onPanelChange, chatPrefill, onChatPrefillConsumed }: BottomDockProps) {
+export function BottomDock({ activePanel, onPanelChange, chatPrefill, onChatPrefillConsumed, taskOpenRequest, onTaskOpenConsumed }: BottomDockProps) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [voiceActive, setVoiceActive] = useState(false);
@@ -64,6 +66,15 @@ export function BottomDock({ activePanel, onPanelChange, chatPrefill, onChatPref
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatPrefill]);
+
+  useEffect(() => {
+    if (taskOpenRequest) {
+      setTaskPrefill(taskOpenRequest.text);
+      onPanelChange("task");
+      onTaskOpenConsumed?.();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [taskOpenRequest]);
 
   useEffect(() => {
     if (activePanel === "chat") setTimeout(() => inputRef.current?.focus(), 80);

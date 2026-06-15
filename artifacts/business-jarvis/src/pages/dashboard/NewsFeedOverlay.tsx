@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, Mic, ExternalLink } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, Mic, ExternalLink, MessageSquare, ArrowRight } from "lucide-react";
 import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem } from "@workspace/api-client-react";
 import type { NewsItem } from "@workspace/api-client-react";
+import { VoiceCapture } from "@/components/ui/VoiceCapture";
 
 /* ─── CSS animations (injected once) ─────────────────────────────────────── */
 const ANIM_ID = "nf-keyframes";
@@ -57,10 +58,11 @@ function timeAgo(iso: string): string {
 interface Props {
   onClose: () => void;
   onSelectBusiness?: (id: number) => void;
+  onOpenTask?: (text: string) => void;
 }
 
 /* ─── Component ──────────────────────────────────────────────────────────── */
-export default function NewsFeedOverlay({ onClose, onSelectBusiness }: Props) {
+export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask }: Props) {
   const prefersReducedMotion = useMemo(() =>
     typeof window !== "undefined"
       ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -77,6 +79,11 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness }: Props) {
   const [index,        setIndex]        = useState(0);
   const [expanded,     setExpanded]     = useState(false);
   const lastFilterRef = useRef<string | null>(null);
+
+  /* Reply zone */
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const replyRef = useRef<HTMLTextAreaElement>(null);
 
   /* Touch swipe */
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -113,6 +120,12 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness }: Props) {
   const infoCount = deck.filter(i => i.severity === "info").length;
   /* Remaining (not yet actioned) */
   const remaining = deck.filter(i => !localActions.has(i.id)).length;
+
+  /* Reset reply zone when card changes */
+  useEffect(() => {
+    setReplyOpen(false);
+    setReplyText("");
+  }, [safeIdx]);
 
   /* Navigation */
   const handlePrev = useCallback(() => {
@@ -417,26 +430,98 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness }: Props) {
               {/* ── Action zone ── */}
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "10px 22px 14px" }}>
 
-                {/* Hero "Ответить" button — stub, full width */}
-                <button
-                  title="TODO: Шаг 5 — голосовой ответ"
-                  style={{
-                    width: "100%", height: 38, borderRadius: 12, marginBottom: 10,
-                    display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                    background: "rgba(255,255,255,0.06)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    cursor: "pointer", transition: "all 150ms",
-                    fontSize: 12, fontWeight: 700, fontFamily: ff,
-                    color: "rgba(228,232,255,0.55)",
-                    letterSpacing: "0.04em",
-                  }}
-                  onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.09)")}
-                  onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
-                >
-                  <Mic style={{ width: 13, height: 13 }} />
-                  ● Ответить
-                  <span style={{ fontSize: 9, opacity: 0.45, fontWeight: 400 }}>(Шаг 5)</span>
-                </button>
+                {/* Reply zone */}
+                {!replyOpen ? (
+                  /* Collapsed: toggle button */
+                  <button
+                    onClick={() => { setReplyOpen(true); setTimeout(() => replyRef.current?.focus(), 80); }}
+                    style={{
+                      width: "100%", height: 38, borderRadius: 12, marginBottom: 10,
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
+                      background: "rgba(255,255,255,0.06)",
+                      border: "1px solid rgba(255,255,255,0.12)",
+                      cursor: "pointer", transition: "all 150ms",
+                      fontSize: 12, fontWeight: 700, fontFamily: ff,
+                      color: "rgba(228,232,255,0.55)",
+                      letterSpacing: "0.04em",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.09)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+                  >
+                    <MessageSquare style={{ width: 13, height: 13 }} />
+                    Ответить
+                  </button>
+                ) : (
+                  /* Expanded: text + voice + action */
+                  <div style={{ marginBottom: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+                    {/* Text area row */}
+                    <div style={{
+                      display: "flex", alignItems: "flex-start", gap: 6,
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(0,212,255,0.28)",
+                      borderRadius: 12, padding: "8px 10px 8px 12px",
+                    }}>
+                      <textarea
+                        ref={replyRef}
+                        rows={3}
+                        value={replyText}
+                        onChange={e => setReplyText(e.target.value)}
+                        placeholder="Ответить: что и кому…"
+                        style={{
+                          flex: 1, resize: "none", background: "none", border: "none", outline: "none",
+                          fontSize: 12, fontFamily: ff, lineHeight: 1.55,
+                          color: "rgba(228,232,255,0.88)", caretColor: "#00d4ff",
+                        }}
+                      />
+                      {/* Voice capture — appends transcribed text */}
+                      <VoiceCapture
+                        onText={t => setReplyText(prev => prev ? `${prev} ${t}` : t)}
+                        accentColor="rgba(0,212,255,0.7)"
+                      />
+                    </div>
+
+                    {/* Bottom row: cancel + submit */}
+                    <div style={{ display: "flex", gap: 7 }}>
+                      <button
+                        onClick={() => { setReplyOpen(false); setReplyText(""); }}
+                        style={{
+                          flex: 1, height: 34, borderRadius: 10,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                          background: "rgba(255,255,255,0.04)",
+                          border: "1px solid rgba(255,255,255,0.09)",
+                          cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: ff,
+                          color: "rgba(228,232,255,0.40)", transition: "all 150ms",
+                        }}
+                      >
+                        Отмена
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (!replyText.trim()) return;
+                          const ctx = item
+                            ? `По новости «${item.title}»${item.businessName ? ` (${item.businessName})` : ""}:\n\n${replyText.trim()}`
+                            : replyText.trim();
+                          onOpenTask?.(ctx);
+                        }}
+                        style={{
+                          flex: 2, height: 34, borderRadius: 10,
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                          background: replyText.trim()
+                            ? "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)"
+                            : "rgba(255,255,255,0.06)",
+                          border: "none",
+                          cursor: replyText.trim() ? "pointer" : "not-allowed",
+                          fontSize: 11, fontWeight: 700, fontFamily: ff,
+                          color: replyText.trim() ? "#fff" : "rgba(228,232,255,0.28)",
+                          boxShadow: replyText.trim() ? "0 3px 12px rgba(0,212,255,0.28)" : "none",
+                          transition: "all 150ms",
+                        }}
+                      >
+                        В задачу <ArrowRight style={{ width: 12, height: 12 }} />
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* 3-button row */}
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

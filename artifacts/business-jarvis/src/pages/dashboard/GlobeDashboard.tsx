@@ -246,6 +246,7 @@ export default function GlobeDashboard() {
   const [feedDismissed, setFeedDismissed] = useState(false);
   const [dockPanel, setDockPanel] = useState<DockPanel>(null);
   const [chatPrefill, setChatPrefill] = useState<{ bizName: string; msg: string } | null>(null);
+  const [taskOpenRequest, setTaskOpenRequest] = useState<{ text: string } | null>(null);
   const feedAutoOpenedRef = useRef(false);
   const lastPolygonHoverRef = useRef(0);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -724,6 +725,10 @@ export default function GlobeDashboard() {
               setSelectedBusiness({ id, color: bColor });
               setFeedOpen(false);
             }}
+            onOpenTask={(text) => {
+              setFeedOpen(false);
+              setTaskOpenRequest({ text });
+            }}
           />
         )}
 
@@ -734,6 +739,8 @@ export default function GlobeDashboard() {
             onPanelChange={handlePanelChange}
             chatPrefill={chatPrefill}
             onChatPrefillConsumed={() => setChatPrefill(null)}
+            taskOpenRequest={taskOpenRequest}
+            onTaskOpenConsumed={() => setTaskOpenRequest(null)}
           />
         )}
 
