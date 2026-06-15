@@ -5,6 +5,7 @@ import { peopleTable } from "./people";
 
 export const taskPriorityEnum = pgEnum("task_priority", ["high", "medium", "low"]);
 export const taskStatusEnum = pgEnum("task_status", ["draft", "sent", "in_progress", "review", "done", "returned"]);
+export const taskKindEnum = pgEnum("task_kind", ["task", "approval"]);
 
 export const tasksTable = pgTable("tasks", {
   id: serial("id").primaryKey(),
@@ -16,6 +17,10 @@ export const tasksTable = pgTable("tasks", {
   dueDate: text("due_date"),
   businessId: integer("business_id"),
   status: taskStatusEnum("status").notNull().default("draft"),
+  kind: taskKindEnum("kind").notNull().default("task"),
+  approverRole: text("approver_role"),
+  acceptedAt: timestamp("accepted_at"),
+  blockedByApprovalId: integer("blocked_by_approval_id"),
   createdBy: text("created_by").notNull().default("owner"),
   parentId: integer("parent_id"),
   returnComment: text("return_comment"),

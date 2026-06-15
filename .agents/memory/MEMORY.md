@@ -2,3 +2,4 @@
 - [Two API server workflows](two-api-workflows.md) — "API Server" holds port 8080 and must be restarted for code changes; artifacts dev workflow always fails with EADDRINUSE
 - [Scripts seed pattern](scripts-seed-pattern.md) — seed scripts cannot import drizzle-orm directly; filter in JS or add drizzle-orm to scripts deps
 - [Screenshot rule](screenshot-rule.md) — after every task: use ?role=client param, hard-refresh before screenshotting to avoid stale HMR
+- [Task activity journal](task-activity-journal.md) — task_activity table + writeActivity helper; seed guard blocks backfill if review tasks exist — use separate backfill script

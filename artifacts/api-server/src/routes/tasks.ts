@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, inArray } from "drizzle-orm";
-import { db, peopleTable, tasksTable } from "@workspace/db";
+import { db, peopleTable, tasksTable, taskActivityTable } from "@workspace/db";
 import OpenAI from "openai";
 
 const router: IRouter = Router();
@@ -55,6 +55,22 @@ function taskToResponse(
   };
 }
 
+async function writeActivity(params: {
+  taskId: number;
+  type: typeof taskActivityTable.$inferInsert["type"];
+  actorRole: string;
+  text?: string;
+  at?: Date;
+}) {
+  await db.insert(taskActivityTable).values({
+    taskId: params.taskId,
+    type: params.type,
+    actorRole: params.actorRole,
+    text: params.text ?? null,
+    at: params.at ?? new Date(),
+  });
+}
+
 const ACTIVE_STATUSES = ["sent", "in_progress", "returned"] as const;
 const REVIEW_STATUSES = ["review"] as const;
 
@@ -82,6 +98,29 @@ router.get("/tasks", async (req, res): Promise<void> => {
   res.json(result);
 });
 
+router.get("/tasks/activity", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id || isNaN(id)) {
+    res.status(400).json({ error: "id query param required" });
+    return;
+  }
+
+  const rows = await db
+    .select()
+    .from(taskActivityTable)
+    .where(eq(taskActivityTable.taskId, id))
+    .orderBy(taskActivityTable.at);
+
+  res.json(rows.map(r => ({
+    id: r.id,
+    taskId: r.taskId,
+    type: r.type,
+    actorRole: r.actorRole,
+    text: r.text ?? null,
+    at: r.at.toISOString(),
+  })));
+});
+
 router.post("/tasks/accept", async (req, res): Promise<void> => {
   const id = Number(req.query["id"]);
   if (!id || isNaN(id)) {
@@ -89,9 +128,10 @@ router.post("/tasks/accept", async (req, res): Promise<void> => {
     return;
   }
 
+  const now = new Date();
   const [updated] = await db
     .update(tasksTable)
-    .set({ status: "done", lastActivityAt: new Date() })
+    .set({ status: "done", lastActivityAt: now })
     .where(eq(tasksTable.id, id))
     .returning();
 
@@ -99,6 +139,8 @@ router.post("/tasks/accept", async (req, res): Promise<void> => {
     res.status(404).json({ error: "Task not found" });
     return;
   }
+
+  await writeActivity({ taskId: id, type: "accepted_final", actorRole: "owner", at: now });
 
   const allPeople = await db.select().from(peopleTable);
   const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
@@ -118,9 +160,68 @@ router.post("/tasks/return", async (req, res): Promise<void> => {
     return;
   }
 
+  const now = new Date();
   const [updated] = await db
     .update(tasksTable)
-    .set({ status: "returned", returnComment: comment.trim(), lastActivityAt: new Date() })
+    .set({ status: "returned", returnComment: comment.trim(), lastActivityAt: now })
+    .where(eq(tasksTable.id, id))
+    .returning();
+
+  if (!updated) {
+    res.status(404).json({ error: "Task not found" });
+    return;
+  }
+
+  await writeActivity({ taskId: id, type: "returned", actorRole: "owner", text: comment.trim(), at: now });
+
+  const allPeople = await db.select().from(peopleTable);
+  const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
+  res.json(taskToResponse(updated, assignee, allPeople));
+});
+
+router.post("/tasks/start", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id || isNaN(id)) {
+    res.status(400).json({ error: "id query param required" });
+    return;
+  }
+
+  const now = new Date();
+  const [updated] = await db
+    .update(tasksTable)
+    .set({ status: "in_progress", acceptedAt: now, lastActivityAt: now })
+    .where(eq(tasksTable.id, id))
+    .returning();
+
+  if (!updated) {
+    res.status(404).json({ error: "Task not found" });
+    return;
+  }
+
+  await writeActivity({ taskId: id, type: "accepted", actorRole: updated.createdBy ?? "owner", at: now });
+
+  const allPeople = await db.select().from(peopleTable);
+  const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
+  res.json(taskToResponse(updated, assignee, allPeople));
+});
+
+router.post("/tasks/submit", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id || isNaN(id)) {
+    res.status(400).json({ error: "id query param required" });
+    return;
+  }
+
+  const { resultNote } = req.body as { resultNote?: string };
+  const now = new Date();
+
+  const [updated] = await db
+    .update(tasksTable)
+    .set({
+      status: "review",
+      resultNote: resultNote?.trim() ?? null,
+      lastActivityAt: now,
+    })
     .where(eq(tasksTable.id, id))
     .returning();
 
@@ -130,8 +231,16 @@ router.post("/tasks/return", async (req, res): Promise<void> => {
   }
 
   const allPeople = await db.select().from(peopleTable);
-  const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
-  res.json(taskToResponse(updated, assignee, allPeople));
+  const assignee = allPeople.find(p => p.id === updated.assigneeId);
+  await writeActivity({
+    taskId: id,
+    type: "submitted",
+    actorRole: assignee?.role ?? "assignee",
+    text: resultNote?.trim() ?? undefined,
+    at: now,
+  });
+
+  res.json(taskToResponse(updated, assignee!, allPeople));
 });
 
 router.post("/tasks/draft", async (req, res): Promise<void> => {
@@ -277,6 +386,7 @@ router.post("/tasks", async (req, res): Promise<void> => {
     ? (priority as "high" | "medium" | "low")
     : "medium";
 
+  const now = new Date();
   const [task] = await db.insert(tasksTable).values({
     title: title.trim(),
     body: (body ?? "").trim(),
@@ -286,7 +396,10 @@ router.post("/tasks", async (req, res): Promise<void> => {
     dueDate: dueDate ?? null,
     businessId: businessId ?? null,
     status: "sent",
+    lastActivityAt: now,
   }).returning();
+
+  await writeActivity({ taskId: task!.id, type: "created", actorRole: "owner", at: now });
 
   res.status(201).json(taskToResponse(task!, assignee, allPeople));
 });

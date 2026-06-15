@@ -295,6 +295,35 @@ export interface TaskInput {
   businessId?: number | null;
 }
 
+export type TaskActivityType = typeof TaskActivityType[keyof typeof TaskActivityType];
+
+
+export const TaskActivityType = {
+  created: 'created',
+  accepted: 'accepted',
+  decomposed: 'decomposed',
+  submitted: 'submitted',
+  accepted_final: 'accepted_final',
+  returned: 'returned',
+  commented: 'commented',
+  escalated: 'escalated',
+  pinged: 'pinged',
+} as const;
+
+export interface TaskActivity {
+  id: number;
+  taskId: number;
+  type: TaskActivityType;
+  actorRole: string;
+  /** @nullable */
+  text?: string | null;
+  at: string;
+}
+
+export interface SubmitTaskInput {
+  resultNote?: string;
+}
+
 export interface ReturnTaskInput {
   comment: string;
 }
@@ -784,6 +813,18 @@ export const GetAiSummaryPeriod = {
   week: 'week',
   month: 'month',
 } as const;
+
+export type GetTaskActivityParams = {
+id: number;
+};
+
+export type StartTaskParams = {
+id: number;
+};
+
+export type SubmitTaskParams = {
+id: number;
+};
 
 export type AcceptTaskParams = {
 id: number;

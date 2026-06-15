@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Shell } from "@/components/layout/Shell";
 import {
   useListTasks, useListPeople, useCreateTask, useDraftTask,
-  useAcceptTask, useReturnTask,
+  useAcceptTask, useReturnTask, useGetTaskActivity,
 } from "@workspace/api-client-react";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { LiquidFilters } from "@/components/liquid/LiquidFilters";
@@ -74,6 +74,93 @@ const TEXT = {
   lo: "rgba(228,232,255,0.40)",
   dim: "rgba(228,232,255,0.25)",
 };
+
+// ── Activity timeline helpers ─────────────────────────────────────────────────
+const ACTIVITY_META: Record<string, { label: string; dot: string; icon: string }> = {
+  created:       { label: "Поставлена",      dot: "#5b8bd0", icon: "📋" },
+  accepted:      { label: "Принята в работу", dot: "#3ed9a0", icon: "✅" },
+  submitted:     { label: "Сдана на приёмку", dot: "#f0b54a", icon: "📤" },
+  accepted_final:{ label: "Принята",          dot: "#3ed9a0", icon: "🏆" },
+  returned:      { label: "Возвращена",       dot: "#f0625a", icon: "↩️" },
+  decomposed:    { label: "Разбита на части", dot: "#a78bfa", icon: "🔀" },
+  commented:     { label: "Комментарий",      dot: "#5b8bd0", icon: "💬" },
+  escalated:     { label: "Эскалация",        dot: "#f0625a", icon: "🚨" },
+  pinged:        { label: "Напоминание",      dot: "#f0b54a", icon: "🔔" },
+};
+
+function ActivityTimeline({ taskId }: { taskId: number }) {
+  const { data: activity, isLoading } = useGetTaskActivity({ id: taskId });
+
+  if (isLoading) {
+    return (
+      <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 0", color: "rgba(228,232,255,0.30)", fontSize: 11, fontFamily: HF }}>
+        <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
+        Загрузка хроники…
+      </div>
+    );
+  }
+
+  if (!activity || activity.length === 0) {
+    return (
+      <div style={{ fontSize: 11, color: "rgba(228,232,255,0.28)", fontFamily: HF, fontStyle: "italic" }}>
+        Хроника пуста
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
+      {activity.map((entry, idx) => {
+        const meta = ACTIVITY_META[entry.type] ?? { label: entry.type, dot: ACCENT, icon: "•" };
+        const isLast = idx === activity.length - 1;
+        const date = new Date(entry.at);
+        const timeStr = date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" })
+          + " " + date.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+
+        return (
+          <div key={entry.id} style={{ display: "flex", gap: 12, position: "relative" }}>
+            {/* Dot + vertical line */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0, width: 20 }}>
+              <div style={{
+                width: 10, height: 10, borderRadius: "50%", flexShrink: 0, marginTop: 3,
+                background: meta.dot,
+                boxShadow: isLast ? `0 0 7px 2px ${meta.dot}55` : "none",
+                border: `2px solid ${meta.dot}55`,
+              }} />
+              {!isLast && (
+                <div style={{ width: 1.5, flex: 1, minHeight: 16, background: "rgba(255,255,255,0.08)", marginTop: 2 }} />
+              )}
+            </div>
+
+            {/* Content */}
+            <div style={{ paddingBottom: isLast ? 0 : 14, minWidth: 0, flex: 1 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 6, flexWrap: "wrap" }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(228,232,255,0.80)", fontFamily: HF }}>
+                  {meta.icon} {meta.label}
+                </span>
+                <span style={{ fontSize: 10, color: "rgba(228,232,255,0.35)", fontFamily: HF, fontVariantNumeric: "tabular-nums" }}>
+                  {timeStr}
+                </span>
+              </div>
+              <div style={{ fontSize: 11, color: "rgba(228,232,255,0.45)", fontFamily: HF, marginTop: 1 }}>
+                {entry.actorRole}
+              </div>
+              {entry.text && (
+                <div style={{
+                  marginTop: 6, padding: "7px 10px", borderRadius: 8,
+                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+                  fontSize: 11, color: "rgba(228,232,255,0.55)", fontFamily: HF, lineHeight: 1.5,
+                }}>
+                  {entry.text}
+                </div>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
 
 // ── Avatar ────────────────────────────────────────────────────────────────────
 function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
@@ -247,34 +334,14 @@ function ReviewCard({
             </div>
           )}
 
-          {/* Mini timeline */}
+          {/* Activity timeline */}
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: TEXT.dim, fontFamily: HF, marginBottom: 10 }}>
-              Хронология
+              Хроника пути задачи
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 0 }}>
-              {/* Start */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 80 }}>
-                <div style={{ width: 9, height: 9, borderRadius: "50%", background: ACCENT, boxShadow: `0 0 6px 2px ${ACCENT}44`, marginBottom: 5 }} />
-                <div style={{ fontSize: 10, color: TEXT.dim, fontFamily: HF, textAlign: "center" }}>Поставлено</div>
-                <div style={{ fontSize: 11, color: TEXT.lo, fontFamily: HF, fontVariantNumeric: "tabular-nums", textAlign: "center" }}>{fmtShortDate(task.createdAt)}</div>
-              </div>
-              {/* Line */}
-              <div style={{ flex: 1, height: 2, background: `linear-gradient(90deg, ${ACCENT}55, rgba(91,139,208,0.18))`, borderRadius: 1, marginBottom: 24 }} />
-              {/* End */}
-              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 80 }}>
-                <div style={{
-                  width: 9, height: 9, borderRadius: "50%", marginBottom: 5,
-                  background: isStale ? "#f0625a" : "#f0b54a",
-                  boxShadow: `0 0 6px 2px ${isStale ? "#f0625a" : "#f0b54a"}44`,
-                  animation: isStale ? "pulse-glow 1.5s ease-in-out infinite" : undefined,
-                }} />
-                <div style={{ fontSize: 10, color: TEXT.dim, fontFamily: HF, textAlign: "center" }}>Сдано</div>
-                <div style={{ fontSize: 11, color: TEXT.lo, fontFamily: HF, fontVariantNumeric: "tabular-nums", textAlign: "center" }}>{fmtShortDate(task.lastActivityAt)}</div>
-              </div>
-            </div>
+            <ActivityTimeline taskId={task.id} />
             {isStale && (
-              <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#f0625a", fontFamily: HF }}>
+              <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#f0625a", fontFamily: HF }}>
                 <AlertTriangle style={{ width: 12, height: 12 }} />
                 Ждёт вашего решения {days} {days === 1 ? "день" : days < 5 ? "дня" : "дней"}
               </div>

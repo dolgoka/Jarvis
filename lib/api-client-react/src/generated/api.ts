@@ -43,6 +43,7 @@ import type {
   GetBusinessCardParams,
   GetDashboardStatsParams,
   GetFeedParams,
+  GetTaskActivityParams,
   GetTopBusinessesParams,
   HealthStatus,
   ListReportsParams,
@@ -61,7 +62,11 @@ import type {
   ReturnTaskInput,
   ReturnTaskParams,
   SnoozeFeedItemParams,
+  StartTaskParams,
+  SubmitTaskInput,
+  SubmitTaskParams,
   Task,
+  TaskActivity,
   TaskDraft,
   TaskDraftInput,
   TaskInput,
@@ -1466,6 +1471,246 @@ export const useDraftTask = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDraftTaskMutationOptions(options));
+    }
+
+export const getGetTaskActivityUrl = (params: GetTaskActivityParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/activity?${stringifiedParams}` : `/api/tasks/activity`
+}
+
+/**
+ * @summary Get activity journal for a task
+ */
+export const getTaskActivity = async (params: GetTaskActivityParams, options?: RequestInit): Promise<TaskActivity[]> => {
+
+  return customFetch<TaskActivity[]>(getGetTaskActivityUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTaskActivityQueryKey = (params?: GetTaskActivityParams,) => {
+    return [
+    `/api/tasks/activity`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTaskActivityQueryOptions = <TData = Awaited<ReturnType<typeof getTaskActivity>>, TError = ErrorType<void>>(params: GetTaskActivityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTaskActivity>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTaskActivityQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTaskActivity>>> = ({ signal }) => getTaskActivity(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTaskActivity>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTaskActivityQueryResult = NonNullable<Awaited<ReturnType<typeof getTaskActivity>>>
+export type GetTaskActivityQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get activity journal for a task
+ */
+
+export function useGetTaskActivity<TData = Awaited<ReturnType<typeof getTaskActivity>>, TError = ErrorType<void>>(
+ params: GetTaskActivityParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTaskActivity>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTaskActivityQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getStartTaskUrl = (params: StartTaskParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/start?${stringifiedParams}` : `/api/tasks/start`
+}
+
+/**
+ * @summary Accept task into work — transitions sent → in_progress
+ */
+export const startTask = async (params: StartTaskParams, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getStartTaskUrl(params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getStartTaskMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startTask>>, TError,{params: StartTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof startTask>>, TError,{params: StartTaskParams}, TContext> => {
+
+const mutationKey = ['startTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof startTask>>, {params: StartTaskParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  startTask(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type StartTaskMutationResult = NonNullable<Awaited<ReturnType<typeof startTask>>>
+
+    export type StartTaskMutationError = ErrorType<void>
+
+    /**
+ * @summary Accept task into work — transitions sent → in_progress
+ */
+export const useStartTask = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof startTask>>, TError,{params: StartTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof startTask>>,
+        TError,
+        {params: StartTaskParams},
+        TContext
+      > => {
+      return useMutation(getStartTaskMutationOptions(options));
+    }
+
+export const getSubmitTaskUrl = (params: SubmitTaskParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/submit?${stringifiedParams}` : `/api/tasks/submit`
+}
+
+/**
+ * @summary Submit task for review — transitions in_progress → review
+ */
+export const submitTask = async (params: SubmitTaskParams,
+    submitTaskInput?: SubmitTaskInput, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getSubmitTaskUrl(params),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      submitTaskInput,)
+  }
+);}
+
+
+
+
+export const getSubmitTaskMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitTask>>, TError,{params: SubmitTaskParams;data?: BodyType<SubmitTaskInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof submitTask>>, TError,{params: SubmitTaskParams;data?: BodyType<SubmitTaskInput>}, TContext> => {
+
+const mutationKey = ['submitTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof submitTask>>, {params: SubmitTaskParams;data?: BodyType<SubmitTaskInput>}> = (props) => {
+          const {params,data} = props ?? {};
+
+          return  submitTask(params,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SubmitTaskMutationResult = NonNullable<Awaited<ReturnType<typeof submitTask>>>
+    export type SubmitTaskMutationBody = BodyType<SubmitTaskInput> | undefined
+    export type SubmitTaskMutationError = ErrorType<void>
+
+    /**
+ * @summary Submit task for review — transitions in_progress → review
+ */
+export const useSubmitTask = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof submitTask>>, TError,{params: SubmitTaskParams;data?: BodyType<SubmitTaskInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof submitTask>>,
+        TError,
+        {params: SubmitTaskParams;data?: BodyType<SubmitTaskInput>},
+        TContext
+      > => {
+      return useMutation(getSubmitTaskMutationOptions(options));
     }
 
 export const getAcceptTaskUrl = (params: AcceptTaskParams,) => {

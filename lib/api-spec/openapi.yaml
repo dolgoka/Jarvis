@@ -28,6 +28,8 @@ tags:
     description: Voice transcription
   - name: notes
     description: Personal notes (owner only)
+  - name: tasks
+    description: Task management and activity journal
 
 paths:
   /healthz:
@@ -377,6 +379,77 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/TaskDraft"
+
+  /tasks/activity:
+    get:
+      operationId: getTaskActivity
+      tags: [tasks]
+      summary: Get activity journal for a task
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of activity entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TaskActivity"
+        "400":
+          description: Bad request
+
+  /tasks/start:
+    post:
+      operationId: startTask
+      tags: [tasks]
+      summary: Accept task into work — transitions sent → in_progress
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+
+  /tasks/submit:
+    post:
+      operationId: submitTask
+      tags: [tasks]
+      summary: Submit task for review — transitions in_progress → review
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitTaskInput"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
 
   /tasks/accept:
     post:
@@ -1091,6 +1164,30 @@ components:
           type: ["string", "null"]
         businessId:
           type: ["integer", "null"]
+
+    TaskActivity:
+      type: object
+      required: [id, taskId, type, actorRole, at]
+      properties:
+        id:
+          type: integer
+        taskId:
+          type: integer
+        type:
+          type: string
+          enum: [created, accepted, decomposed, submitted, accepted_final, returned, commented, escalated, pinged]
+        actorRole:
+          type: string
+        text:
+          type: ["string", "null"]
+        at:
+          type: string
+
+    SubmitTaskInput:
+      type: object
+      properties:
+        resultNote:
+          type: string
 
     ReturnTaskInput:
       type: object

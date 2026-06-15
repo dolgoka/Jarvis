@@ -1,5 +1,5 @@
 import { count, eq } from "drizzle-orm";
-import { db, peopleTable, tasksTable } from "@workspace/db";
+import { db, peopleTable, tasksTable, taskActivityTable } from "@workspace/db";
 
 const PEOPLE = [
   {
@@ -130,61 +130,101 @@ async function seedDemoTasks(people: typeof peopleTable.$inferSelect[]): Promise
       title: "Подготовить отчёт Q2 для совета",
       body: "Сформировать итоговый отчёт по второму кварталу с разбивкой по направлениям и прогнозом на Q3.",
       assigneeId: cfo.id,
+      assigneeRole: cfo.role,
       watchers: [assistant.id],
       priority: "high" as const,
       status: "review" as const,
       dueDate: "2026-06-18",
       resultNote: "Отчёт подготовлен и сверстан. Включены все 4 направления, динамика выручки EBITDA по месяцам, прогноз Q3 с двумя сценариями. Файл загружен в общую папку /reports/Q2-2026, ссылка отправлена совету.",
       lastActivityAt: staleDate,
+      activityOffsets: { created: -48 * 3600, accepted: -36 * 3600, submitted: -26 * 3600 },
     },
     {
       title: "Согласовать NDA с партнёром",
       body: "Проверить и согласовать соглашение о неразглашении с сингапурским партнёром. Внести правки в разделы 4 и 7.",
       assigneeId: lawyer.id,
+      assigneeRole: lawyer.role,
       watchers: [security.id],
       priority: "high" as const,
       status: "review" as const,
       dueDate: "2026-06-16",
       resultNote: "NDA согласован. Правки в разделы 4 и 7 внесены совместно с юрист-партнёром. Сингапурская сторона подтвердила принятие версии v3.2. Подписанный документ передан в архив.",
       lastActivityAt: new Date(),
+      activityOffsets: { created: -72 * 3600, accepted: -60 * 3600, submitted: -1 * 3600 },
     },
     {
       title: "Провести ревью конкурентов — Q2",
       body: "Собрать данные по 5 ключевым конкурентам: цены, новые продукты, рекламные кампании, изменения в команде. Оформить в сравнительную таблицу.",
       assigneeId: zamDev.id,
+      assigneeRole: zamDev.role,
       watchers: [assistant.id, cfo.id],
       priority: "medium" as const,
       status: "review" as const,
       dueDate: "2026-06-19",
       resultNote: "Ревью завершено. Проанализировано 5 конкурентов. Главное: Конкурент А снизил цены на 8%, Конкурент Б запустил мобильное приложение. Сравнительная таблица в /analytics/competitors-Q2-2026.xlsx.",
       lastActivityAt: new Date(Date.now() - 4 * 60 * 60 * 1000),
+      activityOffsets: { created: -96 * 3600, accepted: -80 * 3600, submitted: -4 * 3600 },
     },
     {
       title: "Аудит доступов к продакшн-серверам",
       body: "Провести ревизию прав доступа всех сотрудников к производственной инфраструктуре. Закрыть устаревшие учётные записи.",
       assigneeId: itDir.id,
+      assigneeRole: itDir.role,
       watchers: [security.id],
       priority: "medium" as const,
       status: "in_progress" as const,
       dueDate: "2026-06-20",
       resultNote: null,
       lastActivityAt: new Date(),
+      activityOffsets: { created: -12 * 3600, accepted: -10 * 3600, submitted: null },
     },
   ];
 
   console.log("Seeding demo tasks...");
   for (const d of demos) {
-    const { lastActivityAt, resultNote, ...rest } = d;
+    const { lastActivityAt, resultNote, activityOffsets, assigneeRole, ...rest } = d;
+    const now = Date.now();
+    const createdAt = new Date(now + activityOffsets.created * 1000);
+
     const [ins] = await db.insert(tasksTable).values({
       ...rest,
       resultNote: resultNote ?? null,
       createdBy: "owner",
+      createdAt,
     }).returning();
 
     if (lastActivityAt < new Date(Date.now() - 1000 * 60)) {
       await db.update(tasksTable)
         .set({ lastActivityAt })
         .where(eq(tasksTable.id, ins!.id));
+    }
+
+    const taskId = ins!.id;
+
+    await db.insert(taskActivityTable).values({
+      taskId,
+      type: "created",
+      actorRole: "owner",
+      at: createdAt,
+    });
+
+    const acceptedAt = new Date(now + activityOffsets.accepted * 1000);
+    await db.insert(taskActivityTable).values({
+      taskId,
+      type: "accepted",
+      actorRole: assigneeRole,
+      at: acceptedAt,
+    });
+
+    if (activityOffsets.submitted !== null) {
+      const submittedAt = new Date(now + activityOffsets.submitted * 1000);
+      await db.insert(taskActivityTable).values({
+        taskId,
+        type: "submitted",
+        actorRole: assigneeRole,
+        text: resultNote ?? null,
+        at: submittedAt,
+      });
     }
 
     console.log(`  #${ins!.id} [${d.status}] ${d.title}`);

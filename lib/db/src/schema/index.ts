@@ -3,6 +3,7 @@ export * from "./reports";
 export * from "./events";
 export * from "./people";
 export * from "./tasks";
+export * from "./task_activity";
 export * from "./feedItems";
 export * from "./feed";
 export * from "./notes";

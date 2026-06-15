@@ -423,6 +423,98 @@ export const DraftTaskResponse = zod.object({
 
 
 /**
+ * @summary Get activity journal for a task
+ */
+export const GetTaskActivityQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTaskActivityResponseItem = zod.object({
+  "id": zod.number(),
+  "taskId": zod.number(),
+  "type": zod.enum(['created', 'accepted', 'decomposed', 'submitted', 'accepted_final', 'returned', 'commented', 'escalated', 'pinged']),
+  "actorRole": zod.string(),
+  "text": zod.string().nullish(),
+  "at": zod.string()
+})
+export const GetTaskActivityResponse = zod.array(GetTaskActivityResponseItem)
+
+
+/**
+ * @summary Accept task into work — transitions sent → in_progress
+ */
+export const StartTaskQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const StartTaskResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "watchers": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
+  "email": zod.string().nullish()
+})),
+  "priority": zod.enum(['high', 'medium', 'low']),
+  "dueDate": zod.string().nullish(),
+  "businessId": zod.number().nullish(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "createdBy": zod.string().optional(),
+  "returnComment": zod.string().nullish(),
+  "resultNote": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Submit task for review — transitions in_progress → review
+ */
+export const SubmitTaskQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SubmitTaskBody = zod.object({
+  "resultNote": zod.string().optional()
+})
+
+export const SubmitTaskResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "watchers": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
+  "email": zod.string().nullish()
+})),
+  "priority": zod.enum(['high', 'medium', 'low']),
+  "dueDate": zod.string().nullish(),
+  "businessId": zod.number().nullish(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "createdBy": zod.string().optional(),
+  "returnComment": zod.string().nullish(),
+  "resultNote": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Accept a review task — marks it done
  */
 export const AcceptTaskQueryParams = zod.object({
