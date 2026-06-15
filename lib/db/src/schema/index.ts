@@ -5,3 +5,4 @@ export * from "./people";
 export * from "./tasks";
 export * from "./feedItems";
 export * from "./feed";
+export * from "./notes";

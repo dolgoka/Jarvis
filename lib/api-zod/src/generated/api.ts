@@ -555,6 +555,69 @@ export const DismissFeedItemResponse = zod.object({
 
 
 /**
+ * @summary List all notes (pinned first, newest first)
+ */
+export const ListNotesResponseItem = zod.object({
+  "id": zod.number(),
+  "body": zod.string(),
+  "source": zod.enum(['voice', 'text']),
+  "pinned": zod.boolean(),
+  "businessId": zod.number().nullish(),
+  "aiSummary": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+export const ListNotesResponse = zod.array(ListNotesResponseItem)
+
+
+/**
+ * @summary Create a new note
+ */
+export const CreateNoteBody = zod.object({
+  "body": zod.string(),
+  "source": zod.enum(['voice', 'text']).optional(),
+  "businessId": zod.number().optional()
+})
+
+
+/**
+ * @summary Update a note (body, pinned, aiSummary)
+ */
+export const UpdateNoteQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const UpdateNoteBody = zod.object({
+  "body": zod.string().optional(),
+  "pinned": zod.boolean().optional(),
+  "aiSummary": zod.string().nullish()
+})
+
+export const UpdateNoteResponse = zod.object({
+  "id": zod.number(),
+  "body": zod.string(),
+  "source": zod.enum(['voice', 'text']),
+  "pinned": zod.boolean(),
+  "businessId": zod.number().nullish(),
+  "aiSummary": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Delete a note
+ */
+export const DeleteNoteQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const DeleteNoteResponse = zod.object({
+  "deleted": zod.number()
+})
+
+
+/**
  * @summary Transcribe base64-encoded audio to text (max ~60 s, Russian)
  */
 export const VoiceTranscribeBody = zod.object({

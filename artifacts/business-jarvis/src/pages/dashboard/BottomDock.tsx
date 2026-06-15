@@ -1,11 +1,13 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useAiChat } from "@workspace/api-client-react";
 import {
-  Send, X, Loader2, Mic, MicOff, Volume2, Square,
+  Send, X, Loader2, Volume2, Square,
   MessageSquare, Lightbulb, ClipboardList,
 } from "lucide-react";
 import { AiAnswer } from "@/components/ui/AiAnswer";
 import { TaskComposer } from "./TaskComposer";
+import { NotesDock } from "./NotesDock";
+import { VoiceCapture } from "@/components/ui/VoiceCapture";
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 const ACCENT = "var(--jarvis-accent)";
@@ -13,12 +15,6 @@ const ACCENT = "var(--jarvis-accent)";
 interface Message {
   role: "user" | "assistant";
   text: string;
-}
-
-function getMimeType(): string {
-  for (const t of ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"])
-    if (MediaRecorder.isTypeSupported(t)) return t;
-  return "";
 }
 
 const QUICK = [
@@ -37,15 +33,9 @@ interface BottomDockProps {
 export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [voiceActive, setVoiceActive] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [recordSeconds, setRecordSeconds] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -85,46 +75,9 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); }
   }
 
-  const stopRecording = useCallback(() => {
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    setRecordSeconds(0);
-    if (mediaRecorderRef.current?.state !== "inactive") mediaRecorderRef.current?.stop();
-    setIsRecording(false);
-  }, []);
-
-  async function startRecording() {
-    if (isRecording) { stopRecording(); return; }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = getMimeType();
-      const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
-      chunksRef.current = [];
-      mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      mr.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/mp4" });
-        if (blob.size < 1000) return;
-        setIsTranscribing(true);
-        try {
-          const buf = await blob.arrayBuffer();
-          const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-          const resp = await fetch("/api/voice/transcribe", {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ audio: b64 }),
-          });
-          const data = await resp.json();
-          if (data.text?.trim()) handleSend(data.text.trim());
-        } catch { /* ignore */ }
-        finally { setIsTranscribing(false); }
-      };
-      mr.start(200);
-      mediaRecorderRef.current = mr;
-      setIsRecording(true);
-      timerRef.current = setInterval(() => setRecordSeconds(s => {
-        if (s >= 59) { stopRecording(); return 0; }
-        return s + 1;
-      }), 1000);
-    } catch { /* mic denied */ }
+  function handleVoiceText(text: string) {
+    setInput(text);
+    setTimeout(() => inputRef.current?.focus(), 50);
   }
 
   async function playMessage(idx: number, text: string) {
@@ -137,10 +90,11 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      const data = await resp.json();
+      const data = await resp.json() as { audio?: string };
       if (!data.audio) { setPlayingIdx(null); return; }
       const binary = atob(data.audio);
-      const bytes = new Uint8Array(binary.length).map((_, i) => binary.charCodeAt(i));
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)!;
       const blob = new Blob([bytes], { type: "audio/mp3" });
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
@@ -151,10 +105,9 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
     } catch { setPlayingIdx(null); }
   }
 
-  const micBusy = isTranscribing || isPending;
-  const chatOpen = activePanel === "chat";
+  const chatOpen    = activePanel === "chat";
   const thoughtOpen = activePanel === "thought";
-  const taskOpen = activePanel === "task";
+  const taskOpen    = activePanel === "task";
 
   function togglePanel(panel: DockPanel) {
     onPanelChange(activePanel === panel ? null : panel);
@@ -168,16 +121,15 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
         width: "min(560px, calc(100vw - 32px))",
       }}
     >
-      {/* ── Chat panel (expands upward) ── */}
+      {/* ── Chat panel ── */}
       {chatOpen && (
         <div
           className="glass w-full mb-2 flex flex-col overflow-hidden"
           style={{
-            border: isRecording ? "1px solid rgba(239,68,68,0.4)" : undefined,
+            border: voiceActive ? "1px solid rgba(239,68,68,0.35)" : undefined,
             height: 360,
           }}
         >
-          {/* Panel header */}
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 flex-shrink-0">
             <div className="flex items-center gap-2">
               <MessageSquare className="w-3.5 h-3.5" style={{ color: ACCENT }} />
@@ -195,7 +147,6 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
             </button>
           </div>
 
-          {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3" style={{ scrollbarWidth: "none" }}>
             {messages.length === 0 && !isPending && (
               <div className="flex flex-col items-center justify-center h-full gap-4">
@@ -278,43 +229,35 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
             className="flex items-center gap-2 px-3 py-2.5 border-t border-white/5 flex-shrink-0"
             style={{ background: "rgba(0,0,0,0.2)" }}
           >
-            <button
-              onClick={startRecording}
-              disabled={micBusy}
-              className="flex-shrink-0 p-1 rounded transition-colors disabled:opacity-40"
-              style={{ color: isRecording ? "rgb(239,68,68)" : "rgba(0,212,255,0.45)" }}
-              title={isRecording ? `Стоп (${recordSeconds}с)` : "Голос"}
-            >
-              {isTranscribing
-                ? <Loader2 className="w-4 h-4 animate-spin" />
-                : isRecording
-                ? <MicOff className="w-4 h-4 animate-pulse" />
-                : <Mic className="w-4 h-4" />}
-            </button>
-            {isRecording
-              ? <span className="flex-1 text-xs font-mono animate-pulse" style={{ color: "rgba(239,68,68,0.8)", fontFamily: HF }}>Запись… {recordSeconds}с</span>
-              : (
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKey}
-                  placeholder={isTranscribing ? "Распознаю речь…" : "Спросить про компанию…"}
-                  disabled={isPending || isTranscribing}
-                  className="flex-1 bg-transparent outline-none text-sm font-mono min-w-0"
-                  style={{ color: "rgba(228,232,255,0.82)", fontFamily: HF }}
-                />
-              )}
-            <button
-              onClick={() => handleSend()}
-              disabled={!input.trim() || isPending || isRecording}
-              className="flex-shrink-0 p-1 transition-colors disabled:opacity-20"
-              style={{ color: ACCENT }}
-              aria-label="Отправить"
-            >
-              <Send className="w-4 h-4" />
-            </button>
+            <VoiceCapture
+              onText={handleVoiceText}
+              onActiveChange={setVoiceActive}
+              accentColor="rgba(0,212,255,0.5)"
+            />
+            {!voiceActive && (
+              <input
+                ref={inputRef}
+                type="text"
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKey}
+                placeholder="Спросить про компанию…"
+                disabled={isPending}
+                className="flex-1 bg-transparent outline-none text-sm font-mono min-w-0"
+                style={{ color: "rgba(228,232,255,0.82)", fontFamily: HF }}
+              />
+            )}
+            {!voiceActive && (
+              <button
+                onClick={() => handleSend()}
+                disabled={!input.trim() || isPending}
+                className="flex-shrink-0 p-1 transition-colors disabled:opacity-20"
+                style={{ color: ACCENT }}
+                aria-label="Отправить"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -324,32 +267,13 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
         <TaskComposer onClose={() => onPanelChange(null)} />
       )}
 
-      {/* ── Thought panel (stub) ── */}
+      {/* ── Notes panel ── */}
       {thoughtOpen && (
-        <div
-          className="glass relative w-full mb-2 flex flex-col items-center justify-center"
-          style={{ height: 160 }}
-        >
-          <button
-            onClick={() => onPanelChange(null)}
-            className="absolute top-3 right-3 p-1 rounded"
-            style={{ color: "rgba(228,232,255,0.2)" }}
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-          <Lightbulb className="w-6 h-6 mb-3" style={{ color: "rgba(149,165,245,0.35)" }} />
-          <span className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: "rgba(149,165,245,0.35)", fontFamily: HF, letterSpacing: "0.1em" }}>
-            Скоро
-          </span>
-          <span className="text-[11px] mt-1.5" style={{ color: "rgba(228,232,255,0.18)", fontFamily: HF }}>
-            Фиксация мыслей — в следующем шаге
-          </span>
-        </div>
+        <NotesDock onClose={() => onPanelChange(null)} />
       )}
 
       {/* ── Pill row ── */}
       <div className="glass flex items-center gap-1.5 p-1.5">
-        {/* Спросить */}
         <DockPill
           icon={<MessageSquare className="w-4 h-4" />}
           label="Спросить"
@@ -357,8 +281,6 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
           accentColor={ACCENT}
           onClick={() => togglePanel("chat")}
         />
-
-        {/* Мысль */}
         <DockPill
           icon={<Lightbulb className="w-4 h-4" />}
           label="Мысль"
@@ -366,8 +288,6 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
           accentColor="rgba(149,165,245,0.9)"
           onClick={() => togglePanel("thought")}
         />
-
-        {/* Задача → opens TaskComposer sheet */}
         <DockPill
           icon={<ClipboardList className="w-4 h-4" />}
           label="Задача"
@@ -379,6 +299,8 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
     </div>
   );
 }
+
+// ─── DockPill ─────────────────────────────────────────────────────────────────
 
 interface DockPillProps {
   icon: React.ReactNode;
@@ -397,19 +319,21 @@ function DockPill({ icon, label, active, accentColor, onClick }: DockPillProps) 
         height: 40,
         padding: "0 16px",
         borderRadius: 14,
-        background: active ? `${accentColor}18` : "transparent",
-        border: `1px solid ${active ? `${accentColor}40` : "transparent"}`,
-        color: active ? accentColor : "rgba(228,232,255,0.40)",
+        background: active
+          ? `color-mix(in srgb, ${accentColor} 14%, transparent)`
+          : "rgba(255,255,255,0.04)",
+        border: active
+          ? `1px solid color-mix(in srgb, ${accentColor} 35%, transparent)`
+          : "1px solid rgba(255,255,255,0.07)",
+        color: active ? accentColor : "rgba(228,232,255,0.35)",
         fontFamily: HF,
         fontSize: 13,
-        fontWeight: 500,
+        fontWeight: active ? 600 : 400,
         cursor: "pointer",
-        whiteSpace: "nowrap",
-        transition: "background 150ms, border-color 150ms, color 150ms",
       }}
     >
-      <span style={{ opacity: active ? 1 : 0.6, transition: "opacity 150ms" }}>{icon}</span>
-      <span>{label}</span>
+      {icon}
+      {label}
     </button>
   );
 }

@@ -435,6 +435,52 @@ export interface FeedDraft {
   businessName?: string | null;
 }
 
+export type NoteSource = typeof NoteSource[keyof typeof NoteSource];
+
+
+export const NoteSource = {
+  voice: 'voice',
+  text: 'text',
+} as const;
+
+export interface Note {
+  id: number;
+  body: string;
+  source: NoteSource;
+  pinned: boolean;
+  /** @nullable */
+  businessId?: number | null;
+  /** @nullable */
+  aiSummary?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type NoteInputSource = typeof NoteInputSource[keyof typeof NoteInputSource];
+
+
+export const NoteInputSource = {
+  voice: 'voice',
+  text: 'text',
+} as const;
+
+export interface NoteInput {
+  body: string;
+  source?: NoteInputSource;
+  businessId?: number;
+}
+
+export interface NotePatch {
+  body?: string;
+  pinned?: boolean;
+  /** @nullable */
+  aiSummary?: string | null;
+}
+
+export interface NoteDeleteResult {
+  deleted: number;
+}
+
 export interface VoiceTranscribeInput {
   /** Base64-encoded audio data (max ~60 s) */
   audio: string;
@@ -554,5 +600,13 @@ id: number;
 export type SnoozeFeedItemParams = {
 id: number;
 hours?: number;
+};
+
+export type UpdateNoteParams = {
+id: number;
+};
+
+export type DeleteNoteParams = {
+id: number;
 };
 

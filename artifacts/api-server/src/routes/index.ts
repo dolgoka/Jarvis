@@ -11,6 +11,7 @@ import peopleRouter from "./people";
 import tasksRouter from "./tasks";
 import feedRouter from "./feed";
 import feedNewsRouter from "./feedNews";
+import notesRouter from "./notes";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(peopleRouter);
 router.use(tasksRouter);
 router.use(feedNewsRouter);
 router.use(feedRouter);
+router.use(notesRouter);
 
 export default router;

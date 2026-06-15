@@ -7,7 +7,8 @@
     "hello": "tsx ./src/hello.ts",
     "seed": "tsx ./src/seed.ts",
     "seed:tasks": "tsx ./src/seedTasks.ts",
-    "seed:all": "tsx ./src/seed.ts && tsx ./src/seedTasks.ts",
+    "seed:notes": "tsx ./src/seedNotes.ts",
+    "seed:all": "tsx ./src/seed.ts && tsx ./src/seedTasks.ts && tsx ./src/seedNotes.ts",
     "seed:morning": "tsx ./src/seed-morning.ts",
     "seed:news": "tsx ./src/seed-news.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"
