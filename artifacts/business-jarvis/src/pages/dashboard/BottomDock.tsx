@@ -176,7 +176,10 @@ export function BottomDock({ activePanel, onPanelChange, chatPrefill, onChatPref
               </span>
               {contextBiz && (
                 <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.22)" }}>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(0,212,255,0.8)", fontFamily: HF, letterSpacing: "0.02em" }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(0,212,255,0.45)", fontFamily: HF, letterSpacing: "0.02em" }}>
+                    Контекст:
+                  </span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: "rgba(0,212,255,0.88)", fontFamily: HF, letterSpacing: "0.02em" }}>
                     {contextBiz}
                   </span>
                   <button onClick={() => setContextBiz(null)} style={{ display: "flex", alignItems: "center", color: "rgba(0,212,255,0.5)", cursor: "pointer", lineHeight: 1 }}>
