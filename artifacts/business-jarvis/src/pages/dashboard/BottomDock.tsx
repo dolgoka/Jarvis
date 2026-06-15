@@ -28,13 +28,16 @@ export type DockPanel = "chat" | "thought" | "task" | null;
 interface BottomDockProps {
   activePanel: DockPanel;
   onPanelChange: (p: DockPanel) => void;
+  chatPrefill?: { bizName: string; msg: string } | null;
+  onChatPrefillConsumed?: () => void;
 }
 
-export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
+export function BottomDock({ activePanel, onPanelChange, chatPrefill, onChatPrefillConsumed }: BottomDockProps) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [voiceActive, setVoiceActive] = useState(false);
   const [taskPrefill, setTaskPrefill] = useState<string | undefined>(undefined);
+  const [contextBiz, setContextBiz] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -53,6 +56,16 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
   });
 
   useEffect(() => {
+    if (chatPrefill) {
+      setInput(chatPrefill.msg);
+      setContextBiz(chatPrefill.bizName);
+      onChatPrefillConsumed?.();
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatPrefill]);
+
+  useEffect(() => {
     if (activePanel === "chat") setTimeout(() => inputRef.current?.focus(), 80);
   }, [activePanel]);
 
@@ -64,6 +77,7 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
     const msg = (text ?? input).trim();
     if (!msg || isPending) return;
     setInput("");
+    setContextBiz(null);
     if (activePanel !== "chat") onPanelChange("chat");
     setMessages(prev => {
       const history = prev.map(m => ({ role: m.role, content: m.text }));
@@ -149,6 +163,16 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
               <span className="text-[11px] font-mono uppercase tracking-widest" style={{ color: "rgba(228,232,255,0.35)", fontFamily: HF }}>
                 Ассистент
               </span>
+              {contextBiz && (
+                <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 999, background: "rgba(0,212,255,0.08)", border: "1px solid rgba(0,212,255,0.22)" }}>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: "rgba(0,212,255,0.8)", fontFamily: HF, letterSpacing: "0.02em" }}>
+                    {contextBiz}
+                  </span>
+                  <button onClick={() => setContextBiz(null)} style={{ display: "flex", alignItems: "center", color: "rgba(0,212,255,0.5)", cursor: "pointer", lineHeight: 1 }}>
+                    <X className="w-2.5 h-2.5" />
+                  </button>
+                </div>
+              )}
             </div>
             <button
               onClick={() => onPanelChange(null)}

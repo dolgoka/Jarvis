@@ -1,9 +1,14 @@
-import { useGetBusinessCard, getGetBusinessCardQueryKey } from "@workspace/api-client-react";
+import { useState } from "react";
+import { useGetBusinessCard, getGetBusinessCardQueryKey, useGetBusiness, getGetBusinessQueryKey } from "@workspace/api-client-react";
 import type { Metric, RoadmapItem, CoverageItem, TopPerson, BusinessCard } from "@workspace/api-client-react";
-import { X, MessageSquare, MapPin, Calendar, User, CheckCircle2, XCircle, Clock, ChevronRight } from "lucide-react";
-import { useLocation } from "wouter";
+import { X, MessageSquare, MapPin, Calendar, User, CheckCircle2, XCircle, ChevronRight, ChevronDown, ChevronUp, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Loader2 } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
+import {
+  LineChart, Line, BarChart, Bar, Cell,
+  XAxis, YAxis, CartesianGrid,
+  Tooltip as RechartsTooltip, ResponsiveContainer,
+} from "recharts";
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 const HC: Record<string, string> = { green: "#3ed9a0", yellow: "#f0b54a", red: "#f0625a" };
@@ -377,19 +382,314 @@ function NonFinancialSection({ data }: { data: BusinessCard }) {
   );
 }
 
+// ── Analytics types ──────────────────────────────────────────────────────────
+type OvFunding  = { date: string; amount: number; round: string };
+type OvInvData  = { runwayMonths: number; burnRateMonthly: number; burnRatePrevious?: number; cashOnHand: number; fundingRounds?: OvFunding[] };
+type OvPFItem   = { metric: string; plan: number; actual: number; unit: string };
+type OvBalChange = { equity: { start: number; end: number }; debt: { start: number; end: number }; profit: { start: number; end: number; plan: number } };
+type OvAnalytics = {
+  stage?: "investment" | "operational";
+  forms?: { bdr?: Record<string, number>; odds?: Record<string, number>; balance?: Record<string, number> };
+  balanceChange?: OvBalChange;
+  investmentData?: OvInvData;
+  planFact?: OvPFItem[];
+};
+
+// ── Compact money formatter ───────────────────────────────────────────────────
+function fmt(v: number, currency: string): string {
+  const abs = Math.abs(v);
+  const sign = v < 0 ? "−" : "";
+  const sym = currency === "USD" ? "$" : currency === "EUR" ? "€" : currency === "RUB" ? "₽" : currency;
+  if (abs >= 1_000_000_000) return `${sign}${sym}${(abs / 1_000_000_000).toFixed(1)}B`;
+  if (abs >= 1_000_000)     return `${sign}${sym}${(abs / 1_000_000).toFixed(1)}M`;
+  if (abs >= 1_000)         return `${sign}${sym}${(abs / 1_000).toFixed(0)}K`;
+  return `${sign}${sym}${abs.toFixed(0)}`;
+}
+
+// ── Waterfall helpers ─────────────────────────────────────────────────────────
+type WfStep = { label: string; value: number; rawValue: number; type: "inflow" | "deduction" | "result" };
+
+function bdrFind(bdr: Record<string, number>, pat: RegExp) {
+  const entry = Object.entries(bdr).find(([k]) => pat.test(k));
+  return entry ? { key: entry[0], val: entry[1] } : null;
+}
+
+function buildWaterfallSteps(bdr: Record<string, number>): WfStep[] | null {
+  const rev = bdrFind(bdr, /выручка/i);
+  const net = bdrFind(bdr, /чистая прибыль/i) ?? bdrFind(bdr, /убыток/i);
+  if (!rev || !net || rev.val <= 0) return null;
+  const revenue = rev.val; const netProfit = net.val;
+  const ebitda = bdrFind(bdr, /^ebitda$/i);
+  const steps: WfStep[] = [];
+  steps.push({ label: "Выручка", value: revenue, rawValue: revenue, type: "inflow" });
+  if (ebitda !== null) {
+    const preExp = revenue - ebitda.val;
+    if (preExp > 0) steps.push({ label: "Операционные расходы", value: preExp, rawValue: -preExp, type: "deduction" });
+    steps.push({ label: "EBITDA", value: Math.abs(ebitda.val), rawValue: ebitda.val, type: "result" });
+    const postExp = ebitda.val - netProfit;
+    if (postExp > 0) steps.push({ label: "Прочие расходы", value: postExp, rawValue: -postExp, type: "deduction" });
+  } else {
+    const cogs = bdrFind(bdr, /себестоимость/i);
+    const totalExpenses = revenue - netProfit;
+    if (cogs && cogs.val > 0 && cogs.val < totalExpenses) {
+      steps.push({ label: "Себестоимость", value: cogs.val, rawValue: -cogs.val, type: "deduction" });
+      const rem = totalExpenses - cogs.val;
+      if (rem > 0) steps.push({ label: "Прочие расходы", value: rem, rawValue: -rem, type: "deduction" });
+    } else if (totalExpenses > 0) {
+      steps.push({ label: "Операционные расходы", value: totalExpenses, rawValue: -totalExpenses, type: "deduction" });
+    }
+  }
+  const isLoss = netProfit < 0;
+  steps.push({ label: isLoss ? "Убыток" : "Чистая прибыль", value: Math.abs(netProfit), rawValue: netProfit, type: "result" });
+  return steps;
+}
+
+function WaterfallBlock({ bdr, currency }: { bdr: Record<string, number>; currency: string }) {
+  const steps = buildWaterfallSteps(bdr);
+  if (!steps || steps.length < 3) return null;
+  const revenue = steps[0].value;
+  const netStep = steps[steps.length - 1];
+  const MAX_PCT = 88;
+  let running = revenue;
+  type Computed = { step: WfStep; barLeft: number; barWidth: number; color: string };
+  const computed: Computed[] = steps.map(step => {
+    let barLeft: number, barWidth: number, color: string;
+    if (step.type === "inflow") { barLeft = 0; barWidth = MAX_PCT; color = "#5b8fff"; }
+    else if (step.type === "deduction") {
+      running -= step.value;
+      barLeft = Math.max(0, (running / revenue) * MAX_PCT);
+      barWidth = (step.value / revenue) * MAX_PCT; color = HC.red;
+    } else {
+      barLeft = 0; barWidth = Math.max(0.4, (Math.abs(step.value) / revenue) * MAX_PCT);
+      const isLast = step === netStep;
+      color = isLast ? (step.rawValue < 0 ? HC.red : step.rawValue < revenue * 0.05 ? HC.yellow : HC.green) : "#5b8bd0";
+    }
+    return { step, barLeft, barWidth, color };
+  });
+  const netProfit = netStep.rawValue;
+  const summaryLabel = netProfit < 0
+    ? `Убыток ${fmt(Math.abs(netProfit), currency)} при выручке ${fmt(revenue, currency)}`
+    : `Из ${fmt(revenue, currency)} до прибыли доходит ${fmt(netProfit, currency)} (${((netProfit / revenue) * 100).toFixed(1)}%)`;
+  return (
+    <div style={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.025)", padding: "18px 20px", display: "flex", flexDirection: "column", gap: 4, flex: 1 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: TEXT.lo, fontFamily: HF, marginBottom: 6 }}>Куда уходит выручка</div>
+      {computed.map(({ step, barLeft, barWidth, color }, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 26 }}>
+          <div style={{ fontSize: 11, color: step.type === "result" ? TEXT.mid : TEXT.lo, fontFamily: HF, fontWeight: step.type === "result" ? 600 : 400, width: 130, flexShrink: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{step.label}</div>
+          <div style={{ flex: 1, position: "relative", height: step.type === "result" ? 14 : 10, borderRadius: 4, background: "rgba(255,255,255,0.05)" }}>
+            <div style={{ position: "absolute", top: 0, height: "100%", left: `${barLeft}%`, width: `${Math.max(0.3, barWidth)}%`, borderRadius: 4, background: step.type === "inflow" ? "linear-gradient(90deg,#3a6aff,#5b8fff)" : step.type === "deduction" ? `linear-gradient(90deg,${color}cc,${color})` : `linear-gradient(90deg,${color}99,${color})`, boxShadow: step.type === "result" ? `0 0 8px ${color}44` : "none" }} />
+          </div>
+          <div style={{ fontSize: 11, fontWeight: step.type === "result" ? 700 : 500, color: step.type === "deduction" ? HC.red : step.type === "result" ? color : TEXT.mid, fontFamily: HF, width: 80, flexShrink: 0, textAlign: "right" }}>
+            {step.type === "deduction" ? "−" : ""}{fmt(step.value, currency)}
+          </div>
+        </div>
+      ))}
+      <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.07)", fontSize: 11, color: TEXT.lo, fontFamily: HF, lineHeight: 1.5 }}>{summaryLabel}</div>
+    </div>
+  );
+}
+
+// ── Margin Donut ──────────────────────────────────────────────────────────────
+function MarginDonut({ bdr, planFact, currency }: { bdr: Record<string, number>; planFact: OvPFItem[]; currency: string }) {
+  const rev = bdrFind(bdr, /выручка/i);
+  const net = bdrFind(bdr, /чистая прибыль/i) ?? bdrFind(bdr, /убыток/i);
+  if (!rev || !net || rev.val <= 0) return null;
+  const marginPct = (net.val / rev.val) * 100;
+  let planMarginPct: number | null = null;
+  const planRevItem = planFact.find(m => /оборот|выручка/i.test(m.metric));
+  const planProfitItem = planFact.find(m => /чистая прибыль/i.test(m.metric));
+  if (planRevItem && planProfitItem && planRevItem.plan > 0) planMarginPct = (planProfitItem.plan / planRevItem.plan) * 100;
+  let arcColor: string;
+  if (planMarginPct !== null) arcColor = marginPct >= planMarginPct * 0.95 ? HC.green : marginPct >= planMarginPct * 0.80 ? HC.yellow : HC.red;
+  else arcColor = marginPct >= 15 ? HC.green : marginPct >= 5 ? HC.yellow : HC.red;
+  const R = 44; const cx = 58; const cy = 58;
+  const circumference = 2 * Math.PI * R;
+  const clampedPct = Math.max(0, Math.min(100, Math.abs(marginPct)));
+  const dash = (clampedPct / 100) * circumference;
+  const gap = circumference - dash;
+  const planAngle = planMarginPct !== null ? ((Math.min(100, Math.abs(planMarginPct)) / 100) * 360) - 90 : null;
+  const planX = planAngle !== null ? cx + (R + 6) * Math.cos((planAngle * Math.PI) / 180) : null;
+  const planY = planAngle !== null ? cy + (R + 6) * Math.sin((planAngle * Math.PI) / 180) : null;
+  const statusLabel = planMarginPct !== null
+    ? (marginPct >= planMarginPct * 0.95 ? "В плане" : marginPct >= planMarginPct * 0.80 ? "Ниже плана" : "Критично")
+    : (marginPct >= 15 ? "Норма" : marginPct >= 5 ? "Ниже нормы" : "Критично");
+  void currency;
+  return (
+    <div style={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.025)", padding: "18px 20px", display: "flex", flexDirection: "column", alignItems: "center", gap: 8, minWidth: 140 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: TEXT.lo, fontFamily: HF }}>Чистая маржа</div>
+      <svg width={116} height={116} viewBox="0 0 116 116">
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={9} />
+        <circle cx={cx} cy={cy} r={R} fill="none" stroke={arcColor} strokeWidth={9} strokeDasharray={`${dash} ${gap}`} strokeLinecap="round" transform={`rotate(-90 ${cx} ${cy})`} style={{ filter: `drop-shadow(0 0 6px ${arcColor}66)` }} />
+        {planX !== null && planY !== null && <circle cx={planX} cy={planY} r={3} fill="rgba(228,232,255,0.8)" />}
+        <text x={cx} y={cy - 5} textAnchor="middle" fontSize={18} fontWeight={800} fill={arcColor} fontFamily="'Hanken Grotesk',system-ui,sans-serif">{marginPct.toFixed(marginPct < 1 ? 2 : 1)}%</text>
+        <text x={cx} y={cy + 11} textAnchor="middle" fontSize={8.5} fontWeight={600} fill="rgba(228,232,255,0.4)" fontFamily="'Hanken Grotesk',system-ui,sans-serif" letterSpacing="0.05em">МАРЖА</text>
+        {planMarginPct !== null && <text x={cx} y={cy + 24} textAnchor="middle" fontSize={8} fontWeight={500} fill="rgba(228,232,255,0.28)" fontFamily="'Hanken Grotesk',system-ui,sans-serif">цель {planMarginPct.toFixed(1)}%</text>}
+      </svg>
+      <div style={{ padding: "3px 10px", borderRadius: 999, fontSize: 10, fontWeight: 600, fontFamily: HF, background: `${arcColor}18`, color: arcColor, border: `1px solid ${arcColor}44` }}>{statusLabel}</div>
+    </div>
+  );
+}
+
+// ── Balance Change Block ──────────────────────────────────────────────────────
+function profitColor(factIncrement: number, planIncrement: number): string {
+  if (planIncrement <= 0) return TEXT.mid;
+  const r = factIncrement / planIncrement;
+  return r >= 1 ? "#3ed9a0" : r >= 0.7 ? "#f0b54a" : "#f0625a";
+}
+
+function BalanceChangeBlock({ bc, currency }: { bc: OvBalChange; currency: string }) {
+  const factIncrement = bc.profit.end - bc.profit.start;
+  const color = profitColor(factIncrement, bc.profit.plan);
+  const rows = [
+    { label: "Собственный капитал", start: bc.equity.start, end: bc.equity.end, isProfit: false },
+    { label: "Заёмные средства",    start: bc.debt.start,   end: bc.debt.end,   isProfit: false },
+    { label: "Прибыль",             start: bc.profit.start, end: bc.profit.end, isProfit: true },
+  ];
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <h3 style={{ fontSize: 12, fontWeight: 600, color: TEXT.lo, fontFamily: HF, marginBottom: 2 }}>Изменение баланса за квартал</h3>
+      <div style={{ borderRadius: 16, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.025)", overflow: "hidden" }}>
+        {rows.map((row, i) => {
+          const delta = row.end - row.start;
+          const isUp = delta >= 0;
+          const rowColor = row.isProfit ? color : TEXT.dim;
+          return (
+            <div key={row.label} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "12px 18px", borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.06)" : "none", background: row.isProfit ? "rgba(255,255,255,0.02)" : "transparent" }}>
+              <div style={{ width: 5, height: 5, borderRadius: "50%", flexShrink: 0, marginTop: 5, background: row.isProfit ? color : "rgba(255,255,255,0.15)" }} />
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", rowGap: 3 }}>
+                  <span style={{ fontSize: 12, fontWeight: row.isProfit ? 600 : 400, color: row.isProfit ? TEXT.mid : TEXT.lo, fontFamily: HF }}>{row.label}</span>
+                  <span style={{ fontSize: 11, color: TEXT.dim, fontFamily: HF }}>{fmt(row.start, currency)}<span style={{ margin: "0 3px", opacity: 0.5 }}>→</span>{fmt(row.end, currency)}</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, fontFamily: HF, color: rowColor }}>
+                    {row.isProfit ? null : (isUp ? "↑" : "↓")}{" "}{delta >= 0 ? "+" : "−"}{fmt(Math.abs(delta), currency)}
+                  </span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ── Investment Blocks ─────────────────────────────────────────────────────────
+function RunwayBlock({ data, currency }: { data: OvInvData; currency: string }) {
+  const { runwayMonths, cashOnHand } = data;
+  const color = runwayMonths >= 12 ? HC.green : runwayMonths >= 6 ? HC.yellow : HC.red;
+  const label = runwayMonths >= 12 ? "Устойчиво" : runwayMonths >= 6 ? "Внимание" : "Критично";
+  const barPct = Math.min(100, (runwayMonths / 24) * 100);
+  void currency;
+  return (
+    <div style={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.025)", padding: "18px 20px", display: "flex", flexDirection: "column", gap: 12, flex: 1, minWidth: 160 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: TEXT.lo, fontFamily: HF }}>Runway</div>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+        <span style={{ fontSize: 44, fontWeight: 800, color, fontFamily: HF, lineHeight: 1, filter: `drop-shadow(0 0 12px ${color}55)` }}>{runwayMonths}</span>
+        <span style={{ fontSize: 15, fontWeight: 600, color: TEXT.mid, fontFamily: HF, paddingBottom: 5 }}>мес.</span>
+      </div>
+      <div style={{ height: 7, borderRadius: 4, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+        <div style={{ height: "100%", borderRadius: 4, width: `${barPct}%`, background: `linear-gradient(90deg,${color}88,${color})` }} />
+      </div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ padding: "2px 9px", borderRadius: 999, fontSize: 10, fontWeight: 600, fontFamily: HF, background: `${color}18`, color, border: `1px solid ${color}44` }}>{label}</span>
+        <span style={{ fontSize: 11, color: TEXT.lo, fontFamily: HF }}>{fmt(cashOnHand, currency)} на счетах</span>
+      </div>
+    </div>
+  );
+}
+
+function BurnRateBlock({ data, currency }: { data: OvInvData; currency: string }) {
+  const { burnRateMonthly, burnRatePrevious } = data;
+  const delta = burnRatePrevious != null ? burnRateMonthly - burnRatePrevious : null;
+  const deltaPct = delta != null && burnRatePrevious ? Math.abs((delta / burnRatePrevious) * 100).toFixed(1) : null;
+  const trendColor = delta == null ? TEXT.mid : delta > 0 ? HC.red : HC.green;
+  const TrendIcon = delta == null ? Minus : delta > 0 ? TrendingUp : TrendingDown;
+  return (
+    <div style={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.025)", padding: "18px 20px", display: "flex", flexDirection: "column", gap: 12, flex: 1, minWidth: 160 }}>
+      <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: TEXT.lo, fontFamily: HF }}>Burn Rate / мес.</div>
+      <div style={{ fontSize: 32, fontWeight: 800, color: TEXT.hi, fontFamily: HF, lineHeight: 1 }}>{fmt(burnRateMonthly, currency)}</div>
+      {delta != null && deltaPct != null && (
+        <div style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontFamily: HF, color: trendColor }}>
+          <TrendIcon style={{ width: 13, height: 13, flexShrink: 0 }} />
+          <span style={{ fontWeight: 600 }}>{delta > 0 ? "+" : "−"}{deltaPct}% к прошлому месяцу</span>
+        </div>
+      )}
+      {burnRatePrevious != null && <div style={{ fontSize: 11, color: TEXT.dim, fontFamily: HF }}>Прошлый: {fmt(burnRatePrevious, currency)}</div>}
+    </div>
+  );
+}
+
+function FundingChartBlock({ data, currency }: { data: OvInvData; currency: string }) {
+  const rounds = data.fundingRounds;
+  if (!rounds || rounds.length === 0) return null;
+  const chartData = rounds.map(r => ({ label: r.round, amount: r.amount }));
+  const maxAmount = Math.max(...chartData.map(d => d.amount));
+  return (
+    <section style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <h3 style={{ fontSize: 12, fontWeight: 600, color: TEXT.lo, fontFamily: HF, marginBottom: 2 }}>История финансирования</h3>
+      <div style={{ borderRadius: 18, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.025)", padding: "16px 6px 8px" }}>
+        <div style={{ height: 180 }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData} margin={{ top: 6, right: 14, left: 0, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(91,139,208,0.08)" vertical={false} />
+              <XAxis dataKey="label" stroke="rgba(255,255,255,0.08)" tick={{ fill: TEXT.lo, fontSize: 10, fontFamily: HF }} />
+              <YAxis stroke="rgba(255,255,255,0.08)" tick={{ fill: TEXT.lo, fontSize: 10, fontFamily: HF }} tickFormatter={(v) => fmt(v, currency)} width={70} />
+              <RechartsTooltip contentStyle={{ backgroundColor: "rgba(11,11,18,0.95)", border: "1px solid rgba(255,255,255,0.09)", borderRadius: 12, fontSize: 12, fontFamily: HF }} formatter={(v: number) => [fmt(v, currency), "Объём"]} />
+              <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
+                {chartData.map((entry, idx) => <Cell key={idx} fill={entry.amount === maxAmount ? "#5b8bd0" : "rgba(91,139,208,0.45)"} />)}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+// ── Form Accordion ────────────────────────────────────────────────────────────
+function FormAccordion({ title, data, currency }: { title: string; data: Record<string, number>; currency: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ borderRadius: 14, border: "1px solid rgba(255,255,255,0.08)", overflow: "hidden", background: "rgba(255,255,255,0.025)" }}>
+      <button style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 18px", background: "transparent", cursor: "pointer", transition: "background 150ms" }}
+        onMouseEnter={e => (e.currentTarget.style.background = "rgba(91,139,208,0.05)")}
+        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+        onClick={() => setOpen((o: boolean) => !o)}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: TEXT.mid, fontFamily: HF }}>{title}</span>
+        {open ? <ChevronUp className="w-4 h-4 flex-shrink-0" style={{ color: TEXT.dim }} /> : <ChevronDown className="w-4 h-4 flex-shrink-0" style={{ color: TEXT.dim }} />}
+      </button>
+      {open && (
+        <div style={{ padding: "0 18px 14px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          {Object.entries(data).map(([key, val]) => (
+            <div key={key} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", gap: 14 }}>
+              <span style={{ fontSize: 12, color: TEXT.lo, fontFamily: HF }}>{key}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: val < 0 ? HC.red : TEXT.hi, fontFamily: HF, flexShrink: 0 }}>{fmt(val, currency)}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Main Overlay ───────────────────────────────────────────────────────────── */
 export default function BusinessCardOverlay({
   businessId,
   onClose,
+  onAskChat,
 }: {
   businessId: number;
   onClose: () => void;
+  onAskChat: (bizName: string) => void;
 }) {
-  const [, navigate] = useLocation();
   const { data, isLoading } = useGetBusinessCard(
     { id: businessId },
     { query: { queryKey: getGetBusinessCardQueryKey({ id: businessId }) } },
   );
+
+  const { data: bizDetail } = useGetBusiness(businessId, {
+    query: { enabled: !!businessId, queryKey: getGetBusinessQueryKey(businessId) },
+  });
 
   const biz = data?.business;
   const health = biz?.health ?? "green";
@@ -407,10 +707,14 @@ export default function BusinessCardOverlay({
     ? new Date(data.latestReport.date).toLocaleDateString("ru", { day: "numeric", month: "long", year: "numeric" })
     : null;
 
+  const analytics = (bizDetail?.analytics as OvAnalytics | null | undefined) ?? null;
+  const currency = biz?.currency ?? "USD";
+  const bdr = analytics?.forms?.bdr;
+  const showFinancialVisuals = analytics?.stage === "operational" && bdr && bdrFind(bdr, /выручка/i) && bdrFind(bdr, /чистая прибыль/i);
+
   function handleAskChat() {
     if (!biz) return;
-    const msg = encodeURIComponent(`Расскажи подробнее о компании «${biz.name}»`);
-    navigate(`/chat?message=${msg}`);
+    onAskChat(biz.name);
   }
 
   return (
@@ -605,6 +909,58 @@ export default function BusinessCardOverlay({
                 <div className="glass" style={{ padding: "14px 18px" }}>
                   <SectionLabel>О компании</SectionLabel>
                   <p style={{ fontSize: 13, color: TEXT.mid, fontFamily: HF, lineHeight: 1.7 }}>{biz.description}</p>
+                </div>
+              )}
+
+              {/* ── Financial visuals: Waterfall + Margin Donut ── */}
+              {showFinancialVisuals && bdr && (
+                <div>
+                  <SectionLabel>Финансовый анализ</SectionLabel>
+                  <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "stretch" }}>
+                    <WaterfallBlock bdr={bdr} currency={currency} />
+                    {analytics?.planFact && analytics.planFact.length > 0 && (
+                      <MarginDonut bdr={bdr} planFact={analytics.planFact} currency={currency} />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Balance Change ── */}
+              {analytics?.stage === "operational" && analytics.balanceChange && (
+                <div>
+                  <BalanceChangeBlock bc={analytics.balanceChange} currency={currency} />
+                </div>
+              )}
+
+              {/* ── Investment Metrics ── */}
+              {analytics?.stage === "investment" && analytics.investmentData && (
+                <>
+                  <div>
+                    <SectionLabel>Инвестиционные метрики</SectionLabel>
+                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "stretch" }}>
+                      <RunwayBlock data={analytics.investmentData} currency={currency} />
+                      <BurnRateBlock data={analytics.investmentData} currency={currency} />
+                    </div>
+                  </div>
+                  <FundingChartBlock data={analytics.investmentData} currency={currency} />
+                </>
+              )}
+
+              {/* ── Financial Forms (BDR / ODDS / Balance) ── */}
+              {analytics?.forms && (
+                <div>
+                  <SectionLabel>Финансовые формы</SectionLabel>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {analytics.forms.bdr && Object.keys(analytics.forms.bdr).length > 0 && (
+                      <FormAccordion title="БДР — Бюджет доходов и расходов" data={analytics.forms.bdr} currency={currency} />
+                    )}
+                    {analytics.forms.odds && Object.keys(analytics.forms.odds).length > 0 && (
+                      <FormAccordion title="ОДДС — Движение денежных средств" data={analytics.forms.odds} currency={currency} />
+                    )}
+                    {analytics.forms.balance && Object.keys(analytics.forms.balance).length > 0 && (
+                      <FormAccordion title="Баланс" data={analytics.forms.balance} currency={currency} />
+                    )}
+                  </div>
                 </div>
               )}
 

@@ -245,6 +245,7 @@ export default function GlobeDashboard() {
   const [feedOpen, setFeedOpen] = useState(false);
   const [feedDismissed, setFeedDismissed] = useState(false);
   const [dockPanel, setDockPanel] = useState<DockPanel>(null);
+  const [chatPrefill, setChatPrefill] = useState<{ bizName: string; msg: string } | null>(null);
   const feedAutoOpenedRef = useRef(false);
   const lastPolygonHoverRef = useRef(0);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -336,6 +337,16 @@ export default function GlobeDashboard() {
       setFeedOpen(false);
       setFeedDismissed(true);
     }
+  }, []);
+
+  /* "Спросить о компании" from BusinessCardOverlay → dock chat with prefill */
+  const handleAskChat = useCallback((bizName: string) => {
+    setCardBusinessId(null);
+    setSelectedBusiness(null);
+    setFeedOpen(false);
+    setFeedDismissed(true);
+    setChatPrefill({ bizName, msg: `Расскажи подробнее о компании «${bizName}»` });
+    setDockPanel("chat");
   }, []);
 
   /* Feed toggle — closes dock */
@@ -718,7 +729,12 @@ export default function GlobeDashboard() {
 
         {/* ── Bottom dock ── */}
         {!selectedBusiness && (
-          <BottomDock activePanel={dockPanel} onPanelChange={handlePanelChange} />
+          <BottomDock
+            activePanel={dockPanel}
+            onPanelChange={handlePanelChange}
+            chatPrefill={chatPrefill}
+            onChatPrefillConsumed={() => setChatPrefill(null)}
+          />
         )}
 
         {/* ── Corner menu ── */}
@@ -739,6 +755,7 @@ export default function GlobeDashboard() {
           <BusinessCardOverlay
             businessId={cardBusinessId}
             onClose={() => { setCardBusinessId(null); }}
+            onAskChat={handleAskChat}
           />
         )}
       </div>
