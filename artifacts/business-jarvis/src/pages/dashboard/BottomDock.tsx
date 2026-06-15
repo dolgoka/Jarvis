@@ -160,7 +160,7 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3" style={{ scrollbarWidth: "none" }}>
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3" style={{ scrollbarWidth: "none", minHeight: 0 }}>
             {messages.length === 0 && !isPending && (
               <div className="flex flex-col items-center justify-center h-full gap-4">
                 <p className="text-[11px] font-mono text-center" style={{ color: "rgba(228,232,255,0.18)", fontFamily: HF }}>

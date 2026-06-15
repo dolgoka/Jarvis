@@ -132,7 +132,7 @@ export function ChatWidget() {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 scrollbar-thin" style={{ minHeight: 0 }}>
             {messages.length === 0 && !isPending && (
               <div className="flex items-center justify-center h-full">
                 <p className="text-white/20 text-xs font-mono text-center leading-relaxed">

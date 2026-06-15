@@ -70,7 +70,7 @@ export function NoteExpand({ note, onBack, onCreateTask }: NoteExpandProps) {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0">
       {/* ── Header ── */}
       <div className="flex items-center gap-2 px-3 pt-3 pb-2 border-b border-white/5 flex-shrink-0">
         <button
@@ -147,7 +147,7 @@ export function NoteExpand({ note, onBack, onCreateTask }: NoteExpandProps) {
       </div>
 
       {/* ── Result area ── */}
-      <div className="flex-1 overflow-y-auto px-3 pb-2" style={{ scrollbarWidth: "none", minHeight: 0 }}>
+      <div className="flex-1 overflow-y-auto px-3 pb-5" style={{ scrollbarWidth: "none", minHeight: 0 }}>
         {isExpanding && (
           <div className="flex items-center gap-2 py-4">
             <Loader2 className="w-4 h-4 animate-spin" style={{ color: ACCENT_NOTE }} />

@@ -344,7 +344,7 @@ export function NotesDock({ onClose, onCreateTask }: NotesDockProps) {
   const isEmpty    = notes.length === 0;
 
   return (
-    <div className="glass w-full mb-2 flex flex-col" style={{ maxHeight: 460 }}>
+    <div className="glass w-full mb-2 flex flex-col overflow-hidden" style={{ maxHeight: "min(460px, calc(100dvh - 96px))" }}>
       {/* ── Header ── */}
       <div className="flex items-center justify-between px-4 py-2.5 border-b border-white/5 flex-shrink-0">
         <div className="flex items-center gap-2">
