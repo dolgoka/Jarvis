@@ -179,7 +179,15 @@ ${directory}
 - Верни только валидный JSON, без markdown-обёртки.`;
 
   try {
-    const completion = await makeClient().chat.completions.create({
+    let client;
+    try {
+      client = makeClient();
+    } catch (err) {
+      console.error("[AI] tasks/draft: OpenAI key not configured:", err instanceof Error ? err.message : err);
+      res.status(503).json({ error: "Ключ OpenAI не настроен на сервере" });
+      return;
+    }
+    const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",
       messages: [
         { role: "system", content: systemPrompt },

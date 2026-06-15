@@ -198,7 +198,14 @@ router.post("/notes/expand", async (req, res): Promise<void> => {
     }
 
     const prompt = buildPrompt(mode, note.body, peopleRoles);
-    const client = makeClient();
+    let client;
+    try {
+      client = makeClient();
+    } catch (err) {
+      console.error("[AI] notes/expand: OpenAI key not configured:", err instanceof Error ? err.message : err);
+      res.status(503).json({ error: "Ключ OpenAI не настроен на сервере" });
+      return;
+    }
 
     const completion = await client.chat.completions.create({
       model: "gpt-4o-mini",

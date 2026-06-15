@@ -9,7 +9,7 @@
     "seed:tasks": "tsx ./src/seedTasks.ts",
     "seed:notes": "tsx ./src/seedNotes.ts",
     "seed:card": "tsx ./src/seedCard.ts",
-    "seed:all": "tsx ./src/seed.ts && tsx ./src/seedTasks.ts && tsx ./src/seedNotes.ts",
+    "seed:all": "tsx ./src/seed.ts && tsx ./src/seedTasks.ts && tsx ./src/seedNotes.ts && tsx ./src/seed-news.ts && tsx ./src/seedCard.ts",
     "seed:morning": "tsx ./src/seed-morning.ts",
     "seed:news": "tsx ./src/seed-news.ts",
     "typecheck": "tsc -p tsconfig.json --noEmit"

@@ -261,7 +261,14 @@ router.get("/ai/summary", async (req, res): Promise<void> => {
   const totalProfit = businessSummaries.reduce((s, b) => s + b.profit, 0);
   const totalOrders = businessSummaries.reduce((s, b) => s + b.orders, 0);
 
-  const client = makeClient();
+  let client;
+  try {
+    client = makeClient();
+  } catch (err) {
+    console.error("[AI] summary: OpenAI key not configured:", err instanceof Error ? err.message : err);
+    res.status(503).json({ error: "Ключ OpenAI не настроен на сервере" });
+    return;
+  }
   const prompt = `Ты — директор по разведке глобального холдинга. Проанализируй данные о результатах бизнесов за период: ${period}.
 
 Количество бизнесов: ${businessSummaries.length}. Выручка: $${totalRevenue.toLocaleString()}, Прибыль: $${totalProfit.toLocaleString()}, Заказы: ${totalOrders.toLocaleString()}
@@ -316,7 +323,14 @@ router.post("/ai/chat", async (req, res): Promise<void> => {
     .slice(-20)
     .map(m => ({ role: m.role, content: m.content }));
 
-  const client = makeClient();
+  let client;
+  try {
+    client = makeClient();
+  } catch (err) {
+    console.error("[AI] chat: OpenAI key not configured:", err instanceof Error ? err.message : err);
+    res.status(503).json({ error: "Ключ OpenAI не настроен на сервере" });
+    return;
+  }
   const completion = await client.chat.completions.create({
     model: "gpt-4o-mini",
     messages: [

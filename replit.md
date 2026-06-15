@@ -16,6 +16,7 @@ Global business intelligence command center — a real-time dashboard where an o
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Required env: `DATABASE_URL` — Postgres connection string
 - Required env: `AI_INTEGRATIONS_OPENAI_BASE_URL`, `AI_INTEGRATIONS_OPENAI_API_KEY` — for AI summaries (auto-provisioned via Replit AI Integrations)
+- **Railway**: добавить в Variables → `OPENAI_API_KEY` = `sk-...` (без него все AI-эндпоинты вернут 503)
 
 ## Stack
 
