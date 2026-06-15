@@ -30,6 +30,7 @@ interface Draft {
 
 interface TaskComposerProps {
   onClose: () => void;
+  prefillText?: string;
 }
 
 const PRIORITY_CFG: { value: Priority; label: string; color: string }[] = [
@@ -52,10 +53,10 @@ function formatAge(lastActivityAt: string): string {
   return `${Math.floor(hrs / 24)}д. назад`;
 }
 
-export function TaskComposer({ onClose }: TaskComposerProps) {
+export function TaskComposer({ onClose, prefillText }: TaskComposerProps) {
   const [tab, setTab]   = useState<Tab>("new");
   const [phase, setPhase] = useState<"input" | "draft">("input");
-  const [text, setText]   = useState("");
+  const [text, setText]   = useState(prefillText ?? "");
   const [draft, setDraft] = useState<Draft | null>(null);
   const [showAssigneePicker, setShowAssigneePicker] = useState(false);
   const [showWatcherPicker, setShowWatcherPicker]   = useState(false);

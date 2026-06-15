@@ -34,6 +34,7 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [voiceActive, setVoiceActive] = useState(false);
+  const [taskPrefill, setTaskPrefill] = useState<string | undefined>(undefined);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -105,12 +106,24 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
     } catch { setPlayingIdx(null); }
   }
 
+  // When NotesDock requests "В задачу": prefill task and switch panel
+  function handleCreateTask(text: string) {
+    setTaskPrefill(text);
+    onPanelChange("task");
+  }
+
   const chatOpen    = activePanel === "chat";
   const thoughtOpen = activePanel === "thought";
   const taskOpen    = activePanel === "task";
 
   function togglePanel(panel: DockPanel) {
-    onPanelChange(activePanel === panel ? null : panel);
+    if (activePanel === panel) {
+      onPanelChange(null);
+    } else {
+      // Reset prefill when opening task from dock pill directly
+      if (panel === "task") setTaskPrefill(undefined);
+      onPanelChange(panel);
+    }
   }
 
   return (
@@ -264,12 +277,18 @@ export function BottomDock({ activePanel, onPanelChange }: BottomDockProps) {
 
       {/* ── Task panel ── */}
       {taskOpen && (
-        <TaskComposer onClose={() => onPanelChange(null)} />
+        <TaskComposer
+          onClose={() => { onPanelChange(null); setTaskPrefill(undefined); }}
+          prefillText={taskPrefill}
+        />
       )}
 
       {/* ── Notes panel ── */}
       {thoughtOpen && (
-        <NotesDock onClose={() => onPanelChange(null)} />
+        <NotesDock
+          onClose={() => onPanelChange(null)}
+          onCreateTask={handleCreateTask}
+        />
       )}
 
       {/* ── Pill row ── */}

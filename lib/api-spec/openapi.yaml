@@ -649,6 +649,33 @@ paths:
         "404":
           description: Not found
 
+  /notes/expand:
+    post:
+      operationId: expandNote
+      tags: [notes]
+      summary: AI-expand a note in the chosen mode (develop/steps/risks/route/summarize)
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteExpandInput"
+      responses:
+        "200":
+          description: Expanded markdown text
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NoteExpandResult"
+        "404":
+          description: Note not found
+
   /voice/transcribe:
     post:
       operationId: voiceTranscribe
@@ -1232,6 +1259,21 @@ components:
       properties:
         deleted:
           type: integer
+
+    NoteExpandInput:
+      type: object
+      required: [mode]
+      properties:
+        mode:
+          type: string
+          enum: [develop, steps, risks, route, summarize]
+
+    NoteExpandResult:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
 
     VoiceTranscribeInput:
       type: object

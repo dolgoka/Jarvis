@@ -618,6 +618,22 @@ export const DeleteNoteResponse = zod.object({
 
 
 /**
+ * @summary AI-expand a note in the chosen mode (develop/steps/risks/route/summarize)
+ */
+export const ExpandNoteQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ExpandNoteBody = zod.object({
+  "mode": zod.enum(['develop', 'steps', 'risks', 'route', 'summarize'])
+})
+
+export const ExpandNoteResponse = zod.object({
+  "text": zod.string()
+})
+
+
+/**
  * @summary Transcribe base64-encoded audio to text (max ~60 s, Russian)
  */
 export const VoiceTranscribeBody = zod.object({

@@ -33,6 +33,7 @@ import type {
   DeleteNoteParams,
   DismissResult,
   Event,
+  ExpandNoteParams,
   FeedDraft,
   FeedDraftInput,
   FeedItem,
@@ -48,6 +49,8 @@ import type {
   NewsItem,
   Note,
   NoteDeleteResult,
+  NoteExpandInput,
+  NoteExpandResult,
   NoteInput,
   NotePatch,
   Person,
@@ -2447,6 +2450,85 @@ export const useDeleteNote = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getDeleteNoteMutationOptions(options));
+    }
+
+export const getExpandNoteUrl = (params: ExpandNoteParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/notes/expand?${stringifiedParams}` : `/api/notes/expand`
+}
+
+/**
+ * @summary AI-expand a note in the chosen mode (develop/steps/risks/route/summarize)
+ */
+export const expandNote = async (noteExpandInput: NoteExpandInput,
+    params: ExpandNoteParams, options?: RequestInit): Promise<NoteExpandResult> => {
+
+  return customFetch<NoteExpandResult>(getExpandNoteUrl(params),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      noteExpandInput,)
+  }
+);}
+
+
+
+
+export const getExpandNoteMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof expandNote>>, TError,{data: BodyType<NoteExpandInput>;params: ExpandNoteParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof expandNote>>, TError,{data: BodyType<NoteExpandInput>;params: ExpandNoteParams}, TContext> => {
+
+const mutationKey = ['expandNote'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof expandNote>>, {data: BodyType<NoteExpandInput>;params: ExpandNoteParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  expandNote(data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ExpandNoteMutationResult = NonNullable<Awaited<ReturnType<typeof expandNote>>>
+    export type ExpandNoteMutationBody = BodyType<NoteExpandInput>
+    export type ExpandNoteMutationError = ErrorType<void>
+
+    /**
+ * @summary AI-expand a note in the chosen mode (develop/steps/risks/route/summarize)
+ */
+export const useExpandNote = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof expandNote>>, TError,{data: BodyType<NoteExpandInput>;params: ExpandNoteParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof expandNote>>,
+        TError,
+        {data: BodyType<NoteExpandInput>;params: ExpandNoteParams},
+        TContext
+      > => {
+      return useMutation(getExpandNoteMutationOptions(options));
     }
 
 export const getVoiceTranscribeUrl = () => {

@@ -481,6 +481,25 @@ export interface NoteDeleteResult {
   deleted: number;
 }
 
+export type NoteExpandInputMode = typeof NoteExpandInputMode[keyof typeof NoteExpandInputMode];
+
+
+export const NoteExpandInputMode = {
+  develop: 'develop',
+  steps: 'steps',
+  risks: 'risks',
+  route: 'route',
+  summarize: 'summarize',
+} as const;
+
+export interface NoteExpandInput {
+  mode: NoteExpandInputMode;
+}
+
+export interface NoteExpandResult {
+  text: string;
+}
+
 export interface VoiceTranscribeInput {
   /** Base64-encoded audio data (max ~60 s) */
   audio: string;
@@ -607,6 +626,10 @@ id: number;
 };
 
 export type DeleteNoteParams = {
+id: number;
+};
+
+export type ExpandNoteParams = {
 id: number;
 };
 

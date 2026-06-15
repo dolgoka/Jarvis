@@ -7,9 +7,11 @@ import {
   type Note,
 } from "@workspace/api-client-react";
 import { VoiceCapture } from "@/components/ui/VoiceCapture";
+import { NoteExpand } from "./NoteExpand";
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 const ACCENT_NOTE = "rgba(149,165,245,0.9)";
+const GREEN = "rgba(62,217,160,0.9)";
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -25,21 +27,25 @@ function timeAgo(iso: string): string {
 
 interface NoteCardProps {
   note: Note;
-  onPin:    (id: number, val: boolean) => void;
-  onSave:   (id: number, body: string)  => void;
-  onDelete: (id: number) => void;
-  isUpdating: boolean;
-  isDeleting: boolean;
+  onPin:        (id: number, val: boolean) => void;
+  onSave:       (id: number, body: string)  => void;
+  onDelete:     (id: number) => void;
+  onExpand:     (id: number) => void;
+  onCreateTask: (text: string) => void;
+  isUpdating:   boolean;
+  isDeleting:   boolean;
 }
 
-function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: NoteCardProps) {
-  const [expanded,  setExpanded]  = useState(false);
-  const [editing,   setEditing]   = useState(false);
-  const [draft,     setDraft]     = useState(note.body);
+function NoteCard({
+  note, onPin, onSave, onDelete, onExpand, onCreateTask,
+  isUpdating, isDeleting,
+}: NoteCardProps) {
+  const [expanded,   setExpanded]   = useState(false);
+  const [editing,    setEditing]    = useState(false);
+  const [draft,      setDraft]      = useState(note.body);
   const [confirming, setConfirming] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // sync draft when note body changes externally
   useEffect(() => { setDraft(note.body); }, [note.body]);
 
   function startEdit() {
@@ -53,10 +59,7 @@ function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: Not
     }, 30);
   }
 
-  function cancelEdit() {
-    setDraft(note.body);
-    setEditing(false);
-  }
+  function cancelEdit() { setDraft(note.body); setEditing(false); }
 
   function commitEdit() {
     const trimmed = draft.trim();
@@ -64,12 +67,10 @@ function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: Not
     setEditing(false);
   }
 
-  function handleCardClick() {
-    if (!editing) setExpanded(e => !e);
-  }
+  function handleCardClick() { if (!editing) setExpanded(e => !e); }
 
   const isPinned = note.pinned;
-  const isVoice  = note.source === "voice";
+  const hasAi    = Boolean(note.aiSummary);
 
   return (
     <div
@@ -92,7 +93,7 @@ function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: Not
         onKeyDown={e => { if (e.key === "Enter" || e.key === " ") handleCardClick(); }}
         aria-expanded={expanded}
       >
-        {/* top row: pin badge + time + voice badge */}
+        {/* top row: badges + time */}
         <div className="flex items-center gap-1.5 mb-1.5">
           {isPinned && (
             <span
@@ -102,12 +103,21 @@ function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: Not
               <Pin className="w-2.5 h-2.5" /> Закреплено
             </span>
           )}
-          {isVoice && (
+          {note.source === "voice" && (
             <span
               className="text-[9px] font-mono uppercase tracking-widest rounded-full px-1.5 py-0.5"
               style={{ background: "rgba(0,212,255,0.08)", color: "rgba(0,212,255,0.5)" }}
             >
               🎙 голос
+            </span>
+          )}
+          {hasAi && (
+            <span
+              className="flex items-center gap-0.5 text-[9px] font-mono uppercase tracking-widest rounded-full px-1.5 py-0.5"
+              style={{ background: "rgba(149,165,245,0.08)", color: "rgba(149,165,245,0.6)" }}
+              title="Есть AI-разбор"
+            >
+              ✦ разбор
             </span>
           )}
           <span className="ml-auto text-[10px] font-mono" style={{ color: "rgba(228,232,255,0.25)" }}>
@@ -166,7 +176,7 @@ function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: Not
               </button>
               <button
                 onClick={cancelEdit}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] transition-all"
+                className="px-2.5 py-1 rounded-lg text-[11px] transition-all"
                 style={{ color: "rgba(228,232,255,0.3)", fontFamily: HF }}
               >
                 Отмена
@@ -196,21 +206,19 @@ function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: Not
             </>
           ) : (
             <>
-              {/* Stub: Разогнать */}
+              {/* Разогнать */}
               <button
-                title="TODO: Часть B — AI-разгон"
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] transition-all opacity-40 cursor-not-allowed"
-                style={{ color: "rgba(149,165,245,0.8)", fontFamily: HF }}
-                disabled
+                onClick={() => onExpand(note.id)}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] transition-all hover:opacity-80"
+                style={{ color: ACCENT_NOTE, fontFamily: HF }}
               >
                 <Sparkles className="w-3 h-3" /> Разогнать
               </button>
-              {/* Stub: В задачу */}
+              {/* В задачу */}
               <button
-                title="TODO: Часть B — в задачу"
-                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] transition-all opacity-40 cursor-not-allowed"
-                style={{ color: "rgba(62,217,160,0.8)", fontFamily: HF }}
-                disabled
+                onClick={() => onCreateTask(note.body)}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-[11px] transition-all hover:opacity-80"
+                style={{ color: GREEN, fontFamily: HF }}
               >
                 <ClipboardList className="w-3 h-3" /> В задачу
               </button>
@@ -223,7 +231,6 @@ function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: Not
                 className="p-1.5 rounded-lg transition-colors hover:bg-white/10"
                 style={{ color: "rgba(228,232,255,0.3)" }}
                 title="Редактировать"
-                aria-label="Редактировать мысль"
               >
                 <Pencil className="w-3.5 h-3.5" />
               </button>
@@ -234,7 +241,6 @@ function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: Not
                 className="p-1.5 rounded-lg transition-colors hover:bg-white/10 disabled:opacity-30"
                 style={{ color: isPinned ? "rgba(149,165,245,0.8)" : "rgba(228,232,255,0.3)" }}
                 title={isPinned ? "Открепить" : "Закрепить"}
-                aria-label={isPinned ? "Открепить мысль" : "Закрепить мысль"}
               >
                 {isPinned ? <PinOff className="w-3.5 h-3.5" /> : <Pin className="w-3.5 h-3.5" />}
               </button>
@@ -244,7 +250,6 @@ function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: Not
                 className="p-1.5 rounded-lg transition-colors hover:bg-red-500/10"
                 style={{ color: "rgba(248,113,113,0.45)" }}
                 title="Удалить"
-                aria-label="Удалить мысль"
               >
                 <Trash2 className="w-3.5 h-3.5" />
               </button>
@@ -259,13 +264,15 @@ function NoteCard({ note, onPin, onSave, onDelete, isUpdating, isDeleting }: Not
 // ─── NotesDock ────────────────────────────────────────────────────────────────
 
 interface NotesDockProps {
-  onClose: () => void;
+  onClose:      () => void;
+  onCreateTask: (text: string) => void;
 }
 
-export function NotesDock({ onClose }: NotesDockProps) {
-  const [inputText, setInputText]   = useState("");
+export function NotesDock({ onClose, onCreateTask }: NotesDockProps) {
+  const [inputText,   setInputText]   = useState("");
   const [voiceActive, setVoiceActive] = useState(false);
   const [voiceSource, setVoiceSource] = useState<"text" | "voice">("text");
+  const [expandNoteId, setExpandNoteId] = useState<number | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { data: notes = [], refetch } = useListNotes();
@@ -278,7 +285,6 @@ export function NotesDock({ onClose }: NotesDockProps) {
 
   const updatingIds = useRef<Set<number>>(new Set());
   const [updatingSet, setUpdatingSet] = useState<Set<number>>(new Set());
-
   const deletingIds = useRef<Set<number>>(new Set());
   const [deletingSet, setDeletingSet] = useState<Set<number>>(new Set());
 
@@ -334,7 +340,8 @@ export function NotesDock({ onClose }: NotesDockProps) {
     deleteNote({ params: { id } });
   }
 
-  const isEmpty = notes.length === 0;
+  const expandNote = notes.find(n => n.id === expandNoteId) ?? null;
+  const isEmpty    = notes.length === 0;
 
   return (
     <div className="glass w-full mb-2 flex flex-col" style={{ maxHeight: 460 }}>
@@ -343,86 +350,96 @@ export function NotesDock({ onClose }: NotesDockProps) {
         <div className="flex items-center gap-2">
           <Lightbulb className="w-3.5 h-3.5" style={{ color: ACCENT_NOTE }} />
           <span className="text-[11px] font-mono uppercase tracking-widest" style={{ color: "rgba(228,232,255,0.35)", fontFamily: HF }}>
-            Мысли
+            {expandNote ? "Мысли · Разгон" : "Мысли"}
           </span>
         </div>
         <button
-          onClick={onClose}
+          onClick={expandNote ? () => setExpandNoteId(null) : onClose}
           className="p-1 rounded transition-colors"
           style={{ color: "rgba(228,232,255,0.25)" }}
-          aria-label="Закрыть"
+          aria-label={expandNote ? "Назад" : "Закрыть"}
         >
           <X className="w-3.5 h-3.5" />
         </button>
       </div>
 
-      {/* ── Input ── */}
-      <div className="flex-shrink-0 px-3 pt-3 pb-0">
-        <textarea
-          ref={textareaRef}
-          value={inputText}
-          onChange={e => { setInputText(e.target.value); setVoiceSource("text"); }}
-          onKeyDown={e => { if (e.key === "Enter" && e.metaKey) handleSave(); }}
-          placeholder="Запишите мысль…"
-          rows={2}
-          className="w-full bg-transparent outline-none resize-none text-[13px] leading-relaxed"
-          style={{ color: "rgba(228,232,255,0.82)", fontFamily: HF }}
+      {/* ── Expand view ── */}
+      {expandNote ? (
+        <NoteExpand
+          note={expandNote}
+          onBack={() => setExpandNoteId(null)}
+          onCreateTask={(text) => { setExpandNoteId(null); onCreateTask(text); }}
         />
-        <div
-          className="flex items-center gap-2 py-2 border-t border-white/5"
-          style={{ background: "transparent" }}
-        >
-          <VoiceCapture
-            onText={handleVoiceText}
-            onActiveChange={setVoiceActive}
-            accentColor={ACCENT_NOTE}
-          />
-          {!voiceActive && <div className="flex-1" />}
-          {!voiceActive && (
-            <button
-              onClick={handleSave}
-              disabled={!inputText.trim() || isSaving}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold disabled:opacity-30 transition-all"
-              style={{
-                background: "rgba(149,165,245,0.12)",
-                border: "1px solid rgba(149,165,245,0.25)",
-                color: ACCENT_NOTE,
-                fontFamily: HF,
-              }}
-            >
-              {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-              ↑ Сохранить
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* ── Notes list ── */}
-      <div
-        className="flex-1 overflow-y-auto px-3 pb-3"
-        style={{ scrollbarWidth: "none", minHeight: 0 }}
-      >
-        {isEmpty ? (
-          <div className="flex flex-col items-center justify-center py-8 gap-2">
-            <Lightbulb className="w-8 h-8" style={{ color: "rgba(149,165,245,0.15)" }} aria-hidden />
-            <p className="text-[12px] text-center leading-relaxed" style={{ color: "rgba(228,232,255,0.22)", fontFamily: HF }}>
-              Свалите сюда любую мысль —<br />голосом или текстом. Потом разгоним.
-            </p>
-          </div>
-        ) : (
-          notes.map(note => (
-            <NoteCard
-              key={note.id}
-              note={note}
-              onPin={handlePin}
-              onSave={handleSaveEdit}
-              onDelete={handleDelete}
-              isUpdating={updatingSet.has(note.id)}
-              isDeleting={deletingSet.has(note.id)}
+      ) : (
+        <>
+          {/* ── Input ── */}
+          <div className="flex-shrink-0 px-3 pt-3 pb-0">
+            <textarea
+              ref={textareaRef}
+              value={inputText}
+              onChange={e => { setInputText(e.target.value); setVoiceSource("text"); }}
+              onKeyDown={e => { if (e.key === "Enter" && e.metaKey) handleSave(); }}
+              placeholder="Запишите мысль…"
+              rows={2}
+              className="w-full bg-transparent outline-none resize-none text-[13px] leading-relaxed"
+              style={{ color: "rgba(228,232,255,0.82)", fontFamily: HF }}
             />
-          ))
-        )}
-      </div>
+            <div className="flex items-center gap-2 py-2 border-t border-white/5">
+              <VoiceCapture
+                onText={handleVoiceText}
+                onActiveChange={setVoiceActive}
+                accentColor={ACCENT_NOTE}
+              />
+              {!voiceActive && <div className="flex-1" />}
+              {!voiceActive && (
+                <button
+                  onClick={handleSave}
+                  disabled={!inputText.trim() || isSaving}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold disabled:opacity-30 transition-all"
+                  style={{
+                    background: "rgba(149,165,245,0.12)",
+                    border: "1px solid rgba(149,165,245,0.25)",
+                    color: ACCENT_NOTE,
+                    fontFamily: HF,
+                  }}
+                >
+                  {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                  ↑ Сохранить
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* ── Notes list ── */}
+          <div
+            className="flex-1 overflow-y-auto px-3 pb-3"
+            style={{ scrollbarWidth: "none", minHeight: 0 }}
+          >
+            {isEmpty ? (
+              <div className="flex flex-col items-center justify-center py-8 gap-2">
+                <Lightbulb className="w-8 h-8" style={{ color: "rgba(149,165,245,0.15)" }} aria-hidden />
+                <p className="text-[12px] text-center leading-relaxed" style={{ color: "rgba(228,232,255,0.22)", fontFamily: HF }}>
+                  Свалите сюда любую мысль —<br />голосом или текстом. Потом разгоним.
+                </p>
+              </div>
+            ) : (
+              notes.map(note => (
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  onPin={handlePin}
+                  onSave={handleSaveEdit}
+                  onDelete={handleDelete}
+                  onExpand={id => setExpandNoteId(id)}
+                  onCreateTask={onCreateTask}
+                  isUpdating={updatingSet.has(note.id)}
+                  isDeleting={deletingSet.has(note.id)}
+                />
+              ))
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
