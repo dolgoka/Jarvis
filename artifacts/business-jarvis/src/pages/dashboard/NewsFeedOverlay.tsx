@@ -517,7 +517,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                           transition: "all 150ms",
                         }}
                       >
-                        В задачу <ArrowRight style={{ width: 12, height: 12 }} />
+                        Оформить <ArrowRight style={{ width: 12, height: 12 }} />
                       </button>
                     </div>
                   </div>

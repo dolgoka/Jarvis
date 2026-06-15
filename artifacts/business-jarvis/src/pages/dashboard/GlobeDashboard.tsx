@@ -18,7 +18,6 @@ import { BottomDock, type DockPanel } from "./BottomDock";
 import { CornerMenu } from "./CornerMenu";
 import BusinessCardOverlay from "./BusinessCardOverlay";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Link } from "wouter";
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 
@@ -241,6 +240,7 @@ export default function GlobeDashboard() {
   const [selectedBusiness, setSelectedBusiness] = useState<{ id: number; color: string } | null>(null);
   const [cardBusinessId, setCardBusinessId] = useState<number | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
+  const lastNodeClickRef = useRef<{ id: number; time: number } | null>(null);
   const [rankingOpen, setRankingOpen] = useState(false);
   const [feedOpen, setFeedOpen] = useState(false);
   const [feedDismissed, setFeedDismissed] = useState(false);
@@ -330,6 +330,20 @@ export default function GlobeDashboard() {
     businesses?.forEach(b => { if (b.health === "green" || b.health === "yellow" || b.health === "red") c[b.health]++; });
     return c;
   }, [businesses]);
+
+  /* Node click: single tap → SlideOver; double-tap (≤350 ms, same node) → card overlay */
+  const handleNodeClick = useCallback((id: number, color: string) => {
+    const now = Date.now();
+    const last = lastNodeClickRef.current;
+    if (last && last.id === id && now - last.time < 350) {
+      lastNodeClickRef.current = null;
+      setSelectedBusiness(null);
+      setCardBusinessId(id);
+    } else {
+      lastNodeClickRef.current = { id, time: now };
+      setSelectedBusiness({ id, color });
+    }
+  }, []);
 
   /* Dock panel change — enforce "one focus" */
   const handlePanelChange = useCallback((panel: DockPanel) => {
@@ -475,7 +489,7 @@ export default function GlobeDashboard() {
                 pointsData={markersData}
                 pointLat="lat" pointLng="lng" pointAltitude="alt" pointRadius="radius" pointColor="color"
                 pointResolution={12} pointsMerge={false}
-                onPointClick={(d: any) => setSelectedBusiness({ id: d.business.id, color: d.color })}
+                onPointClick={(d: any) => handleNodeClick(d.business.id, d.color)}
                 onPointHover={(d: any) => setHoveredPoint(d || null)}
                 ringsData={prefersReducedMotion ? [] : markersData.filter((d: any) => d.health !== "green")}
                 ringLat="lat" ringLng="lng"
@@ -490,7 +504,7 @@ export default function GlobeDashboard() {
                   const cls = d.health === "red" ? "beacon-red" : d.health === "yellow" ? "beacon-yellow" : "";
                   el.className = cls;
                   el.style.cssText = `width:9px;height:9px;border-radius:50%;background:${d.color};box-shadow:0 0 8px 4px ${d.color}cc,0 0 18px 7px ${d.color}44;border:1.5px solid rgba(255,255,255,0.7);cursor:pointer;pointer-events:auto;`;
-                  el.addEventListener("click", (e) => { e.stopPropagation(); setSelectedBusiness({ id: d.business.id, color: d.color }); });
+                  el.addEventListener("click", (e) => { e.stopPropagation(); handleNodeClick(d.business.id, d.color); });
                   return el;
                 }}
                 htmlAltitude={(d: any) => d.alt + 0.005}
@@ -761,7 +775,7 @@ export default function GlobeDashboard() {
         {cardBusinessId !== null && (
           <BusinessCardOverlay
             businessId={cardBusinessId}
-            onClose={() => { setCardBusinessId(null); }}
+            onClose={() => { setCardBusinessId(null); setSelectedBusiness(null); }}
             onAskChat={handleAskChat}
           />
         )}
