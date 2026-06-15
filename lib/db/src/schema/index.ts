@@ -6,3 +6,6 @@ export * from "./tasks";
 export * from "./feedItems";
 export * from "./feed";
 export * from "./notes";
+export * from "./metrics";
+export * from "./roadmap";
+export * from "./coverage";

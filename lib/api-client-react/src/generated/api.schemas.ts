@@ -510,6 +510,211 @@ export interface VoiceTranscribeResult {
   text: string;
 }
 
+export interface Partner {
+  label: string;
+  share: number;
+}
+
+export type NonFinancialScoreReputation = typeof NonFinancialScoreReputation[keyof typeof NonFinancialScoreReputation];
+
+
+export const NonFinancialScoreReputation = {
+  green: 'green',
+  yellow: 'yellow',
+  red: 'red',
+} as const;
+
+export type NonFinancialScoreConcept = typeof NonFinancialScoreConcept[keyof typeof NonFinancialScoreConcept];
+
+
+export const NonFinancialScoreConcept = {
+  green: 'green',
+  yellow: 'yellow',
+  red: 'red',
+} as const;
+
+export type NonFinancialScoreMedia = typeof NonFinancialScoreMedia[keyof typeof NonFinancialScoreMedia];
+
+
+export const NonFinancialScoreMedia = {
+  green: 'green',
+  yellow: 'yellow',
+  red: 'red',
+} as const;
+
+export interface NonFinancialScore {
+  reputation: NonFinancialScoreReputation;
+  concept: NonFinancialScoreConcept;
+  media: NonFinancialScoreMedia;
+  /** @nullable */
+  note?: string | null;
+}
+
+export type BusinessCardProfileStatus = typeof BusinessCardProfileStatus[keyof typeof BusinessCardProfileStatus];
+
+
+export const BusinessCardProfileStatus = {
+  active: 'active',
+  inactive: 'inactive',
+  pending: 'pending',
+} as const;
+
+export type BusinessCardProfileHealth = typeof BusinessCardProfileHealth[keyof typeof BusinessCardProfileHealth];
+
+
+export const BusinessCardProfileHealth = {
+  green: 'green',
+  yellow: 'yellow',
+  red: 'red',
+} as const;
+
+export type BusinessCardProfileStage = typeof BusinessCardProfileStage[keyof typeof BusinessCardProfileStage];
+
+
+export const BusinessCardProfileStage = {
+  investment: 'investment',
+  operational: 'operational',
+} as const;
+
+export type BusinessCardProfileCircle = typeof BusinessCardProfileCircle[keyof typeof BusinessCardProfileCircle];
+
+
+export const BusinessCardProfileCircle = {
+  internal: 'internal',
+  external_passive: 'external_passive',
+} as const;
+
+export interface BusinessCardProfile {
+  id: number;
+  name: string;
+  city: string;
+  country: string;
+  industry: string;
+  status: BusinessCardProfileStatus;
+  health: BusinessCardProfileHealth;
+  currency: string;
+  stage: BusinessCardProfileStage;
+  circle: BusinessCardProfileCircle;
+  managerId: number;
+  managerName: string;
+  managerEmail: string;
+  createdAt: string;
+  /** @nullable */
+  description?: string | null;
+  partners?: Partner[] | null;
+  nonFinancial?: NonFinancialScore | null;
+}
+
+export type MetricStageScope = typeof MetricStageScope[keyof typeof MetricStageScope];
+
+
+export const MetricStageScope = {
+  investment: 'investment',
+  operational: 'operational',
+} as const;
+
+export type MetricPeriod = typeof MetricPeriod[keyof typeof MetricPeriod];
+
+
+export const MetricPeriod = {
+  day: 'day',
+  week: 'week',
+  month: 'month',
+} as const;
+
+export interface Metric {
+  id: number;
+  businessId: number;
+  stageScope: MetricStageScope;
+  key: string;
+  label: string;
+  unit: string;
+  plan: number;
+  fact: number;
+  period: MetricPeriod;
+  ownerRole: string;
+  thresholdYellow: number;
+  thresholdRed: number;
+  date: string;
+  /** @nullable */
+  note?: string | null;
+}
+
+export type RoadmapItemStatus = typeof RoadmapItemStatus[keyof typeof RoadmapItemStatus];
+
+
+export const RoadmapItemStatus = {
+  done: 'done',
+  current: 'current',
+  planned: 'planned',
+} as const;
+
+export interface RoadmapItem {
+  id: number;
+  businessId: number;
+  title: string;
+  date: string;
+  status: RoadmapItemStatus;
+  /** @nullable */
+  note?: string | null;
+}
+
+export interface CoverageItem {
+  id: number;
+  businessId: number;
+  area: string;
+  closed: boolean;
+  ownerRole: string;
+  /** @nullable */
+  note?: string | null;
+}
+
+export type TopPersonCLevel = typeof TopPersonCLevel[keyof typeof TopPersonCLevel];
+
+
+export const TopPersonCLevel = {
+  gd: 'gd',
+  executive: 'executive',
+  financial: 'financial',
+  commercial: 'commercial',
+} as const;
+
+/**
+ * @nullable
+ */
+export type TopPersonEffectiveness = typeof TopPersonEffectiveness[keyof typeof TopPersonEffectiveness] | null;
+
+
+export const TopPersonEffectiveness = {
+  green: 'green',
+  yellow: 'yellow',
+  red: 'red',
+} as const;
+
+export interface TopPerson {
+  id: number;
+  name: string;
+  role: string;
+  cLevel: TopPersonCLevel;
+  /** @nullable */
+  effectiveness?: TopPersonEffectiveness;
+  /** @nullable */
+  email?: string | null;
+}
+
+export interface BusinessCard {
+  business: BusinessCardProfile;
+  metrics: Metric[];
+  roadmap: RoadmapItem[];
+  coverage: CoverageItem[];
+  topManagement: TopPerson[];
+  latestReport: Report | null;
+}
+
+export type GetBusinessCardParams = {
+id: number;
+};
+
 export type ListReportsParams = {
 businessId: number;
 period?: ListReportsPeriod;

@@ -75,6 +75,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/Business"
 
+  /businesses/card:
+    get:
+      operationId: getBusinessCard
+      tags: [businesses]
+      summary: Get full company card aggregate (plan-fact, roadmap, coverage, management, latest report)
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Full business card aggregate
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusinessCard"
+        "404":
+          description: Business not found
+
   /businesses/{id}:
     get:
       operationId: getBusiness
@@ -1290,3 +1311,193 @@ components:
         text:
           type: string
           description: Transcribed text
+
+    Partner:
+      type: object
+      required: [label, share]
+      properties:
+        label:
+          type: string
+        share:
+          type: number
+
+    NonFinancialScore:
+      type: object
+      required: [reputation, concept, media]
+      properties:
+        reputation:
+          type: string
+          enum: [green, yellow, red]
+        concept:
+          type: string
+          enum: [green, yellow, red]
+        media:
+          type: string
+          enum: [green, yellow, red]
+        note:
+          type: ["string", "null"]
+
+    BusinessCardProfile:
+      type: object
+      required: [id, name, city, country, industry, status, health, currency, stage, circle, managerId, managerName, managerEmail, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        city:
+          type: string
+        country:
+          type: string
+        industry:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, pending]
+        health:
+          type: string
+          enum: [green, yellow, red]
+        currency:
+          type: string
+        stage:
+          type: string
+          enum: [investment, operational]
+        circle:
+          type: string
+          enum: [internal, external_passive]
+        managerId:
+          type: integer
+        managerName:
+          type: string
+        managerEmail:
+          type: string
+        createdAt:
+          type: string
+        description:
+          type: ["string", "null"]
+        partners:
+          oneOf:
+            - type: array
+              items:
+                $ref: "#/components/schemas/Partner"
+            - type: "null"
+        nonFinancial:
+          oneOf:
+            - $ref: "#/components/schemas/NonFinancialScore"
+            - type: "null"
+
+    Metric:
+      type: object
+      required: [id, businessId, stageScope, key, label, unit, plan, fact, period, ownerRole, thresholdYellow, thresholdRed, date]
+      properties:
+        id:
+          type: integer
+        businessId:
+          type: integer
+        stageScope:
+          type: string
+          enum: [investment, operational]
+        key:
+          type: string
+        label:
+          type: string
+        unit:
+          type: string
+        plan:
+          type: number
+        fact:
+          type: number
+        period:
+          type: string
+          enum: [day, week, month]
+        ownerRole:
+          type: string
+        thresholdYellow:
+          type: number
+        thresholdRed:
+          type: number
+        date:
+          type: string
+        note:
+          type: ["string", "null"]
+
+    RoadmapItem:
+      type: object
+      required: [id, businessId, title, date, status]
+      properties:
+        id:
+          type: integer
+        businessId:
+          type: integer
+        title:
+          type: string
+        date:
+          type: string
+        status:
+          type: string
+          enum: [done, current, planned]
+        note:
+          type: ["string", "null"]
+
+    CoverageItem:
+      type: object
+      required: [id, businessId, area, closed, ownerRole]
+      properties:
+        id:
+          type: integer
+        businessId:
+          type: integer
+        area:
+          type: string
+        closed:
+          type: boolean
+        ownerRole:
+          type: string
+        note:
+          type: ["string", "null"]
+
+    TopPerson:
+      type: object
+      required: [id, name, role, cLevel]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        role:
+          type: string
+        cLevel:
+          type: string
+          enum: [gd, executive, financial, commercial]
+        effectiveness:
+          type: ["string", "null"]
+          enum: [green, yellow, red, null]
+        email:
+          type: ["string", "null"]
+
+    BusinessCard:
+      type: object
+      required: [business, metrics, roadmap, coverage, topManagement, latestReport]
+      properties:
+        business:
+          $ref: "#/components/schemas/BusinessCardProfile"
+        metrics:
+          type: array
+          items:
+            $ref: "#/components/schemas/Metric"
+        roadmap:
+          type: array
+          items:
+            $ref: "#/components/schemas/RoadmapItem"
+        coverage:
+          type: array
+          items:
+            $ref: "#/components/schemas/CoverageItem"
+        topManagement:
+          type: array
+          items:
+            $ref: "#/components/schemas/TopPerson"
+        latestReport:
+          oneOf:
+            - $ref: "#/components/schemas/Report"
+            - type: "null"

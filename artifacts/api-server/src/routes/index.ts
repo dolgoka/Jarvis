@@ -12,10 +12,12 @@ import tasksRouter from "./tasks";
 import feedRouter from "./feed";
 import feedNewsRouter from "./feedNews";
 import notesRouter from "./notes";
+import businessCardRouter from "./businessCard";
 
 const router: IRouter = Router();
 
 router.use(healthRouter);
+router.use(businessCardRouter);
 router.use(businessesRouter);
 router.use(reportsRouter);
 router.use(dashboardRouter);

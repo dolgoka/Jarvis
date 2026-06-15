@@ -25,6 +25,7 @@ import type {
   AiChatReply,
   AiSummary,
   Business,
+  BusinessCard,
   BusinessInput,
   BusinessMetric,
   BusinessUpdate,
@@ -39,6 +40,7 @@ import type {
   FeedItem,
   FetchLatestReportParams,
   GetAiSummaryParams,
+  GetBusinessCardParams,
   GetDashboardStatsParams,
   GetFeedParams,
   GetTopBusinessesParams,
@@ -304,6 +306,90 @@ export const useCreateBusiness = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getCreateBusinessMutationOptions(options));
     }
+
+export const getGetBusinessCardUrl = (params: GetBusinessCardParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/businesses/card?${stringifiedParams}` : `/api/businesses/card`
+}
+
+/**
+ * @summary Get full company card aggregate (plan-fact, roadmap, coverage, management, latest report)
+ */
+export const getBusinessCard = async (params: GetBusinessCardParams, options?: RequestInit): Promise<BusinessCard> => {
+
+  return customFetch<BusinessCard>(getGetBusinessCardUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBusinessCardQueryKey = (params?: GetBusinessCardParams,) => {
+    return [
+    `/api/businesses/card`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetBusinessCardQueryOptions = <TData = Awaited<ReturnType<typeof getBusinessCard>>, TError = ErrorType<void>>(params: GetBusinessCardParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBusinessCard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBusinessCardQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBusinessCard>>> = ({ signal }) => getBusinessCard(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBusinessCard>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetBusinessCardQueryResult = NonNullable<Awaited<ReturnType<typeof getBusinessCard>>>
+export type GetBusinessCardQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get full company card aggregate (plan-fact, roadmap, coverage, management, latest report)
+ */
+
+export function useGetBusinessCard<TData = Awaited<ReturnType<typeof getBusinessCard>>, TError = ErrorType<void>>(
+ params: GetBusinessCardParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getBusinessCard>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetBusinessCardQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getGetBusinessUrl = (id: number,) => {
 

@@ -58,6 +58,94 @@ export const CreateBusinessBody = zod.object({
 
 
 /**
+ * @summary Get full company card aggregate (plan-fact, roadmap, coverage, management, latest report)
+ */
+export const GetBusinessCardQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetBusinessCardResponse = zod.object({
+  "business": zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "city": zod.string(),
+  "country": zod.string(),
+  "industry": zod.string(),
+  "status": zod.enum(['active', 'inactive', 'pending']),
+  "health": zod.enum(['green', 'yellow', 'red']),
+  "currency": zod.string(),
+  "stage": zod.enum(['investment', 'operational']),
+  "circle": zod.enum(['internal', 'external_passive']),
+  "managerId": zod.number(),
+  "managerName": zod.string(),
+  "managerEmail": zod.string(),
+  "createdAt": zod.string(),
+  "description": zod.string().nullish(),
+  "partners": zod.union([zod.array(zod.object({
+  "label": zod.string(),
+  "share": zod.number()
+})),zod.null()]).optional(),
+  "nonFinancial": zod.union([zod.object({
+  "reputation": zod.enum(['green', 'yellow', 'red']),
+  "concept": zod.enum(['green', 'yellow', 'red']),
+  "media": zod.enum(['green', 'yellow', 'red']),
+  "note": zod.string().nullish()
+}),zod.null()]).optional()
+}),
+  "metrics": zod.array(zod.object({
+  "id": zod.number(),
+  "businessId": zod.number(),
+  "stageScope": zod.enum(['investment', 'operational']),
+  "key": zod.string(),
+  "label": zod.string(),
+  "unit": zod.string(),
+  "plan": zod.number(),
+  "fact": zod.number(),
+  "period": zod.enum(['day', 'week', 'month']),
+  "ownerRole": zod.string(),
+  "thresholdYellow": zod.number(),
+  "thresholdRed": zod.number(),
+  "date": zod.string(),
+  "note": zod.string().nullish()
+})),
+  "roadmap": zod.array(zod.object({
+  "id": zod.number(),
+  "businessId": zod.number(),
+  "title": zod.string(),
+  "date": zod.string(),
+  "status": zod.enum(['done', 'current', 'planned']),
+  "note": zod.string().nullish()
+})),
+  "coverage": zod.array(zod.object({
+  "id": zod.number(),
+  "businessId": zod.number(),
+  "area": zod.string(),
+  "closed": zod.boolean(),
+  "ownerRole": zod.string(),
+  "note": zod.string().nullish()
+})),
+  "topManagement": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "cLevel": zod.enum(['gd', 'executive', 'financial', 'commercial']),
+  "effectiveness": zod.union([zod.literal('green'),zod.literal('yellow'),zod.literal('red'),zod.literal(null)]).nullish(),
+  "email": zod.string().nullish()
+})),
+  "latestReport": zod.union([zod.object({
+  "id": zod.number(),
+  "businessId": zod.number(),
+  "period": zod.enum(['day', 'week', 'month']),
+  "revenue": zod.number(),
+  "orders": zod.number(),
+  "profit": zod.number(),
+  "date": zod.string(),
+  "notes": zod.string().nullish()
+}),zod.null()])
+})
+
+
+/**
  * @summary Get business by ID
  */
 export const GetBusinessParams = zod.object({
