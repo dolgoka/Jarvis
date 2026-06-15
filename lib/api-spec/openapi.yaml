@@ -24,6 +24,8 @@ tags:
     description: Event feed
   - name: feed
     description: Morning feed items
+  - name: voice
+    description: Voice transcription
 
 paths:
   /healthz:
@@ -565,6 +567,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/DismissResult"
 
+  /voice/transcribe:
+    post:
+      operationId: voiceTranscribe
+      tags: [voice]
+      summary: Transcribe base64-encoded audio to text (max ~60 s, Russian)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VoiceTranscribeInput"
+      responses:
+        "200":
+          description: Transcription result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VoiceTranscribeResult"
+
   /feed/draft-task:
     post:
       operationId: feedDraftTask
@@ -1078,3 +1099,19 @@ components:
           type: ["integer", "null"]
         businessName:
           type: ["string", "null"]
+
+    VoiceTranscribeInput:
+      type: object
+      required: [audio]
+      properties:
+        audio:
+          type: string
+          description: Base64-encoded audio data (max ~60 s)
+
+    VoiceTranscribeResult:
+      type: object
+      required: [text]
+      properties:
+        text:
+          type: string
+          description: Transcribed text

@@ -435,6 +435,16 @@ export interface FeedDraft {
   businessName?: string | null;
 }
 
+export interface VoiceTranscribeInput {
+  /** Base64-encoded audio data (max ~60 s) */
+  audio: string;
+}
+
+export interface VoiceTranscribeResult {
+  /** Transcribed text */
+  text: string;
+}
+
 export type ListReportsParams = {
 businessId: number;
 period?: ListReportsPeriod;

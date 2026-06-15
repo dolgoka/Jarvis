@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
-import { X, Mic, Loader2, Check, Plus, ChevronDown, RotateCcw, CheckCircle2 } from "lucide-react";
+import { X, Loader2, Check, Plus, ChevronDown, RotateCcw, CheckCircle2 } from "lucide-react";
+import { VoiceCapture } from "@/components/ui/VoiceCapture";
 import {
   useDraftTask, useCreateTask, useListPeople, useListTasks,
   useAcceptTask, useReturnTask,
@@ -58,6 +59,7 @@ export function TaskComposer({ onClose }: TaskComposerProps) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [showAssigneePicker, setShowAssigneePicker] = useState(false);
   const [showWatcherPicker, setShowWatcherPicker]   = useState(false);
+  const [voiceActive, setVoiceActive] = useState(false);
   const [pickerSearch, setPickerSearch] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -423,30 +425,32 @@ export function TaskComposer({ onClose }: TaskComposerProps) {
           className="flex items-center gap-2 px-3 py-2.5 border-t border-white/5 flex-shrink-0"
           style={{ background: "rgba(0,0,0,0.15)" }}
         >
-          <button
-            disabled
-            className="flex-shrink-0 p-1.5 rounded opacity-20"
-            style={{ color: "rgba(0,212,255,0.6)" }}
-            title="Голос — Шаг 5"
-          >
-            <Mic className="w-4 h-4" />
-          </button>
-          <div className="flex-1" />
-          <button
-            onClick={handleDraft}
-            disabled={!text.trim() || isDrafting}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-30 transition-all"
-            style={{
-              background: ACCENT + "18",
-              border: `1px solid ${ACCENT}40`,
-              color: ACCENT,
-              fontFamily: HF,
-              fontSize: 13,
+          <VoiceCapture
+            onText={t => {
+              setText(prev => prev ? prev + " " + t : t);
+              textareaRef.current?.focus();
             }}
-          >
-            {isDrafting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Оформить
-          </button>
+            onActiveChange={setVoiceActive}
+            accentColor="rgba(0,212,255,0.6)"
+          />
+          {!voiceActive && <div className="flex-1" />}
+          {!voiceActive && (
+            <button
+              onClick={handleDraft}
+              disabled={!text.trim() || isDrafting}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-semibold disabled:opacity-30 transition-all"
+              style={{
+                background: ACCENT + "18",
+                border: `1px solid ${ACCENT}40`,
+                color: ACCENT,
+                fontFamily: HF,
+                fontSize: 13,
+              }}
+            >
+              {isDrafting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+              Оформить
+            </button>
+          )}
         </div>
       </div>
     );

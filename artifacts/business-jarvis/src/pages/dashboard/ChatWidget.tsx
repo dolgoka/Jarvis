@@ -1,41 +1,21 @@
-import { useRef, useState, useEffect, useCallback } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useAiChat } from "@workspace/api-client-react";
-import { MessageSquare, Send, X, ChevronUp, Loader2, Mic, MicOff, Volume2, Square } from "lucide-react";
+import { MessageSquare, Send, X, ChevronUp, Loader2, Volume2, Square } from "lucide-react";
 import { AiAnswer } from "@/components/ui/AiAnswer";
+import { VoiceCapture } from "@/components/ui/VoiceCapture";
 
 interface Message {
   role: "user" | "assistant";
   text: string;
 }
 
-function getMimeType(): string {
-  const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
-  for (const t of types) {
-    if (MediaRecorder.isTypeSupported(t)) return t;
-  }
-  return "";
-}
-
-function mimeToExt(mime: string): string {
-  if (mime.includes("webm")) return "webm";
-  if (mime.includes("mp4")) return "mp4";
-  if (mime.includes("ogg")) return "ogg";
-  return "wav";
-}
-
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [voiceActive, setVoiceActive] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [recordSeconds, setRecordSeconds] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -59,8 +39,8 @@ export function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isPending]);
 
-  function handleSend(text?: string) {
-    const msg = (text ?? input).trim();
+  function handleSend() {
+    const msg = input.trim();
     if (!msg || isPending) return;
     setInput("");
     if (!open) setOpen(true);
@@ -83,57 +63,9 @@ export function ChatWidget() {
     setTimeout(() => inputRef.current?.focus(), 80);
   }
 
-  const stopRecording = useCallback(() => {
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    setRecordSeconds(0);
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-    }
-    setIsRecording(false);
-  }, []);
-
-  async function startRecording() {
-    if (isRecording) { stopRecording(); return; }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mime = getMimeType();
-      const mr = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
-      chunksRef.current = [];
-      mr.ondataavailable = e => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      mr.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop());
-        const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/mp4" });
-        if (blob.size < 1000) return;
-        setIsTranscribing(true);
-        try {
-          const buf = await blob.arrayBuffer();
-          const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
-          const resp = await fetch("/api/voice/transcribe", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ audio: b64 }),
-          });
-          const data = await resp.json();
-          if (data.text?.trim()) {
-            handleSend(data.text.trim());
-          }
-        } catch {
-          console.error("transcribe error");
-        } finally {
-          setIsTranscribing(false);
-        }
-      };
-      mr.start(200);
-      mediaRecorderRef.current = mr;
-      setIsRecording(true);
-      setRecordSeconds(0);
-      timerRef.current = setInterval(() => setRecordSeconds(s => {
-        if (s >= 59) { stopRecording(); return 0; }
-        return s + 1;
-      }), 1000);
-    } catch {
-      console.error("mic access denied");
-    }
+  function handleVoiceText(text: string) {
+    setInput(text);
+    setTimeout(() => inputRef.current?.focus(), 50);
   }
 
   async function playMessage(idx: number, text: string) {
@@ -152,11 +84,11 @@ export function ChatWidget() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      const data = await resp.json();
+      const data = await resp.json() as { audio?: string };
       if (!data.audio) { setPlayingIdx(null); return; }
       const binary = atob(data.audio);
       const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)!;
       const blob = new Blob([bytes], { type: "audio/mp3" });
       const url = URL.createObjectURL(blob);
       const audio = new Audio(url);
@@ -168,8 +100,6 @@ export function ChatWidget() {
       setPlayingIdx(null);
     }
   }
-
-  const micBusy = isTranscribing || isPending;
 
   return (
     <div
@@ -283,51 +213,40 @@ export function ChatWidget() {
             background: "rgba(4, 16, 32, 0.88)",
             backdropFilter: "blur(20px)",
             WebkitBackdropFilter: "blur(20px)",
-            border: `1px solid ${isRecording ? "rgba(239,68,68,0.5)" : "rgba(0,212,255,0.22)"}`,
-            boxShadow: isRecording ? "0 0 24px rgba(239,68,68,0.15)" : "0 0 24px rgba(0,212,255,0.1)",
+            border: `1px solid ${voiceActive ? "rgba(239,68,68,0.4)" : "rgba(0,212,255,0.22)"}`,
+            boxShadow: voiceActive ? "0 0 24px rgba(239,68,68,0.12)" : "0 0 24px rgba(0,212,255,0.1)",
             transition: "border-color 0.2s, box-shadow 0.2s",
           }}
         >
-          <button
-            onClick={startRecording}
-            disabled={micBusy}
-            className="flex-shrink-0 p-1 rounded transition-colors disabled:opacity-40"
-            style={{ color: isRecording ? "rgb(239,68,68)" : "rgba(0,212,255,0.5)" }}
-            title={isRecording ? `Остановить (${recordSeconds}с)` : "Голосовой ввод"}
-          >
-            {isTranscribing
-              ? <Loader2 className="w-4 h-4 animate-spin" />
-              : isRecording
-              ? <MicOff className="w-4 h-4 animate-pulse" />
-              : <Mic className="w-4 h-4" />
-            }
-          </button>
+          <VoiceCapture
+            onText={handleVoiceText}
+            onActiveChange={setVoiceActive}
+            accentColor="rgba(0,212,255,0.6)"
+          />
 
-          {isRecording ? (
-            <span className="flex-1 text-xs font-mono text-red-400/80 animate-pulse">
-              Запись… {recordSeconds}с
-            </span>
-          ) : (
+          {!voiceActive && (
             <input
               ref={inputRef}
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder={isTranscribing ? "Распознаю речь…" : "Спросить про компанию…"}
-              disabled={isPending || isTranscribing}
+              placeholder="Спросить про компанию…"
+              disabled={isPending}
               className="flex-1 bg-transparent text-white/80 text-sm font-mono placeholder:text-white/20 outline-none min-w-0"
             />
           )}
 
-          <button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isPending || isRecording}
-            className="flex-shrink-0 text-cyan-400 hover:text-cyan-300 disabled:text-white/15 transition-colors p-1"
-            aria-label="Отправить"
-          >
-            <Send className="w-4 h-4" />
-          </button>
+          {!voiceActive && (
+            <button
+              onClick={handleSend}
+              disabled={!input.trim() || isPending}
+              className="flex-shrink-0 text-cyan-400 hover:text-cyan-300 disabled:text-white/15 transition-colors p-1"
+              aria-label="Отправить"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          )}
         </div>
       ) : (
         <button

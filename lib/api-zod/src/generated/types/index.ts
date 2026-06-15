@@ -67,3 +67,5 @@ export * from './taskInput';
 export * from './taskInputPriority';
 export * from './taskPriority';
 export * from './taskStatus';
+export * from './voiceTranscribeInput';
+export * from './voiceTranscribeResult';

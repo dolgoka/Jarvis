@@ -54,7 +54,9 @@ import type {
   Task,
   TaskDraft,
   TaskDraftInput,
-  TaskInput
+  TaskInput,
+  VoiceTranscribeInput,
+  VoiceTranscribeResult
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -2135,6 +2137,77 @@ export const useDismissFeedItem = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDismissFeedItemMutationOptions(options));
+    }
+
+export const getVoiceTranscribeUrl = () => {
+
+
+
+
+  return `/api/voice/transcribe`
+}
+
+/**
+ * @summary Transcribe base64-encoded audio to text (max ~60 s, Russian)
+ */
+export const voiceTranscribe = async (voiceTranscribeInput: VoiceTranscribeInput, options?: RequestInit): Promise<VoiceTranscribeResult> => {
+
+  return customFetch<VoiceTranscribeResult>(getVoiceTranscribeUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      voiceTranscribeInput,)
+  }
+);}
+
+
+
+
+export const getVoiceTranscribeMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof voiceTranscribe>>, TError,{data: BodyType<VoiceTranscribeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof voiceTranscribe>>, TError,{data: BodyType<VoiceTranscribeInput>}, TContext> => {
+
+const mutationKey = ['voiceTranscribe'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof voiceTranscribe>>, {data: BodyType<VoiceTranscribeInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  voiceTranscribe(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VoiceTranscribeMutationResult = NonNullable<Awaited<ReturnType<typeof voiceTranscribe>>>
+    export type VoiceTranscribeMutationBody = BodyType<VoiceTranscribeInput>
+    export type VoiceTranscribeMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Transcribe base64-encoded audio to text (max ~60 s, Russian)
+ */
+export const useVoiceTranscribe = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof voiceTranscribe>>, TError,{data: BodyType<VoiceTranscribeInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof voiceTranscribe>>,
+        TError,
+        {data: BodyType<VoiceTranscribeInput>},
+        TContext
+      > => {
+      return useMutation(getVoiceTranscribeMutationOptions(options));
     }
 
 export const getFeedDraftTaskUrl = () => {

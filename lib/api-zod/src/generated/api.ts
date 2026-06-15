@@ -555,6 +555,18 @@ export const DismissFeedItemResponse = zod.object({
 
 
 /**
+ * @summary Transcribe base64-encoded audio to text (max ~60 s, Russian)
+ */
+export const VoiceTranscribeBody = zod.object({
+  "audio": zod.string().describe('Base64-encoded audio data (max ~60 s)')
+})
+
+export const VoiceTranscribeResponse = zod.object({
+  "text": zod.string().describe('Transcribed text')
+})
+
+
+/**
  * @summary Generate AI task draft from feed item context
  */
 export const FeedDraftTaskBody = zod.object({
