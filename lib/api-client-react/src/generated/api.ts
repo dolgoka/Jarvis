@@ -44,6 +44,7 @@ import type {
   GetDashboardStatsParams,
   GetFeedParams,
   GetTaskActivityParams,
+  GetTaskTreeParams,
   GetTopBusinessesParams,
   HealthStatus,
   ListReportsParams,
@@ -70,6 +71,7 @@ import type {
   TaskDraft,
   TaskDraftInput,
   TaskInput,
+  TaskTree,
   UpdateNoteParams,
   VoiceTranscribeInput,
   VoiceTranscribeResult
@@ -1472,6 +1474,90 @@ export const useDraftTask = <TError = ErrorType<unknown>,
       > => {
       return useMutation(getDraftTaskMutationOptions(options));
     }
+
+export const getGetTaskTreeUrl = (params: GetTaskTreeParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/tree?${stringifiedParams}` : `/api/tasks/tree`
+}
+
+/**
+ * @summary Get a task and all its direct subtasks (by parentId, depth-first)
+ */
+export const getTaskTree = async (params: GetTaskTreeParams, options?: RequestInit): Promise<TaskTree> => {
+
+  return customFetch<TaskTree>(getGetTaskTreeUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetTaskTreeQueryKey = (params?: GetTaskTreeParams,) => {
+    return [
+    `/api/tasks/tree`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetTaskTreeQueryOptions = <TData = Awaited<ReturnType<typeof getTaskTree>>, TError = ErrorType<void>>(params: GetTaskTreeParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTaskTree>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTaskTreeQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTaskTree>>> = ({ signal }) => getTaskTree(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTaskTree>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTaskTreeQueryResult = NonNullable<Awaited<ReturnType<typeof getTaskTree>>>
+export type GetTaskTreeQueryError = ErrorType<void>
+
+
+/**
+ * @summary Get a task and all its direct subtasks (by parentId, depth-first)
+ */
+
+export function useGetTaskTree<TData = Awaited<ReturnType<typeof getTaskTree>>, TError = ErrorType<void>>(
+ params: GetTaskTreeParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTaskTree>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTaskTreeQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getGetTaskActivityUrl = (params: GetTaskActivityParams,) => {
   const normalizedParams = new URLSearchParams();

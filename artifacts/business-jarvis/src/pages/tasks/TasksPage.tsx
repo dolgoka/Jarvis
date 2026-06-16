@@ -5,6 +5,7 @@ import {
   useListTasks, useListPeople, useCreateTask, useDraftTask,
   useAcceptTask, useReturnTask, useGetTaskActivity,
 } from "@workspace/api-client-react";
+import { LazyTaskDistributionTree } from "@/components/tasks/TaskDistributionTree";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { LiquidFilters } from "@/components/liquid/LiquidFilters";
 import {
@@ -347,6 +348,9 @@ function ReviewCard({
               </div>
             )}
           </div>
+
+          {/* Distribution tree */}
+          <LazyTaskDistributionTree taskId={task.id} createdBy="заказчик" />
 
           {/* Return comment textarea */}
           {returning && (

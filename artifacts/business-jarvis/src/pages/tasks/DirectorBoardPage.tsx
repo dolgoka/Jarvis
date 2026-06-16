@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { LazyTaskDistributionTree } from "@/components/tasks/TaskDistributionTree";
 import { toast } from "sonner";
 import {
   ArrowLeft, Loader2, ChevronDown, ChevronUp,
@@ -557,6 +558,9 @@ function TaskCard({
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: TEXT.dim, fontFamily: HF, marginBottom: 7 }}>Хроника</div>
               <Timeline taskId={task.id} />
             </div>
+
+            {/* Distribution tree (visible to director as creator) */}
+            <LazyTaskDistributionTree taskId={task.id} createdBy={task.createdBy ?? undefined} />
 
             {/* ── Action zone ── */}
 

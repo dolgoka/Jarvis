@@ -174,6 +174,55 @@ router.get("/tasks/activity", async (req, res): Promise<void> => {
   })));
 });
 
+router.get("/tasks/tree", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id || isNaN(id)) {
+    res.status(400).json({ error: "id query param required" });
+    return;
+  }
+
+  const [allTasks, allPeople] = await Promise.all([
+    db.select().from(tasksTable),
+    db.select().from(peopleTable),
+  ]);
+
+  const root = allTasks.find(t => t.id === id);
+  if (!root) {
+    res.status(404).json({ error: "Task not found" });
+    return;
+  }
+
+  function toNode(t: typeof tasksTable.$inferSelect) {
+    const assignee = allPeople.find(p => p.id === t.assigneeId);
+    return {
+      id: t.id,
+      title: t.title,
+      assigneeRole: assignee?.role ?? "—",
+      status: t.status,
+      acceptedAt: (t as any).acceptedAt ? (t as any).acceptedAt.toISOString() : null,
+      lastActivityAt: t.lastActivityAt.toISOString(),
+      parentId: t.parentId ?? null,
+    };
+  }
+
+  // Depth-first recursive collection of all subtasks
+  function collectChildren(parentId: number, depth = 0): ReturnType<typeof toNode>[] {
+    if (depth > 6) return [];
+    const direct = allTasks.filter(t => t.parentId === parentId);
+    const result: ReturnType<typeof toNode>[] = [];
+    for (const t of direct) {
+      result.push(toNode(t));
+      result.push(...collectChildren(t.id, depth + 1));
+    }
+    return result;
+  }
+
+  res.json({
+    root: toNode(root),
+    children: collectChildren(id),
+  });
+});
+
 router.post("/tasks/accept", async (req, res): Promise<void> => {
   const id = Number(req.query["id"]);
   if (!id || isNaN(id)) {

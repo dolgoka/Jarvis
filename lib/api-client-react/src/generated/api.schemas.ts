@@ -362,6 +362,35 @@ export interface TaskDraft {
   rationale: string;
 }
 
+export type TaskTreeNodeStatus = typeof TaskTreeNodeStatus[keyof typeof TaskTreeNodeStatus];
+
+
+export const TaskTreeNodeStatus = {
+  draft: 'draft',
+  sent: 'sent',
+  in_progress: 'in_progress',
+  review: 'review',
+  done: 'done',
+  returned: 'returned',
+} as const;
+
+export interface TaskTreeNode {
+  id: number;
+  title: string;
+  assigneeRole: string;
+  status: TaskTreeNodeStatus;
+  /** @nullable */
+  acceptedAt?: string | null;
+  lastActivityAt: string;
+  /** @nullable */
+  parentId?: number | null;
+}
+
+export interface TaskTree {
+  root: TaskTreeNode;
+  children: TaskTreeNode[];
+}
+
 export type FeedItemType = typeof FeedItemType[keyof typeof FeedItemType];
 
 
@@ -828,6 +857,10 @@ export const GetAiSummaryPeriod = {
   week: 'week',
   month: 'month',
 } as const;
+
+export type GetTaskTreeParams = {
+id: number;
+};
 
 export type GetTaskActivityParams = {
 id: number;

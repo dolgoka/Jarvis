@@ -380,6 +380,29 @@ paths:
               schema:
                 $ref: "#/components/schemas/TaskDraft"
 
+  /tasks/tree:
+    get:
+      operationId: getTaskTree
+      tags: [tasks]
+      summary: Get a task and all its direct subtasks (by parentId, depth-first)
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Task distribution tree
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskTree"
+        "400":
+          description: Bad request
+        "404":
+          description: Not found
+
   /tasks/activity:
     get:
       operationId: getTaskActivity
@@ -1256,6 +1279,37 @@ components:
           type: ["string", "null"]
         rationale:
           type: string
+
+    TaskTreeNode:
+      type: object
+      required: [id, title, assigneeRole, status, lastActivityAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        assigneeRole:
+          type: string
+        status:
+          type: string
+          enum: [draft, sent, in_progress, review, done, returned]
+        acceptedAt:
+          type: ["string", "null"]
+        lastActivityAt:
+          type: string
+        parentId:
+          type: ["integer", "null"]
+
+    TaskTree:
+      type: object
+      required: [root, children]
+      properties:
+        root:
+          $ref: "#/components/schemas/TaskTreeNode"
+        children:
+          type: array
+          items:
+            $ref: "#/components/schemas/TaskTreeNode"
 
     FeedItem:
       type: object

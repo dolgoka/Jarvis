@@ -423,6 +423,35 @@ export const DraftTaskResponse = zod.object({
 
 
 /**
+ * @summary Get a task and all its direct subtasks (by parentId, depth-first)
+ */
+export const GetTaskTreeQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GetTaskTreeResponse = zod.object({
+  "root": zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "assigneeRole": zod.string(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "acceptedAt": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "parentId": zod.number().nullish()
+}),
+  "children": zod.array(zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "assigneeRole": zod.string(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "acceptedAt": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "parentId": zod.number().nullish()
+}))
+})
+
+
+/**
  * @summary Get activity journal for a task
  */
 export const GetTaskActivityQueryParams = zod.object({
