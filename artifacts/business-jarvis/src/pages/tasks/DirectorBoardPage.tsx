@@ -49,6 +49,10 @@ const ACTIVITY_META: Record<string, { label: string; dot: string }> = {
   pinged:         { label: "Напоминание",       dot: "#f0b54a" },
 };
 
+function hoursAgo(isoStr: string): number {
+  return (Date.now() - new Date(isoStr).getTime()) / 3_600_000;
+}
+
 type Task = {
   id: number; title: string; body: string;
   assigneeId: number; assigneeName: string; assigneeRole: string;
@@ -488,6 +492,16 @@ function TaskCard({
                 {task.returnComment && (
                   <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 5, background: "rgba(240,98,90,0.14)", color: "#f0625a", border: "1px solid rgba(240,98,90,0.30)", letterSpacing: "0.05em", textTransform: "uppercase" }}>
                     возврат
+                  </span>
+                )}
+                {task.status === "sent" && hoursAgo(task.lastActivityAt) > 8 && (
+                  <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 5, background: "rgba(240,181,74,0.14)", color: "#f0b54a", border: "1px solid rgba(240,181,74,0.30)", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
+                    не принята
+                  </span>
+                )}
+                {(task.status === "in_progress" || task.status === "returned") && hoursAgo(task.lastActivityAt) > 24 && (
+                  <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 5, background: "rgba(240,98,90,0.14)", color: "#f0625a", border: "1px solid rgba(240,98,90,0.30)", letterSpacing: "0.05em", textTransform: "uppercase" as const }}>
+                    зависла
                   </span>
                 )}
               </div>

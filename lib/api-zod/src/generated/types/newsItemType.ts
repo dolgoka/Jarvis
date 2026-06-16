@@ -20,4 +20,6 @@ export const NewsItemType = {
   task_review: 'task_review',
   task_returned: 'task_returned',
   approval: 'approval',
+  task_stuck: 'task_stuck',
+  task_escalated: 'task_escalated',
 } as const;

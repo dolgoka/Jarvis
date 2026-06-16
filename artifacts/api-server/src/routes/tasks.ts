@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, inArray, and } from "drizzle-orm";
 import { db, peopleTable, tasksTable, taskActivityTable, newsItemsTable } from "@workspace/db";
 import OpenAI from "openai";
+import { resolveStuckEvents } from "../lib/taskMonitor";
 
 const router: IRouter = Router();
 
@@ -57,6 +58,10 @@ function taskToResponse(
   };
 }
 
+const RESOLVE_STUCK_TYPES = new Set<typeof taskActivityTable.$inferInsert["type"]>([
+  "accepted", "accepted_final", "submitted", "returned",
+]);
+
 async function writeActivity(params: {
   taskId: number;
   type: typeof taskActivityTable.$inferInsert["type"];
@@ -71,6 +76,9 @@ async function writeActivity(params: {
     text: params.text ?? null,
     at: params.at ?? new Date(),
   });
+  if (RESOLVE_STUCK_TYPES.has(params.type)) {
+    await resolveStuckEvents(params.taskId);
+  }
 }
 
 /**
@@ -746,4 +754,64 @@ router.post("/tasks", async (req, res): Promise<void> => {
   res.status(201).json(taskToResponse(task!, assignee, allPeople));
 });
 
+router.post("/tasks/ping", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id) { res.status(400).json({ error: "id required" }); return; }
+
+  const allPeople = await db.select().from(peopleTable);
+  const rows = await db.select().from(tasksTable).where(eq(tasksTable.id, id)).limit(1);
+  const task = rows[0];
+  if (!task) { res.status(404).json({ error: "Task not found" }); return; }
+  const assignee = allPeople.find(p => p.id === task.assigneeId);
+  if (!assignee) { res.status(404).json({ error: "Assignee not found" }); return; }
+
+  const now = new Date();
+  await writeActivity({ taskId: id, type: "pinged", actorRole: "owner", at: now });
+  await db.insert(newsItemsTable).values({
+    taskId: id,
+    type: "task_stuck",
+    severity: "attention",
+    title: "Напоминание владельца",
+    body: `Владелец ждёт результата по задаче «${task.title}»`,
+    recipientRole: "employee",
+    sourceLabel: "Владелец",
+    isUrgentFlag: false,
+    actionable: false,
+    status: "new",
+  });
+
+  res.json(taskToResponse(task, assignee, allPeople));
+});
+
+router.post("/tasks/escalate", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id) { res.status(400).json({ error: "id required" }); return; }
+
+  const allPeople = await db.select().from(peopleTable);
+  const rows = await db.select().from(tasksTable).where(eq(tasksTable.id, id)).limit(1);
+  const task = rows[0];
+  if (!task) { res.status(404).json({ error: "Task not found" }); return; }
+  const assignee = allPeople.find(p => p.id === task.assigneeId);
+  if (!assignee) { res.status(404).json({ error: "Assignee not found" }); return; }
+
+  const now = new Date();
+  await writeActivity({ taskId: id, type: "escalated", actorRole: "owner", at: now });
+  const recipient = task.createdByPersonId ? "director" : "owner";
+  await db.insert(newsItemsTable).values({
+    taskId: id,
+    type: "task_escalated",
+    severity: "critical",
+    title: "Ручная эскалация",
+    body: `Задача «${task.title}» эскалирована вручную — требует немедленного внимания`,
+    recipientRole: recipient,
+    sourceLabel: "Владелец",
+    isUrgentFlag: true,
+    actionable: true,
+    status: "new",
+  });
+
+  res.json(taskToResponse(task, assignee, allPeople));
+});
+
 export default router;
+

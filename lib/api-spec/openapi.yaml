@@ -593,6 +593,48 @@ paths:
         "404":
           description: Not found
 
+  /tasks/ping:
+    post:
+      operationId: pingTask
+      tags: [tasks]
+      summary: Send a reminder ping to the task assignee
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Pinged
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+
+  /tasks/escalate:
+    post:
+      operationId: escalateTask
+      tags: [tasks]
+      summary: Manually escalate a stuck task to the superior
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Escalated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+
   /tasks:
     get:
       operationId: listTasks
@@ -1452,7 +1494,7 @@ components:
           enum: [critical, attention, info]
         type:
           type: string
-          enum: [urgent, hr, corporate, task, external, task_new, task_accepted, task_review, task_returned, approval]
+          enum: [urgent, hr, corporate, task, external, task_new, task_accepted, task_review, task_returned, approval, task_stuck, task_escalated]
         title:
           type: string
         body:

@@ -476,6 +476,8 @@ export const NewsItemType = {
   task_review: 'task_review',
   task_returned: 'task_returned',
   approval: 'approval',
+  task_stuck: 'task_stuck',
+  task_escalated: 'task_escalated',
 } as const;
 
 export type NewsItemStatus = typeof NewsItemStatus[keyof typeof NewsItemStatus];
@@ -901,6 +903,14 @@ id: number;
 };
 
 export type ReturnTaskParams = {
+id: number;
+};
+
+export type PingTaskParams = {
+id: number;
+};
+
+export type EscalateTaskParams = {
 id: number;
 };
 

@@ -4,3 +4,4 @@
 - [Screenshot rule](screenshot-rule.md) — after every task: use ?role=client param, hard-refresh before screenshotting to avoid stale HMR
 - [Task activity journal](task-activity-journal.md) — task_activity table + writeActivity helper; seed guard blocks backfill if review tasks exist — use separate backfill script
 - [Director board chain](director-board-chain.md) — createdByPersonId integer on tasks drives director↔staff routing; feed recipientRole='director' for task_review/task_accepted events
+- [AI-PM monitor (C5)](aipm-monitor.md) — taskMonitor.ts: startMonitor() called after app.listen; resolveStuckEvents auto-called via writeActivity for movement types; news_type enum extended with task_stuck+task_escalated

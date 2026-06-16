@@ -34,6 +34,7 @@ import type {
   DashboardStats,
   DeleteNoteParams,
   DismissResult,
+  EscalateTaskParams,
   Event,
   ExpandNoteParams,
   FeedDraft,
@@ -59,6 +60,7 @@ import type {
   NoteInput,
   NotePatch,
   Person,
+  PingTaskParams,
   RejectApprovalInput,
   RejectApprovalParams,
   Report,
@@ -2184,6 +2186,160 @@ export const useReturnTask = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getReturnTaskMutationOptions(options));
+    }
+
+export const getPingTaskUrl = (params: PingTaskParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/ping?${stringifiedParams}` : `/api/tasks/ping`
+}
+
+/**
+ * @summary Send a reminder ping to the task assignee
+ */
+export const pingTask = async (params: PingTaskParams, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getPingTaskUrl(params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getPingTaskMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pingTask>>, TError,{params: PingTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof pingTask>>, TError,{params: PingTaskParams}, TContext> => {
+
+const mutationKey = ['pingTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof pingTask>>, {params: PingTaskParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  pingTask(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PingTaskMutationResult = NonNullable<Awaited<ReturnType<typeof pingTask>>>
+
+    export type PingTaskMutationError = ErrorType<void>
+
+    /**
+ * @summary Send a reminder ping to the task assignee
+ */
+export const usePingTask = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof pingTask>>, TError,{params: PingTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof pingTask>>,
+        TError,
+        {params: PingTaskParams},
+        TContext
+      > => {
+      return useMutation(getPingTaskMutationOptions(options));
+    }
+
+export const getEscalateTaskUrl = (params: EscalateTaskParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/escalate?${stringifiedParams}` : `/api/tasks/escalate`
+}
+
+/**
+ * @summary Manually escalate a stuck task to the superior
+ */
+export const escalateTask = async (params: EscalateTaskParams, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getEscalateTaskUrl(params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getEscalateTaskMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof escalateTask>>, TError,{params: EscalateTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof escalateTask>>, TError,{params: EscalateTaskParams}, TContext> => {
+
+const mutationKey = ['escalateTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof escalateTask>>, {params: EscalateTaskParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  escalateTask(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type EscalateTaskMutationResult = NonNullable<Awaited<ReturnType<typeof escalateTask>>>
+
+    export type EscalateTaskMutationError = ErrorType<void>
+
+    /**
+ * @summary Manually escalate a stuck task to the superior
+ */
+export const useEscalateTask = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof escalateTask>>, TError,{params: EscalateTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof escalateTask>>,
+        TError,
+        {params: EscalateTaskParams},
+        TContext
+      > => {
+      return useMutation(getEscalateTaskMutationOptions(options));
     }
 
 export const getListTasksUrl = (params?: ListTasksParams,) => {

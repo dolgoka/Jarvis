@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, ExternalLink, MessageSquare, ArrowRight, CheckCircle2, RotateCcw, Loader2, Stamp, XCircle } from "lucide-react";
-import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem, useAcceptTask, useReturnTask, useApproveTask, useRejectApproval } from "@workspace/api-client-react";
+import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem, useAcceptTask, useReturnTask, useApproveTask, useRejectApproval, usePingTask, useEscalateTask } from "@workspace/api-client-react";
 import type { NewsItem } from "@workspace/api-client-react";
 import { VoiceCapture } from "@/components/ui/VoiceCapture";
 import { useLocation } from "wouter";
@@ -47,11 +47,13 @@ const TYPE_LABEL: Record<string, string> = {
   task_new:      "Задача→",
   task_accepted: "Принята",
   task_review:   "Проверка",
-  task_returned: "Возврат",
-  approval:      "Согласование",
+  task_returned:  "Возврат",
+  approval:       "Согласование",
+  task_stuck:     "Зависла",
+  task_escalated: "Эскалация",
 };
 
-const TASK_TYPES = new Set(["task_new", "task_accepted", "task_review", "task_returned", "approval"]);
+const TASK_TYPES = new Set(["task_new", "task_accepted", "task_review", "task_returned", "approval", "task_stuck", "task_escalated"]);
 
 function timeAgo(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -127,6 +129,18 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
     },
   });
   const { mutate: rejectApproval, isPending: isRejecting } = useRejectApproval({
+    mutation: {
+      onSuccess: () => { onTaskSuccessRef.current(); },
+      onError: () => {},
+    },
+  });
+  const { mutate: pingTask, isPending: isPinging } = usePingTask({
+    mutation: {
+      onSuccess: () => { onTaskSuccessRef.current(); },
+      onError: () => {},
+    },
+  });
+  const { mutate: escalateTask, isPending: isEscalating } = useEscalateTask({
     mutation: {
       onSuccess: () => { onTaskSuccessRef.current(); },
       onError: () => {},
@@ -804,6 +818,96 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                       >
                         Открыть задачи →
                       </button>
+                    )}
+
+                    {/* task_stuck → Пнуть + Открыть + Эскалировать */}
+                    {item.type === "task_stuck" && (item as any).taskId != null && (
+                      <div style={{ display: "flex", gap: 7 }}>
+                        <button
+                          onClick={() => { pingTask({ params: { id: (item as any).taskId! } }); }}
+                          disabled={isPinging || isEscalating}
+                          style={{
+                            flex: 1, height: 36, borderRadius: 10,
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                            background: "rgba(240,181,74,0.12)", border: "1px solid rgba(240,181,74,0.35)",
+                            color: "#f0b54a", fontFamily: ff, fontSize: 11, fontWeight: 700,
+                            cursor: isPinging ? "not-allowed" : "pointer",
+                            opacity: isPinging ? 0.6 : 1, transition: "all 150ms",
+                          }}
+                        >
+                          {isPinging
+                            ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
+                            : "👊"
+                          }
+                          Пнуть
+                        </button>
+                        <button
+                          onClick={() => { onClose(); navigate("/tasks"); }}
+                          style={{
+                            flex: 1, height: 36, borderRadius: 10,
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                            background: "rgba(91,139,208,0.10)", border: "1px solid rgba(91,139,208,0.30)",
+                            color: "#5b8bd0", fontFamily: ff, fontSize: 11, fontWeight: 700,
+                            cursor: "pointer", transition: "all 150ms",
+                          }}
+                        >
+                          Открыть →
+                        </button>
+                        <button
+                          onClick={() => { escalateTask({ params: { id: (item as any).taskId! } }); }}
+                          disabled={isPinging || isEscalating}
+                          style={{
+                            flex: 1.3, height: 36, borderRadius: 10,
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                            background: "rgba(240,98,90,0.10)", border: "1px solid rgba(240,98,90,0.30)",
+                            color: "#f0625a", fontFamily: ff, fontSize: 11, fontWeight: 700,
+                            cursor: isEscalating ? "not-allowed" : "pointer",
+                            opacity: isEscalating ? 0.6 : 1, transition: "all 150ms",
+                          }}
+                        >
+                          {isEscalating
+                            ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
+                            : "⬆"
+                          }
+                          Эскалировать
+                        </button>
+                      </div>
+                    )}
+
+                    {/* task_escalated → Пнуть + Открыть задачу */}
+                    {item.type === "task_escalated" && (item as any).taskId != null && (
+                      <div style={{ display: "flex", gap: 7 }}>
+                        <button
+                          onClick={() => { pingTask({ params: { id: (item as any).taskId! } }); }}
+                          disabled={isPinging}
+                          style={{
+                            flex: 1, height: 36, borderRadius: 10,
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                            background: "rgba(240,181,74,0.12)", border: "1px solid rgba(240,181,74,0.35)",
+                            color: "#f0b54a", fontFamily: ff, fontSize: 11, fontWeight: 700,
+                            cursor: isPinging ? "not-allowed" : "pointer",
+                            opacity: isPinging ? 0.6 : 1, transition: "all 150ms",
+                          }}
+                        >
+                          {isPinging
+                            ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
+                            : "👊"
+                          }
+                          Пнуть
+                        </button>
+                        <button
+                          onClick={() => { onClose(); navigate("/tasks"); }}
+                          style={{
+                            flex: 1.5, height: 36, borderRadius: 10,
+                            display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                            background: "rgba(91,139,208,0.10)", border: "1px solid rgba(91,139,208,0.30)",
+                            color: "#5b8bd0", fontFamily: ff, fontSize: 12, fontWeight: 700,
+                            cursor: "pointer", transition: "all 150ms",
+                          }}
+                        >
+                          Открыть задачу →
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}
