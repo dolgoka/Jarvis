@@ -12,12 +12,17 @@ import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
 import {
   Loader2, X, MapPin, User, Mail,
   Zap, ChevronDown, Newspaper, Globe as GlobeIcon, ExternalLink,
+  PanelLeft, LayoutGrid, Brain, MessageSquare, ClipboardList,
+  Link as LinkIcon, RefreshCcw, Sun, Moon, Menu,
 } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import NewsFeedOverlay from "./NewsFeedOverlay";
 import { BottomDock, type DockPanel } from "./BottomDock";
 import { CornerMenu } from "./CornerMenu";
 import BusinessCardOverlay from "./BusinessCardOverlay";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuthContext } from "@/hooks/AuthContext";
+import { useTheme } from "@/hooks/ThemeContext";
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 
@@ -51,6 +56,15 @@ const STATUS_LABELS: Record<string, string> = {
   pending:  "На рассмотрении",
   inactive: "Неактивен",
 };
+
+const GLOBE_NAV = [
+  { href: "/",           label: "Глобальный центр", icon: GlobeIcon },
+  { href: "/businesses", label: "Сеть",             icon: LayoutGrid },
+  { href: "/tasks",      label: "Задачи",            icon: ClipboardList },
+  { href: "/ai-summary", label: "Сводка ИИ",         icon: Brain },
+  { href: "/chat",       label: "Чат с ИИ",          icon: MessageSquare },
+  { href: "/connect",    label: "Подключения",       icon: LinkIcon },
+] as const;
 
 /* ── BusinessSlideOver ─────────────────────────────────────────────────────── */
 
@@ -250,6 +264,23 @@ export default function GlobeDashboard() {
   const feedAutoOpenedRef = useRef(false);
   const lastPolygonHoverRef = useRef(0);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    try { return localStorage.getItem("jarvis-sidebar") !== "closed"; } catch { return true; }
+  });
+  const [location] = useLocation();
+  const { switchRole } = useAuthContext();
+  const { theme, toggleTheme } = useTheme();
+
+  const toggleSidebar = useCallback(() => {
+    setSidebarOpen(prev => {
+      const next = !prev;
+      try { localStorage.setItem("jarvis-sidebar", next ? "open" : "closed"); } catch {}
+      return next;
+    });
+  }, []);
+
+  const isNavActive = (href: string) =>
+    location === href || (href !== "/" && location.startsWith(href));
 
   const prefersReducedMotion = useMemo(() =>
     typeof window !== "undefined"
@@ -278,6 +309,15 @@ export default function GlobeDashboard() {
     window.addEventListener("resize", onResize);
     return () => { window.removeEventListener("resize", onResize); clearTimeout(timer); };
   }, []);
+
+  /* Re-measure globe when sidebar opens/closes (wait for CSS transition to finish) */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (containerRef.current)
+        setDimensions({ width: containerRef.current.clientWidth, height: containerRef.current.clientHeight });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [sidebarOpen]);
 
   /* Countries GeoJSON */
   useEffect(() => {
@@ -409,38 +449,191 @@ export default function GlobeDashboard() {
     </div>
   ), [dimensions.width, markersData]);
 
+  /* ── Sidebar inner content (shared between desktop + mobile) ── */
+  const SidebarContent = ({ onNav }: { onNav?: () => void }) => (
+    <>
+      <div
+        className="h-16 flex items-center justify-between px-5 flex-shrink-0"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
+      >
+        <div className="flex items-center gap-2.5">
+          <GlobeIcon className="w-5 h-5" style={{ color: "var(--jarvis-accent)" }} />
+          <span className="font-bold tracking-widest text-base" style={{ color: "var(--jarvis-text-primary)", fontFamily: HF }}>JARVIS</span>
+        </div>
+        <button
+          onClick={toggleSidebar}
+          className="flex items-center justify-center w-8 h-8 transition-colors"
+          style={{ borderRadius: 9, color: "rgba(228,232,255,0.3)", background: "transparent", border: "none", cursor: "pointer" }}
+          title="Скрыть панель"
+        >
+          <PanelLeft className="w-4 h-4" />
+        </button>
+      </div>
+      <nav className="flex-1 px-3 py-5 flex flex-col gap-0.5">
+        <div className="text-[10px] font-semibold uppercase tracking-widest mb-3 px-3"
+          style={{ color: "rgba(228,232,255,0.3)" }}>Навигация</div>
+        {GLOBE_NAV.map((item) => {
+          const active = isNavActive(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="flex items-center gap-3 px-3 font-medium text-sm min-h-[46px]"
+              style={{
+                borderRadius: 12,
+                textDecoration: "none",
+                color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.38)",
+                background: active ? "var(--jarvis-accent-12)" : "transparent",
+                transition: "background 150ms, color 150ms",
+                fontFamily: HF,
+              }}
+              onClick={onNav}
+            >
+              <item.icon className="w-4 h-4 flex-shrink-0"
+                style={{ color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.3)" }} />
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
+      <div className="p-3 flex flex-col gap-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+        <button
+          onClick={toggleTheme}
+          className="flex items-center gap-3 w-full px-3 text-sm min-h-[46px]"
+          style={{ borderRadius: 12, color: "rgba(228,232,255,0.25)", fontFamily: HF, background: "transparent", border: "none", cursor: "pointer" }}
+        >
+          {theme === "dark"
+            ? <Sun className="w-4 h-4 flex-shrink-0 opacity-40" />
+            : <Moon className="w-4 h-4 flex-shrink-0 opacity-40" />
+          }
+          {theme === "dark" ? "Светлая тема" : "Тёмная тема"}
+        </button>
+        <button
+          onClick={switchRole}
+          className="flex items-center gap-3 w-full px-3 text-sm min-h-[46px]"
+          style={{ borderRadius: 12, color: "rgba(228,232,255,0.25)", fontFamily: HF, background: "transparent", border: "none", cursor: "pointer" }}
+        >
+          <RefreshCcw className="w-4 h-4 flex-shrink-0 opacity-40" />
+          Сменить роль
+        </button>
+      </div>
+    </>
+  );
+
   return (
-    /* ── Full-screen container (replaces Shell on this page) ── */
+    /* ── Root: flex row — sidebar + globe area ── */
     <div
-      className="h-[100dvh] overflow-hidden relative"
+      className="flex h-[100dvh] overflow-hidden"
       style={{
         background: "var(--jarvis-bg-screen)",
         color: "rgba(228,232,255,0.9)",
         fontFamily: HF,
       }}
     >
-      {/* ── Mobile top bar ── */}
-      <div
-        className="md:hidden absolute top-0 left-0 right-0 z-10 h-12 flex items-center justify-between px-4 flex-shrink-0 pointer-events-none"
+      {/* ── Desktop sidebar (width transition → pushes content) ── */}
+      <aside
+        className="hidden md:flex flex-col flex-shrink-0 overflow-hidden"
         style={{
-          background: "rgba(4,8,20,0.60)",
-          backdropFilter: "blur(16px) saturate(140%)",
-          WebkitBackdropFilter: "blur(16px) saturate(140%)",
-          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          width: sidebarOpen ? 240 : 0,
+          transition: "width 280ms cubic-bezier(0.4,0,0.2,1)",
+          background: "var(--jarvis-nav-bg)",
+          backdropFilter: "blur(20px) saturate(160%)",
+          WebkitBackdropFilter: "blur(20px) saturate(160%)",
+          borderRight: sidebarOpen ? "1px solid var(--jarvis-nav-border)" : "none",
+          zIndex: 20,
         }}
       >
-        <div className="flex items-center gap-2 pointer-events-none">
-          <GlobeIcon className="w-4 h-4" style={{ color: "var(--jarvis-accent)" }} />
-          <span className="font-bold tracking-widest text-sm" style={{ color: "rgba(228,232,255,0.88)", fontFamily: HF }}>JARVIS</span>
+        {/* Fixed-width inner prevents content from reflowing during transition */}
+        <div style={{ width: 240, minWidth: 240, height: "100%", display: "flex", flexDirection: "column" }}>
+          <SidebarContent />
         </div>
-        <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#3ed9a0", fontFamily: HF }}>
-          <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#3ed9a0" }} />
-          LIVE
-        </div>
+      </aside>
+
+      {/* ── Mobile sidebar (overlay, translate transition) ── */}
+      <div className="md:hidden">
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 z-40"
+          style={{
+            background: "rgba(0,0,0,0.55)",
+            backdropFilter: "blur(4px)",
+            opacity: sidebarOpen ? 1 : 0,
+            pointerEvents: sidebarOpen ? "auto" : "none",
+            transition: "opacity 280ms ease",
+          }}
+          onClick={toggleSidebar}
+        />
+        {/* Drawer */}
+        <aside
+          className="fixed inset-y-0 left-0 z-50 w-60 flex flex-col overflow-hidden"
+          style={{
+            background: "var(--jarvis-nav-bg)",
+            backdropFilter: "blur(20px) saturate(160%)",
+            WebkitBackdropFilter: "blur(20px) saturate(160%)",
+            borderRight: "1px solid var(--jarvis-nav-border)",
+            transition: "transform 280ms cubic-bezier(0.4,0,0.2,1)",
+            transform: sidebarOpen ? "translateX(0)" : "translateX(-100%)",
+          }}
+        >
+          <SidebarContent onNav={toggleSidebar} />
+        </aside>
       </div>
 
-      {/* ── Main globe container ── */}
-      <div className="absolute inset-0" ref={containerRef}>
+      {/* ── Globe content area (flex-1, ref for dimension tracking) ── */}
+      <div className="relative flex-1 overflow-hidden" ref={containerRef}>
+
+        {/* ── Mobile top bar ── */}
+        <div
+          className="md:hidden absolute top-0 left-0 right-0 z-10 h-12 flex items-center justify-between px-3 flex-shrink-0"
+          style={{
+            background: "rgba(4,8,20,0.60)",
+            backdropFilter: "blur(16px) saturate(140%)",
+            WebkitBackdropFilter: "blur(16px) saturate(140%)",
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
+          }}
+        >
+          <button
+            onClick={toggleSidebar}
+            className="flex items-center justify-center w-9 h-9"
+            style={{ borderRadius: 10, color: "rgba(228,232,255,0.45)", background: "transparent", border: "none", cursor: "pointer" }}
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <GlobeIcon className="w-4 h-4" style={{ color: "var(--jarvis-accent)" }} />
+            <span className="font-bold tracking-widest text-sm" style={{ color: "rgba(228,232,255,0.88)", fontFamily: HF }}>JARVIS</span>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs font-semibold" style={{ color: "#3ed9a0", fontFamily: HF }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#3ed9a0" }} />
+            LIVE
+          </div>
+        </div>
+
+        {/* ── Desktop: sidebar toggle button (always visible at top-left of globe area) ── */}
+        <button
+          onClick={toggleSidebar}
+          className="hidden md:flex items-center justify-center absolute z-30"
+          style={{
+            top: 14, left: 14,
+            width: 34, height: 34, borderRadius: 9,
+            background: "rgba(8,14,28,0.72)",
+            backdropFilter: "blur(12px) saturate(120%)",
+            WebkitBackdropFilter: "blur(12px) saturate(120%)",
+            border: "1px solid rgba(255,255,255,0.10)",
+            color: "rgba(228,232,255,0.50)",
+            cursor: "pointer",
+            transition: "background 150ms, color 150ms",
+          }}
+          title={sidebarOpen ? "Скрыть панель" : "Показать панель"}
+        >
+          <PanelLeft
+            className="w-4 h-4"
+            style={{
+              transform: sidebarOpen ? "none" : "scaleX(-1)",
+              transition: "transform 280ms ease",
+            }}
+          />
+        </button>
 
         {/* Ambient glow blobs */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
