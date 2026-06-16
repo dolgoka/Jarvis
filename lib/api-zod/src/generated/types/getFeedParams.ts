@@ -5,9 +5,11 @@
  * Business Jarvis API specification
  * OpenAPI spec version: 0.1.0
  */
+import type { GetFeedRole } from './getFeedRole';
 import type { GetFeedSeverity } from './getFeedSeverity';
 
 export type GetFeedParams = {
 severity?: GetFeedSeverity;
 includeExternal?: boolean;
+role?: GetFeedRole;
 };

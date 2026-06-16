@@ -576,6 +576,12 @@ paths:
           required: false
           schema:
             type: boolean
+        - name: role
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [owner, director, employee]
       responses:
         "200":
           description: List of active news items
@@ -1279,7 +1285,7 @@ components:
           enum: [critical, attention, info]
         type:
           type: string
-          enum: [urgent, hr, corporate, task, external]
+          enum: [urgent, hr, corporate, task, external, task_new, task_accepted, task_review, task_returned]
         title:
           type: string
         body:
@@ -1301,6 +1307,10 @@ components:
           type: ["string", "null"]
         createdAt:
           type: string
+        taskId:
+          type: ["integer", "null"]
+        recipientRole:
+          type: ["string", "null"]
 
     FeedDraft:
       type: object

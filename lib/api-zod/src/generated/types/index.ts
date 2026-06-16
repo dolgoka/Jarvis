@@ -48,6 +48,7 @@ export * from './getBusinessCardParams';
 export * from './getDashboardStatsParams';
 export * from './getDashboardStatsPeriod';
 export * from './getFeedParams';
+export * from './getFeedRole';
 export * from './getFeedSeverity';
 export * from './getTaskActivityParams';
 export * from './getTopBusinessesParams';

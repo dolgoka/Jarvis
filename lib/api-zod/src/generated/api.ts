@@ -661,13 +661,14 @@ export const DismissEventResponse = zod.object({
  */
 export const GetFeedQueryParams = zod.object({
   "severity": zod.enum(['critical', 'attention', 'info']).optional(),
-  "includeExternal": zod.coerce.boolean().optional()
+  "includeExternal": zod.coerce.boolean().optional(),
+  "role": zod.enum(['owner', 'director', 'employee']).optional()
 })
 
 export const GetFeedResponseItem = zod.object({
   "id": zod.number(),
   "severity": zod.enum(['critical', 'attention', 'info']),
-  "type": zod.enum(['urgent', 'hr', 'corporate', 'task', 'external']),
+  "type": zod.enum(['urgent', 'hr', 'corporate', 'task', 'external', 'task_new', 'task_accepted', 'task_review', 'task_returned']),
   "title": zod.string(),
   "body": zod.string(),
   "businessId": zod.number().nullish(),
@@ -677,7 +678,9 @@ export const GetFeedResponseItem = zod.object({
   "actionable": zod.boolean(),
   "status": zod.enum(['new', 'snoozed', 'done']),
   "snoozedUntil": zod.string().nullish(),
-  "createdAt": zod.string()
+  "createdAt": zod.string(),
+  "taskId": zod.number().nullish(),
+  "recipientRole": zod.string().nullish()
 })
 export const GetFeedResponse = zod.array(GetFeedResponseItem)
 

@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
-import { eq, inArray } from "drizzle-orm";
-import { db, peopleTable, tasksTable, taskActivityTable } from "@workspace/db";
+import { eq, inArray, and } from "drizzle-orm";
+import { db, peopleTable, tasksTable, taskActivityTable, newsItemsTable } from "@workspace/db";
 import OpenAI from "openai";
 
 const router: IRouter = Router();
@@ -68,6 +68,47 @@ async function writeActivity(params: {
     actorRole: params.actorRole,
     text: params.text ?? null,
     at: params.at ?? new Date(),
+  });
+}
+
+/**
+ * Write a task-event news item with idempotency guard.
+ * Will not create a duplicate if a pending (status=new) item for the same
+ * taskId + type already exists.
+ */
+async function writeTaskFeedEvent(params: {
+  taskId: number;
+  type: "task_new" | "task_accepted" | "task_review" | "task_returned";
+  title: string;
+  body: string;
+  recipientRole: "owner" | "employee";
+  severity: "attention" | "info";
+}) {
+  const existing = await db
+    .select({ id: newsItemsTable.id })
+    .from(newsItemsTable)
+    .where(
+      and(
+        eq(newsItemsTable.taskId, params.taskId),
+        eq(newsItemsTable.type, params.type),
+        eq(newsItemsTable.status, "new"),
+      ),
+    )
+    .limit(1);
+
+  if (existing.length > 0) return;
+
+  await db.insert(newsItemsTable).values({
+    taskId:        params.taskId,
+    type:          params.type,
+    severity:      params.severity,
+    title:         params.title,
+    body:          params.body,
+    recipientRole: params.recipientRole,
+    sourceLabel:   "Задачи",
+    isUrgentFlag:  false,
+    actionable:    true,
+    status:        "new",
   });
 }
 
@@ -174,6 +215,16 @@ router.post("/tasks/return", async (req, res): Promise<void> => {
 
   await writeActivity({ taskId: id, type: "returned", actorRole: "owner", text: comment.trim(), at: now });
 
+  // Feed: task returned → notify assignee (employee inbox)
+  await writeTaskFeedEvent({
+    taskId:        id,
+    type:          "task_returned",
+    title:         "Задача возвращена на доработку",
+    body:          updated.title + (comment.trim() ? ` — ${comment.trim()}` : ""),
+    recipientRole: "employee",
+    severity:      "attention",
+  });
+
   const allPeople = await db.select().from(peopleTable);
   const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
   res.json(taskToResponse(updated, assignee, allPeople));
@@ -199,6 +250,16 @@ router.post("/tasks/start", async (req, res): Promise<void> => {
   }
 
   await writeActivity({ taskId: id, type: "accepted", actorRole: updated.createdBy ?? "owner", at: now });
+
+  // Feed: accepted into work → notify owner
+  await writeTaskFeedEvent({
+    taskId:        id,
+    type:          "task_accepted",
+    title:         "Задача принята в работу",
+    body:          updated.title,
+    recipientRole: "owner",
+    severity:      "info",
+  });
 
   const allPeople = await db.select().from(peopleTable);
   const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
@@ -238,6 +299,18 @@ router.post("/tasks/submit", async (req, res): Promise<void> => {
     actorRole: assignee?.role ?? "assignee",
     text: resultNote?.trim() ?? undefined,
     at: now,
+  });
+
+  // Feed: submitted for review → notify owner
+  const bodyParts = [updated.title];
+  if (resultNote?.trim()) bodyParts.push(resultNote.trim());
+  await writeTaskFeedEvent({
+    taskId:        id,
+    type:          "task_review",
+    title:         "Задача сдана на проверку",
+    body:          bodyParts.join(" — "),
+    recipientRole: "owner",
+    severity:      "attention",
   });
 
   res.json(taskToResponse(updated, assignee!, allPeople));
@@ -400,6 +473,16 @@ router.post("/tasks", async (req, res): Promise<void> => {
   }).returning();
 
   await writeActivity({ taskId: task!.id, type: "created", actorRole: "owner", at: now });
+
+  // Feed: task created/sent → notify assignee (employee inbox)
+  await writeTaskFeedEvent({
+    taskId:        task!.id,
+    type:          "task_new",
+    title:         "Новая задача",
+    body:          task!.title,
+    recipientRole: "employee",
+    severity:      "info",
+  });
 
   res.status(201).json(taskToResponse(task!, assignee, allPeople));
 });

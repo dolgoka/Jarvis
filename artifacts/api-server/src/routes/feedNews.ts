@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, or, lte, and, inArray } from "drizzle-orm";
+import { eq, or, lte, and, inArray, isNull } from "drizzle-orm";
 import { db, newsItemsTable, businessesTable } from "@workspace/db";
 
 const router: IRouter = Router();
@@ -15,6 +15,7 @@ function isActive(item: typeof newsItemsTable.$inferSelect): boolean {
 router.get("/feed", async (req, res): Promise<void> => {
   const severityFilter = req.query["severity"] as string | undefined;
   const includeExternal = req.query["includeExternal"] === "true";
+  const role = req.query["role"] as string | undefined;
 
   const rows = await db.select().from(newsItemsTable)
     .where(or(
@@ -34,6 +35,16 @@ router.get("/feed", async (req, res): Promise<void> => {
     items = items.filter(i => i.severity === severityFilter);
   }
 
+  // Role-based inbox filter:
+  // owner sees: items with no recipientRole (general news) + items addressed to 'owner'
+  // director/employee: only items addressed to their role (C2)
+  // no role param: all items (backward compat)
+  if (role === "owner") {
+    items = items.filter(i => i.recipientRole == null || i.recipientRole === "owner");
+  } else if (role === "director" || role === "employee") {
+    items = items.filter(i => i.recipientRole === role);
+  }
+
   items.sort((a, b) => {
     if (Number(b.isUrgentFlag) !== Number(a.isUrgentFlag)) return Number(b.isUrgentFlag) - Number(a.isUrgentFlag);
     const sd = (SEV_ORDER[a.severity] ?? 9) - (SEV_ORDER[b.severity] ?? 9);
@@ -50,19 +61,21 @@ router.get("/feed", async (req, res): Promise<void> => {
   const bizMap = new Map(businesses.map(b => [b.id, b.name]));
 
   res.json(items.map(item => ({
-    id:           item.id,
-    severity:     item.severity,
-    type:         item.type,
-    title:        item.title,
-    body:         item.body,
-    businessId:   item.businessId ?? null,
-    businessName: item.businessId != null ? (bizMap.get(item.businessId) ?? null) : null,
-    sourceLabel:  item.sourceLabel,
-    isUrgentFlag: item.isUrgentFlag,
-    actionable:   item.actionable,
-    status:       item.status,
-    snoozedUntil: item.snoozedUntil?.toISOString() ?? null,
-    createdAt:    item.createdAt.toISOString(),
+    id:            item.id,
+    severity:      item.severity,
+    type:          item.type,
+    title:         item.title,
+    body:          item.body,
+    businessId:    item.businessId ?? null,
+    businessName:  item.businessId != null ? (bizMap.get(item.businessId) ?? null) : null,
+    sourceLabel:   item.sourceLabel,
+    isUrgentFlag:  item.isUrgentFlag,
+    actionable:    item.actionable,
+    status:        item.status,
+    snoozedUntil:  item.snoozedUntil?.toISOString() ?? null,
+    createdAt:     item.createdAt.toISOString(),
+    taskId:        item.taskId ?? null,
+    recipientRole: item.recipientRole ?? null,
   })));
 });
 

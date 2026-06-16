@@ -1,8 +1,9 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, Mic, ExternalLink, MessageSquare, ArrowRight } from "lucide-react";
-import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem } from "@workspace/api-client-react";
+import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, ExternalLink, MessageSquare, ArrowRight, CheckCircle2, RotateCcw, Loader2 } from "lucide-react";
+import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem, useAcceptTask, useReturnTask } from "@workspace/api-client-react";
 import type { NewsItem } from "@workspace/api-client-react";
 import { VoiceCapture } from "@/components/ui/VoiceCapture";
+import { useLocation } from "wouter";
 
 /* ─── CSS animations (injected once) ─────────────────────────────────────── */
 const ANIM_ID = "nf-keyframes";
@@ -38,12 +39,18 @@ const SEV_LABEL: Record<string, string> = {
   info:      "Инфо",
 };
 const TYPE_LABEL: Record<string, string> = {
-  urgent:    "Срочно",
-  hr:        "HR",
-  corporate: "Корп",
-  task:      "Задача",
-  external:  "Внешн",
+  urgent:        "Срочно",
+  hr:            "HR",
+  corporate:     "Корп",
+  task:          "Задача",
+  external:      "Внешн",
+  task_new:      "Задача→",
+  task_accepted: "Принята",
+  task_review:   "Проверка",
+  task_returned: "Возврат",
 };
+
+const TASK_TYPES = new Set(["task_new", "task_accepted", "task_review", "task_returned"]);
 
 function timeAgo(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -63,6 +70,8 @@ interface Props {
 
 /* ─── Component ──────────────────────────────────────────────────────────── */
 export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask }: Props) {
+  const [, navigate] = useLocation();
+
   const prefersReducedMotion = useMemo(() =>
     typeof window !== "undefined"
       ? window.matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -85,6 +94,27 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
   const [replyText, setReplyText] = useState("");
   const replyRef = useRef<HTMLTextAreaElement>(null);
 
+  /* Task action zone */
+  const [returnOpen, setReturnOpen] = useState(false);
+  const [returnComment, setReturnComment] = useState("");
+  const [returnCommentError, setReturnCommentError] = useState("");
+
+  /* Stable callback slot — filled after handleSeen is defined below */
+  const onTaskSuccessRef = useRef<() => void>(() => {});
+
+  const { mutate: acceptTask, isPending: isAccepting } = useAcceptTask({
+    mutation: {
+      onSuccess: () => { onTaskSuccessRef.current(); },
+      onError: () => {},
+    },
+  });
+  const { mutate: returnTask, isPending: isReturning } = useReturnTask({
+    mutation: {
+      onSuccess: () => { onTaskSuccessRef.current(); },
+      onError: () => {},
+    },
+  });
+
   /* Touch swipe */
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
@@ -92,6 +122,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
   const { data, isLoading } = useGetFeed({
     severity:        severityFilter as any,
     includeExternal: includeExternal || undefined,
+    role:            "owner",
   });
   const { mutate: markSeen } = useMarkFeedSeen();
   const { mutate: snooze   } = useSnoozeFeedItem();
@@ -121,10 +152,13 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
   /* Remaining (not yet actioned) */
   const remaining = deck.filter(i => !localActions.has(i.id)).length;
 
-  /* Reset reply zone when card changes */
+  /* Reset reply + task action zone when card changes */
   useEffect(() => {
     setReplyOpen(false);
     setReplyText("");
+    setReturnOpen(false);
+    setReturnComment("");
+    setReturnCommentError("");
   }, [safeIdx]);
 
   /* Navigation */
@@ -143,6 +177,9 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
     setLocalActions(prev => new Map(prev).set(item.id, "done"));
     advanceDeck();
   }, [item, markSeen, advanceDeck]);
+
+  /* Keep task success callback ref in sync with the latest handleSeen */
+  onTaskSuccessRef.current = handleSeen;
 
   const handleSnooze = useCallback(() => {
     if (!item) return;
@@ -520,6 +557,121 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                         Оформить <ArrowRight style={{ width: 12, height: 12 }} />
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {/* ── Task action zone (only for task event cards) ── */}
+                {item && TASK_TYPES.has(item.type) && !isActioned && (
+                  <div style={{ marginBottom: 10 }}>
+
+                    {/* task_review → inline Принять / Вернуть */}
+                    {item.type === "task_review" && (item as any).taskId != null && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+
+                        {returnOpen && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            <textarea
+                              rows={2}
+                              value={returnComment}
+                              onChange={e => { setReturnComment(e.target.value); setReturnCommentError(""); }}
+                              placeholder="Причина возврата…"
+                              autoFocus
+                              style={{
+                                width: "100%", resize: "none", borderRadius: 10,
+                                padding: "8px 12px", fontSize: 12, fontFamily: ff,
+                                background: "rgba(255,255,255,0.04)",
+                                border: returnCommentError ? "1px solid rgba(240,98,90,0.5)" : "1px solid rgba(255,255,255,0.09)",
+                                color: "rgba(228,232,255,0.88)", outline: "none", caretColor: "#5b8bd0",
+                              }}
+                            />
+                            {returnCommentError && (
+                              <span style={{ fontSize: 11, color: "#f0625a", fontFamily: ff }}>{returnCommentError}</span>
+                            )}
+                          </div>
+                        )}
+
+                        <div style={{ display: "flex", gap: 8 }}>
+                          {returnOpen && (
+                            <button
+                              onClick={() => { setReturnOpen(false); setReturnComment(""); setReturnCommentError(""); }}
+                              disabled={isReturning}
+                              style={{
+                                flex: 1, height: 36, borderRadius: 10, cursor: "pointer",
+                                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)",
+                                fontSize: 11, fontWeight: 600, fontFamily: ff, color: "rgba(228,232,255,0.40)",
+                              }}
+                            >
+                              Отмена
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              if (!returnOpen) { setReturnOpen(true); return; }
+                              if (!returnComment.trim()) { setReturnCommentError("Укажите причину возврата"); return; }
+                              returnTask({ params: { id: (item as any).taskId! }, data: { comment: returnComment.trim() } });
+                            }}
+                            disabled={isAccepting || isReturning}
+                            style={{
+                              flex: returnOpen ? 2 : 1, height: 36, borderRadius: 10,
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                              background: returnOpen ? "rgba(240,98,90,0.14)" : "rgba(255,255,255,0.05)",
+                              border: returnOpen ? "1px solid rgba(240,98,90,0.40)" : "1px solid rgba(255,255,255,0.09)",
+                              color: returnOpen ? "#f0625a" : "rgba(228,232,255,0.50)",
+                              cursor: (isAccepting || isReturning) ? "not-allowed" : "pointer",
+                              fontSize: 11, fontWeight: 700, fontFamily: ff,
+                              opacity: isReturning ? 0.6 : 1, transition: "all 150ms",
+                            }}
+                          >
+                            {isReturning
+                              ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} />
+                              : <RotateCcw style={{ width: 13, height: 13 }} />
+                            }
+                            {returnOpen ? "Подтвердить" : "Вернуть"}
+                          </button>
+                          {!returnOpen && (
+                            <button
+                              onClick={() => { acceptTask({ params: { id: (item as any).taskId! } }); }}
+                              disabled={isAccepting || isReturning}
+                              style={{
+                                flex: 2, height: 36, borderRadius: 10,
+                                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                                background: "linear-gradient(135deg, #3ed9a0 0%, #2ab87f 100%)",
+                                border: "none", color: "#06111f",
+                                fontFamily: ff, fontSize: 12, fontWeight: 700,
+                                cursor: (isAccepting || isReturning) ? "not-allowed" : "pointer",
+                                boxShadow: "0 4px 14px rgba(62,217,160,0.28)",
+                                opacity: isAccepting ? 0.6 : 1, transition: "opacity 150ms",
+                              }}
+                            >
+                              {isAccepting
+                                ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} />
+                                : <CheckCircle2 style={{ width: 14, height: 14 }} />
+                              }
+                              Принять
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* task_new / task_accepted / task_returned → Открыть задачу */}
+                    {(item.type === "task_new" || item.type === "task_accepted" || item.type === "task_returned") && (item as any).taskId != null && (
+                      <button
+                        onClick={() => { onClose(); navigate(`/tasks`); }}
+                        style={{
+                          width: "100%", height: 36, borderRadius: 10,
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          background: "rgba(91,139,208,0.12)",
+                          border: "1px solid rgba(91,139,208,0.35)",
+                          color: "#5b8bd0", fontFamily: ff, fontSize: 12, fontWeight: 700,
+                          cursor: "pointer", transition: "all 150ms",
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(91,139,208,0.20)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "rgba(91,139,208,0.12)")}
+                      >
+                        Открыть задачи →
+                      </button>
+                    )}
                   </div>
                 )}
 

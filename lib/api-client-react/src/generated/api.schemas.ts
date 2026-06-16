@@ -422,6 +422,10 @@ export const NewsItemType = {
   corporate: 'corporate',
   task: 'task',
   external: 'external',
+  task_new: 'task_new',
+  task_accepted: 'task_accepted',
+  task_review: 'task_review',
+  task_returned: 'task_returned',
 } as const;
 
 export type NewsItemStatus = typeof NewsItemStatus[keyof typeof NewsItemStatus];
@@ -450,6 +454,10 @@ export interface NewsItem {
   /** @nullable */
   snoozedUntil?: string | null;
   createdAt: string;
+  /** @nullable */
+  taskId?: number | null;
+  /** @nullable */
+  recipientRole?: string | null;
 }
 
 export interface FeedDraft {
@@ -849,6 +857,7 @@ export const ListTasksBox = {
 export type GetFeedParams = {
 severity?: GetFeedSeverity;
 includeExternal?: boolean;
+role?: GetFeedRole;
 };
 
 export type GetFeedSeverity = typeof GetFeedSeverity[keyof typeof GetFeedSeverity];
@@ -858,6 +867,15 @@ export const GetFeedSeverity = {
   critical: 'critical',
   attention: 'attention',
   info: 'info',
+} as const;
+
+export type GetFeedRole = typeof GetFeedRole[keyof typeof GetFeedRole];
+
+
+export const GetFeedRole = {
+  owner: 'owner',
+  director: 'director',
+  employee: 'employee',
 } as const;
 
 export type MarkFeedSeenParams = {

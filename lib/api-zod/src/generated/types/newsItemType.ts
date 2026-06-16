@@ -15,4 +15,8 @@ export const NewsItemType = {
   corporate: 'corporate',
   task: 'task',
   external: 'external',
+  task_new: 'task_new',
+  task_accepted: 'task_accepted',
+  task_review: 'task_review',
+  task_returned: 'task_returned',
 } as const;

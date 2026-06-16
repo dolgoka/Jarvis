@@ -26,4 +26,8 @@ export interface NewsItem {
   /** @nullable */
   snoozedUntil?: string | null;
   createdAt: string;
+  /** @nullable */
+  taskId?: number | null;
+  /** @nullable */
+  recipientRole?: string | null;
 }
