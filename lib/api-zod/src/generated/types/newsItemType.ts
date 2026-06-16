@@ -19,4 +19,5 @@ export const NewsItemType = {
   task_accepted: 'task_accepted',
   task_review: 'task_review',
   task_returned: 'task_returned',
+  approval: 'approval',
 } as const;

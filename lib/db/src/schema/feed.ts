@@ -7,7 +7,7 @@ import { businessesTable } from "./businesses";
 import { tasksTable } from "./tasks";
 
 export const newsSeverityEnum = pgEnum("news_severity", ["critical", "attention", "info"]);
-export const newsTypeEnum     = pgEnum("news_type",     ["urgent", "hr", "corporate", "task", "external", "task_new", "task_accepted", "task_review", "task_returned"]);
+export const newsTypeEnum     = pgEnum("news_type",     ["urgent", "hr", "corporate", "task", "external", "task_new", "task_accepted", "task_review", "task_returned", "approval"]);
 export const newsStatusEnum   = pgEnum("news_status",   ["new", "snoozed", "done"]);
 
 export const newsItemsTable = pgTable("news_items", {

@@ -24,6 +24,7 @@ import type {
   AiChatInput,
   AiChatReply,
   AiSummary,
+  ApproveTaskParams,
   Business,
   BusinessCard,
   BusinessInput,
@@ -58,8 +59,11 @@ import type {
   NoteInput,
   NotePatch,
   Person,
+  RejectApprovalInput,
+  RejectApprovalParams,
   Report,
   ReportInput,
+  RequestApprovalInput,
   ReturnTaskInput,
   ReturnTaskParams,
   SnoozeFeedItemParams,
@@ -1473,6 +1477,233 @@ export const useDraftTask = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDraftTaskMutationOptions(options));
+    }
+
+export const getRequestApprovalUrl = () => {
+
+
+
+
+  return `/api/tasks/request-approval`
+}
+
+/**
+ * @summary Create an approval-request task and fire a feed event to the approver
+ */
+export const requestApproval = async (requestApprovalInput: RequestApprovalInput, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getRequestApprovalUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      requestApprovalInput,)
+  }
+);}
+
+
+
+
+export const getRequestApprovalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestApproval>>, TError,{data: BodyType<RequestApprovalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestApproval>>, TError,{data: BodyType<RequestApprovalInput>}, TContext> => {
+
+const mutationKey = ['requestApproval'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestApproval>>, {data: BodyType<RequestApprovalInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestApproval(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestApprovalMutationResult = NonNullable<Awaited<ReturnType<typeof requestApproval>>>
+    export type RequestApprovalMutationBody = BodyType<RequestApprovalInput>
+    export type RequestApprovalMutationError = ErrorType<void>
+
+    /**
+ * @summary Create an approval-request task and fire a feed event to the approver
+ */
+export const useRequestApproval = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestApproval>>, TError,{data: BodyType<RequestApprovalInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestApproval>>,
+        TError,
+        {data: BodyType<RequestApprovalInput>},
+        TContext
+      > => {
+      return useMutation(getRequestApprovalMutationOptions(options));
+    }
+
+export const getApproveTaskUrl = (params: ApproveTaskParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/approve?${stringifiedParams}` : `/api/tasks/approve`
+}
+
+/**
+ * @summary Approve an approval-request task (status → done)
+ */
+export const approveTask = async (params: ApproveTaskParams, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getApproveTaskUrl(params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getApproveTaskMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveTask>>, TError,{params: ApproveTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveTask>>, TError,{params: ApproveTaskParams}, TContext> => {
+
+const mutationKey = ['approveTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveTask>>, {params: ApproveTaskParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  approveTask(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApproveTaskMutationResult = NonNullable<Awaited<ReturnType<typeof approveTask>>>
+
+    export type ApproveTaskMutationError = ErrorType<void>
+
+    /**
+ * @summary Approve an approval-request task (status → done)
+ */
+export const useApproveTask = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveTask>>, TError,{params: ApproveTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof approveTask>>,
+        TError,
+        {params: ApproveTaskParams},
+        TContext
+      > => {
+      return useMutation(getApproveTaskMutationOptions(options));
+    }
+
+export const getRejectApprovalUrl = (params: RejectApprovalParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/reject?${stringifiedParams}` : `/api/tasks/reject`
+}
+
+/**
+ * @summary Reject an approval-request task (status → returned)
+ */
+export const rejectApproval = async (rejectApprovalInput: RejectApprovalInput,
+    params: RejectApprovalParams, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getRejectApprovalUrl(params),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      rejectApprovalInput,)
+  }
+);}
+
+
+
+
+export const getRejectApprovalMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectApproval>>, TError,{data: BodyType<RejectApprovalInput>;params: RejectApprovalParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof rejectApproval>>, TError,{data: BodyType<RejectApprovalInput>;params: RejectApprovalParams}, TContext> => {
+
+const mutationKey = ['rejectApproval'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof rejectApproval>>, {data: BodyType<RejectApprovalInput>;params: RejectApprovalParams}> = (props) => {
+          const {data,params} = props ?? {};
+
+          return  rejectApproval(data,params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RejectApprovalMutationResult = NonNullable<Awaited<ReturnType<typeof rejectApproval>>>
+    export type RejectApprovalMutationBody = BodyType<RejectApprovalInput>
+    export type RejectApprovalMutationError = ErrorType<void>
+
+    /**
+ * @summary Reject an approval-request task (status → returned)
+ */
+export const useRejectApproval = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof rejectApproval>>, TError,{data: BodyType<RejectApprovalInput>;params: RejectApprovalParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof rejectApproval>>,
+        TError,
+        {data: BodyType<RejectApprovalInput>;params: RejectApprovalParams},
+        TContext
+      > => {
+      return useMutation(getRejectApprovalMutationOptions(options));
     }
 
 export const getGetTaskTreeUrl = (params: GetTaskTreeParams,) => {

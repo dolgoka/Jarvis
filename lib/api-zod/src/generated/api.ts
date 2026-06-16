@@ -423,6 +423,96 @@ export const DraftTaskResponse = zod.object({
 
 
 /**
+ * @summary Create an approval-request task and fire a feed event to the approver
+ */
+export const RequestApprovalBody = zod.object({
+  "title": zod.string(),
+  "body": zod.string(),
+  "approverRole": zod.string(),
+  "requesterRole": zod.string(),
+  "blockedTaskId": zod.number().nullish()
+})
+
+
+/**
+ * @summary Approve an approval-request task (status → done)
+ */
+export const ApproveTaskQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const ApproveTaskResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "watchers": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
+  "email": zod.string().nullish()
+})),
+  "priority": zod.enum(['high', 'medium', 'low']),
+  "dueDate": zod.string().nullish(),
+  "businessId": zod.number().nullish(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "createdBy": zod.string().optional(),
+  "createdByPersonId": zod.number().nullish(),
+  "parentId": zod.number().nullish(),
+  "returnComment": zod.string().nullish(),
+  "resultNote": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Reject an approval-request task (status → returned)
+ */
+export const RejectApprovalQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RejectApprovalBody = zod.object({
+  "comment": zod.string()
+})
+
+export const RejectApprovalResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "watchers": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
+  "email": zod.string().nullish()
+})),
+  "priority": zod.enum(['high', 'medium', 'low']),
+  "dueDate": zod.string().nullish(),
+  "businessId": zod.number().nullish(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "createdBy": zod.string().optional(),
+  "createdByPersonId": zod.number().nullish(),
+  "parentId": zod.number().nullish(),
+  "returnComment": zod.string().nullish(),
+  "resultNote": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary Get a task and all its direct subtasks (by parentId, depth-first)
  */
 export const GetTaskTreeQueryParams = zod.object({
@@ -712,7 +802,7 @@ export const GetFeedQueryParams = zod.object({
 export const GetFeedResponseItem = zod.object({
   "id": zod.number(),
   "severity": zod.enum(['critical', 'attention', 'info']),
-  "type": zod.enum(['urgent', 'hr', 'corporate', 'task', 'external', 'task_new', 'task_accepted', 'task_review', 'task_returned']),
+  "type": zod.enum(['urgent', 'hr', 'corporate', 'task', 'external', 'task_new', 'task_accepted', 'task_review', 'task_returned', 'approval']),
   "title": zod.string(),
   "body": zod.string(),
   "businessId": zod.number().nullish(),

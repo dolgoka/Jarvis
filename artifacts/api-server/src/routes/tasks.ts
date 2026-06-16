@@ -395,6 +395,175 @@ router.post("/tasks/submit", async (req, res): Promise<void> => {
   res.json(taskToResponse(updated, assignee!, allPeople));
 });
 
+router.post("/tasks/request-approval", async (req, res): Promise<void> => {
+  const { title, body, approverRole, requesterRole, blockedTaskId } = req.body as {
+    title?: string;
+    body?: string;
+    approverRole?: string;
+    requesterRole?: string;
+    blockedTaskId?: number | null;
+  };
+
+  if (!title?.trim() || !approverRole?.trim() || !requesterRole?.trim()) {
+    res.status(400).json({ error: "title, approverRole and requesterRole are required" });
+    return;
+  }
+
+  const allPeople = await db.select().from(peopleTable);
+  // Find a real person to use as assignee: match role name, or fall back to assistant
+  const approverPerson =
+    allPeople.find(p => p.role === approverRole) ??
+    allPeople.find(p => p.isAssistant) ??
+    allPeople[0];
+
+  if (!approverPerson) {
+    res.status(503).json({ error: "No people in DB — run seed:tasks first" });
+    return;
+  }
+
+  const now = new Date();
+  const [approval] = await db.insert(tasksTable).values({
+    title: title.trim(),
+    body: (body ?? "").trim(),
+    assigneeId: approverPerson.id,
+    kind: "approval",
+    approverRole: approverRole.trim(),
+    status: "sent",
+    priority: "high",
+    watchers: [],
+    createdBy: requesterRole.trim(),
+    lastActivityAt: now,
+    createdAt: now,
+  }).returning();
+
+  await writeActivity({ taskId: approval!.id, type: "created", actorRole: requesterRole.trim(), at: now });
+
+  // Optionally mark blocked task
+  if (blockedTaskId) {
+    await db.update(tasksTable)
+      .set({ blockedByApprovalId: approval!.id })
+      .where(eq(tasksTable.id, blockedTaskId));
+  }
+
+  // Feed event for approver — recipientRole maps role → feed recipient
+  const feedRecipient: "owner" | "director" | "employee" =
+    approverRole === "owner" ? "owner"
+    : approverRole.toLowerCase().includes("директор") || approverRole.toLowerCase().includes("director") ? "director"
+    : "owner";
+
+  await db.insert(newsItemsTable).values({
+    taskId:        approval!.id,
+    type:          "approval",
+    severity:      "attention",
+    title:         "На согласование",
+    body:          `${requesterRole} запрашивает согласование: ${title.trim()}`,
+    recipientRole: feedRecipient,
+    sourceLabel:   "Согласование",
+    isUrgentFlag:  false,
+    actionable:    true,
+    status:        "new",
+  });
+
+  res.status(201).json(taskToResponse(approval!, approverPerson, allPeople));
+});
+
+router.post("/tasks/approve", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id || isNaN(id)) {
+    res.status(400).json({ error: "id query param required" });
+    return;
+  }
+
+  const now = new Date();
+  const [updated] = await db
+    .update(tasksTable)
+    .set({ status: "done", lastActivityAt: now })
+    .where(eq(tasksTable.id, id))
+    .returning();
+
+  if (!updated) { res.status(404).json({ error: "Task not found" }); return; }
+
+  await writeActivity({ taskId: id, type: "accepted_final", actorRole: updated.approverRole ?? "owner", at: now });
+
+  // Unblock any tasks that were blocked waiting for this approval
+  await db.update(tasksTable)
+    .set({ blockedByApprovalId: null })
+    .where(eq(tasksTable.blockedByApprovalId, id));
+
+  // Notify requester ("согласовано")
+  const requesterRole = updated.createdBy;
+  const feedRecipient: "owner" | "director" | "employee" =
+    requesterRole === "owner" ? "owner"
+    : requesterRole.toLowerCase().includes("директор") ? "director"
+    : "employee";
+
+  await db.insert(newsItemsTable).values({
+    taskId:        id,
+    type:          "task_accepted",
+    severity:      "info",
+    title:         "Согласовано ✓",
+    body:          `«${updated.title}» — одобрено`,
+    recipientRole: feedRecipient,
+    sourceLabel:   "Согласование",
+    isUrgentFlag:  false,
+    actionable:    false,
+    status:        "new",
+  });
+
+  const allPeople = await db.select().from(peopleTable);
+  const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
+  res.json(taskToResponse(updated, assignee, allPeople));
+});
+
+router.post("/tasks/reject", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id || isNaN(id)) {
+    res.status(400).json({ error: "id query param required" });
+    return;
+  }
+
+  const { comment } = req.body as { comment?: string };
+  if (!comment?.trim()) {
+    res.status(400).json({ error: "comment is required" });
+    return;
+  }
+
+  const now = new Date();
+  const [updated] = await db
+    .update(tasksTable)
+    .set({ status: "returned", returnComment: comment.trim(), lastActivityAt: now })
+    .where(eq(tasksTable.id, id))
+    .returning();
+
+  if (!updated) { res.status(404).json({ error: "Task not found" }); return; }
+
+  await writeActivity({ taskId: id, type: "returned", actorRole: updated.approverRole ?? "owner", text: comment.trim(), at: now });
+
+  // Notify requester ("отклонено: причина")
+  const requesterRole = updated.createdBy;
+  const feedRecipient: "owner" | "director" | "employee" =
+    requesterRole === "owner" ? "owner"
+    : requesterRole.toLowerCase().includes("директор") ? "director"
+    : "employee";
+
+  await db.insert(newsItemsTable).values({
+    taskId:        id,
+    type:          "task_returned",
+    severity:      "attention",
+    title:         "Отклонено",
+    body:          `«${updated.title}» — отклонено: ${comment.trim()}`,
+    recipientRole: feedRecipient,
+    sourceLabel:   "Согласование",
+    isUrgentFlag:  false,
+    actionable:    false,
+    status:        "new",
+  });
+
+  const allPeople = await db.select().from(peopleTable);
+  const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
+  res.json(taskToResponse(updated, assignee, allPeople));
+});
+
 router.post("/tasks/draft", async (req, res): Promise<void> => {
   const { text } = req.body as { text?: string };
   if (!text?.trim()) {

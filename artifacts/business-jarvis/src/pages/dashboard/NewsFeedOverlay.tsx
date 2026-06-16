@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, ExternalLink, MessageSquare, ArrowRight, CheckCircle2, RotateCcw, Loader2 } from "lucide-react";
-import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem, useAcceptTask, useReturnTask } from "@workspace/api-client-react";
+import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, ExternalLink, MessageSquare, ArrowRight, CheckCircle2, RotateCcw, Loader2, Stamp, XCircle } from "lucide-react";
+import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem, useAcceptTask, useReturnTask, useApproveTask, useRejectApproval } from "@workspace/api-client-react";
 import type { NewsItem } from "@workspace/api-client-react";
 import { VoiceCapture } from "@/components/ui/VoiceCapture";
 import { useLocation } from "wouter";
@@ -48,9 +48,10 @@ const TYPE_LABEL: Record<string, string> = {
   task_accepted: "Принята",
   task_review:   "Проверка",
   task_returned: "Возврат",
+  approval:      "Согласование",
 };
 
-const TASK_TYPES = new Set(["task_new", "task_accepted", "task_review", "task_returned"]);
+const TASK_TYPES = new Set(["task_new", "task_accepted", "task_review", "task_returned", "approval"]);
 
 function timeAgo(iso: string): string {
   const diff = Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
@@ -99,6 +100,11 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
   const [returnComment, setReturnComment] = useState("");
   const [returnCommentError, setReturnCommentError] = useState("");
 
+  /* Approval action zone */
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectComment, setRejectComment] = useState("");
+  const [rejectCommentError, setRejectCommentError] = useState("");
+
   /* Stable callback slot — filled after handleSeen is defined below */
   const onTaskSuccessRef = useRef<() => void>(() => {});
 
@@ -109,6 +115,18 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
     },
   });
   const { mutate: returnTask, isPending: isReturning } = useReturnTask({
+    mutation: {
+      onSuccess: () => { onTaskSuccessRef.current(); },
+      onError: () => {},
+    },
+  });
+  const { mutate: approveTask, isPending: isApproving } = useApproveTask({
+    mutation: {
+      onSuccess: () => { onTaskSuccessRef.current(); },
+      onError: () => {},
+    },
+  });
+  const { mutate: rejectApproval, isPending: isRejecting } = useRejectApproval({
     mutation: {
       onSuccess: () => { onTaskSuccessRef.current(); },
       onError: () => {},
@@ -152,13 +170,16 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
   /* Remaining (not yet actioned) */
   const remaining = deck.filter(i => !localActions.has(i.id)).length;
 
-  /* Reset reply + task action zone when card changes */
+  /* Reset reply + task + approval action zones when card changes */
   useEffect(() => {
     setReplyOpen(false);
     setReplyText("");
     setReturnOpen(false);
     setReturnComment("");
     setReturnCommentError("");
+    setRejectOpen(false);
+    setRejectComment("");
+    setRejectCommentError("");
   }, [safeIdx]);
 
   /* Navigation */
@@ -648,6 +669,118 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                                 : <CheckCircle2 style={{ width: 14, height: 14 }} />
                               }
                               Принять
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* approval → Согласовать / Отклонить */}
+                    {item.type === "approval" && (item as any).taskId != null && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+
+                        {/* Who is requesting */}
+                        {item.body && (
+                          <div style={{
+                            padding: "9px 12px", borderRadius: 10,
+                            background: "rgba(240,181,74,0.06)", border: "1px solid rgba(240,181,74,0.18)",
+                            fontSize: 12, color: "rgba(228,232,255,0.60)", fontFamily: ff, lineHeight: 1.55,
+                          }}>
+                            {item.body}
+                          </div>
+                        )}
+
+                        {/* Rejection comment textarea */}
+                        {rejectOpen && (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+                            <textarea
+                              rows={2}
+                              value={rejectComment}
+                              onChange={e => { setRejectComment(e.target.value); setRejectCommentError(""); }}
+                              placeholder="Причина отклонения…"
+                              autoFocus
+                              style={{
+                                width: "100%", resize: "none", borderRadius: 10,
+                                padding: "8px 12px", fontSize: 12, fontFamily: ff,
+                                background: "rgba(255,255,255,0.04)",
+                                border: rejectCommentError ? "1px solid rgba(240,98,90,0.5)" : "1px solid rgba(255,255,255,0.09)",
+                                color: "rgba(228,232,255,0.88)", outline: "none", caretColor: "#5b8bd0",
+                              }}
+                            />
+                            {rejectCommentError && (
+                              <span style={{ fontSize: 11, color: "#f0625a", fontFamily: ff }}>{rejectCommentError}</span>
+                            )}
+                          </div>
+                        )}
+
+                        <div style={{ display: "flex", gap: 8 }}>
+                          {/* Cancel rejection */}
+                          {rejectOpen && (
+                            <button
+                              onClick={() => { setRejectOpen(false); setRejectComment(""); setRejectCommentError(""); }}
+                              disabled={isRejecting}
+                              style={{
+                                flex: 1, height: 38, borderRadius: 10, cursor: "pointer",
+                                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.09)",
+                                fontSize: 11, fontWeight: 600, fontFamily: ff, color: "rgba(228,232,255,0.40)",
+                              }}
+                            >
+                              Отмена
+                            </button>
+                          )}
+
+                          {/* Отклонить */}
+                          <button
+                            onClick={() => {
+                              if (!rejectOpen) { setRejectOpen(true); return; }
+                              if (!rejectComment.trim()) { setRejectCommentError("Укажите причину"); return; }
+                              rejectApproval({
+                                params: { id: (item as any).taskId! },
+                                data: { comment: rejectComment.trim() },
+                              });
+                            }}
+                            disabled={isApproving || isRejecting}
+                            style={{
+                              flex: rejectOpen ? 2 : 1, height: 38, borderRadius: 10,
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                              background: rejectOpen ? "rgba(240,98,90,0.14)" : "rgba(255,255,255,0.05)",
+                              border: rejectOpen ? "1px solid rgba(240,98,90,0.40)" : "1px solid rgba(255,255,255,0.09)",
+                              color: rejectOpen ? "#f0625a" : "rgba(228,232,255,0.50)",
+                              cursor: (isApproving || isRejecting) ? "not-allowed" : "pointer",
+                              fontSize: 12, fontWeight: 700, fontFamily: ff,
+                              opacity: isRejecting ? 0.6 : 1, transition: "all 150ms",
+                            }}
+                          >
+                            {isRejecting
+                              ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} />
+                              : <XCircle style={{ width: 13, height: 13 }} />
+                            }
+                            {rejectOpen ? "Подтвердить отклонение" : "Отклонить"}
+                          </button>
+
+                          {/* Согласовать */}
+                          {!rejectOpen && (
+                            <button
+                              onClick={() => {
+                                approveTask({ params: { id: (item as any).taskId! } });
+                              }}
+                              disabled={isApproving || isRejecting}
+                              style={{
+                                flex: 2, height: 38, borderRadius: 10,
+                                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                                background: "linear-gradient(135deg, #3ed9a0 0%, #2ab87f 100%)",
+                                border: "none", color: "#06111f",
+                                fontFamily: ff, fontSize: 13, fontWeight: 700,
+                                cursor: (isApproving || isRejecting) ? "not-allowed" : "pointer",
+                                boxShadow: "0 4px 14px rgba(62,217,160,0.28)",
+                                opacity: isApproving ? 0.6 : 1, transition: "opacity 150ms",
+                              }}
+                            >
+                              {isApproving
+                                ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} />
+                                : <Stamp style={{ width: 14, height: 14 }} />
+                              }
+                              Согласовать
                             </button>
                           )}
                         </div>

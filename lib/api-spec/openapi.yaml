@@ -380,6 +380,77 @@ paths:
               schema:
                 $ref: "#/components/schemas/TaskDraft"
 
+  /tasks/request-approval:
+    post:
+      operationId: requestApproval
+      tags: [tasks]
+      summary: Create an approval-request task and fire a feed event to the approver
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequestApprovalInput"
+      responses:
+        "201":
+          description: Created approval task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Bad request
+
+  /tasks/approve:
+    post:
+      operationId: approveTask
+      tags: [tasks]
+      summary: Approve an approval-request task (status → done)
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+
+  /tasks/reject:
+    post:
+      operationId: rejectApproval
+      tags: [tasks]
+      summary: Reject an approval-request task (status → returned)
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RejectApprovalInput"
+      responses:
+        "200":
+          description: Updated task
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "400":
+          description: Bad request
+        "404":
+          description: Not found
+
   /tasks/tree:
     get:
       operationId: getTaskTree
@@ -1280,6 +1351,28 @@ components:
         rationale:
           type: string
 
+    RequestApprovalInput:
+      type: object
+      required: [title, body, approverRole, requesterRole]
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        approverRole:
+          type: string
+        requesterRole:
+          type: string
+        blockedTaskId:
+          type: ["integer", "null"]
+
+    RejectApprovalInput:
+      type: object
+      required: [comment]
+      properties:
+        comment:
+          type: string
+
     TaskTreeNode:
       type: object
       required: [id, title, assigneeRole, status, lastActivityAt]
@@ -1359,7 +1452,7 @@ components:
           enum: [critical, attention, info]
         type:
           type: string
-          enum: [urgent, hr, corporate, task, external, task_new, task_accepted, task_review, task_returned]
+          enum: [urgent, hr, corporate, task, external, task_new, task_accepted, task_review, task_returned, approval]
         title:
           type: string
         body:

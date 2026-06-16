@@ -362,6 +362,19 @@ export interface TaskDraft {
   rationale: string;
 }
 
+export interface RequestApprovalInput {
+  title: string;
+  body: string;
+  approverRole: string;
+  requesterRole: string;
+  /** @nullable */
+  blockedTaskId?: number | null;
+}
+
+export interface RejectApprovalInput {
+  comment: string;
+}
+
 export type TaskTreeNodeStatus = typeof TaskTreeNodeStatus[keyof typeof TaskTreeNodeStatus];
 
 
@@ -462,6 +475,7 @@ export const NewsItemType = {
   task_accepted: 'task_accepted',
   task_review: 'task_review',
   task_returned: 'task_returned',
+  approval: 'approval',
 } as const;
 
 export type NewsItemStatus = typeof NewsItemStatus[keyof typeof NewsItemStatus];
@@ -857,6 +871,14 @@ export const GetAiSummaryPeriod = {
   week: 'week',
   month: 'month',
 } as const;
+
+export type ApproveTaskParams = {
+id: number;
+};
+
+export type RejectApprovalParams = {
+id: number;
+};
 
 export type GetTaskTreeParams = {
 id: number;
