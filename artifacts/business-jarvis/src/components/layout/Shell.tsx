@@ -1,8 +1,7 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Globe, LayoutGrid, Brain, Link as LinkIcon, MessageSquare, ClipboardList, RefreshCcw, Sun, Moon } from "lucide-react";
+import { Globe, LayoutGrid, Brain, Link as LinkIcon, MessageSquare, ClipboardList, RefreshCcw } from "lucide-react";
 import { useAuthContext } from "@/hooks/AuthContext";
-import { useTheme } from "@/hooks/ThemeContext";
 
 const NAV = [
   { href: "/",            label: "Центр",   fullLabel: "Глобальный центр", icon: Globe },
@@ -16,7 +15,6 @@ const NAV = [
 export function Shell({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { switchRole } = useAuthContext();
-  const { theme, toggleTheme } = useTheme();
 
   const isActive = (href: string) =>
     location === href || (href !== "/" && location.startsWith(href));
@@ -24,7 +22,7 @@ export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-[100dvh] overflow-hidden" style={{ background: "var(--jarvis-bg-screen)", color: "rgba(228,232,255,0.9)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>
 
-      {/* ── Desktop sidebar — blur+sat glass, no SVG filter (full-height perf) ── */}
+      {/* ── Desktop sidebar ── */}
       <aside
         className="hidden md:flex w-60 flex-shrink-0 flex-col z-20"
         style={{
@@ -34,27 +32,13 @@ export function Shell({ children }: { children: ReactNode }) {
           borderRight: "1px solid var(--jarvis-nav-border)",
         }}
       >
-        {/* Logo — click globe to toggle theme */}
+        {/* Logo */}
         <div
           className="h-16 flex items-center px-5"
           style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
         >
           <div className="flex items-center gap-2.5">
-            <button
-              onClick={toggleTheme}
-              title={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
-              className="flex items-center justify-center w-7 h-7 rounded-lg transition-all duration-200 hover:scale-110 active:scale-95 relative group"
-              style={{ background: "transparent", border: "none", padding: 0, cursor: "pointer" }}
-            >
-              <Globe
-                className="w-5 h-5 transition-opacity duration-150 group-hover:opacity-0 absolute"
-                style={{ color: "var(--jarvis-accent)" }}
-              />
-              {theme === "dark"
-                ? <Sun className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-150" style={{ color: "var(--jarvis-accent)" }} />
-                : <Moon className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity duration-150" style={{ color: "var(--jarvis-accent)" }} />
-              }
-            </button>
+            <Globe className="w-5 h-5" style={{ color: "var(--jarvis-accent)" }} />
             <span className="font-bold tracking-widest text-base" style={{ color: "var(--jarvis-text-primary)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}>JARVIS</span>
           </div>
         </div>
@@ -73,11 +57,12 @@ export function Shell({ children }: { children: ReactNode }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className="jarvis-btn relative flex items-center gap-3 px-3 font-medium text-sm transition-colors duration-150 min-h-[46px]"
+                className="jarvis-btn relative flex items-center gap-3 px-3 font-medium text-sm transition-all duration-150 min-h-[46px]"
                 style={{
                   borderRadius: 12,
                   color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.38)",
-                  background: active ? "var(--jarvis-accent-12)" : "transparent",
+                  background: active ? "rgba(0,60,100,0.32)" : "transparent",
+                  border: active ? "1px solid rgba(0,212,255,0.20)" : "1px solid transparent",
                   fontFamily: "'Hanken Grotesk', system-ui, sans-serif",
                 }}
               >
@@ -91,20 +76,8 @@ export function Shell({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        {/* Switch role + theme toggle */}
+        {/* Switch role */}
         <div className="p-3 flex flex-col gap-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-          <button
-            onClick={toggleTheme}
-            className="flex items-center gap-3 w-full px-3 text-sm transition-colors duration-150 min-h-[46px] group"
-            style={{ borderRadius: 12, color: "rgba(228,232,255,0.25)", fontFamily: "'Hanken Grotesk', system-ui, sans-serif" }}
-            title={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
-          >
-            {theme === "dark"
-              ? <Sun className="w-4 h-4 flex-shrink-0 opacity-40 group-hover:opacity-70" />
-              : <Moon className="w-4 h-4 flex-shrink-0 opacity-40 group-hover:opacity-70" />
-            }
-            {theme === "dark" ? "Светлая тема" : "Тёмная тема"}
-          </button>
           <button
             onClick={switchRole}
             className="flex items-center gap-3 w-full px-3 text-sm transition-colors duration-150 min-h-[46px] group"
@@ -119,7 +92,7 @@ export function Shell({ children }: { children: ReactNode }) {
       {/* ── Content column ── */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
 
-        {/* Mobile top bar — blur+sat glass, no SVG filter */}
+        {/* Mobile top bar */}
         <div
           className="md:hidden h-14 flex items-center justify-between px-4 flex-shrink-0"
           style={{
@@ -139,14 +112,6 @@ export function Shell({ children }: { children: ReactNode }) {
               LIVE
             </div>
             <button
-              onClick={toggleTheme}
-              className="flex items-center justify-center w-9 h-9 transition-colors"
-              style={{ borderRadius: 10, color: "rgba(228,232,255,0.35)" }}
-              title={theme === "dark" ? "Светлая тема" : "Тёмная тема"}
-            >
-              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-            </button>
-            <button
               onClick={switchRole}
               className="flex items-center justify-center w-9 h-9 transition-colors"
               style={{ borderRadius: 10, color: "rgba(228,232,255,0.25)" }}
@@ -162,7 +127,7 @@ export function Shell({ children }: { children: ReactNode }) {
           {children}
         </main>
 
-        {/* Mobile bottom nav — blur+sat glass, no SVG filter */}
+        {/* Mobile bottom nav */}
         <div
           className="md:hidden flex-shrink-0"
           style={{
