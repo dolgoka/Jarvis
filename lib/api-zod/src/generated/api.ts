@@ -468,6 +468,8 @@ export const StartTaskResponse = zod.object({
   "businessId": zod.number().nullish(),
   "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
   "createdBy": zod.string().optional(),
+  "createdByPersonId": zod.number().nullish(),
+  "parentId": zod.number().nullish(),
   "returnComment": zod.string().nullish(),
   "resultNote": zod.string().nullish(),
   "lastActivityAt": zod.string(),
@@ -507,6 +509,8 @@ export const SubmitTaskResponse = zod.object({
   "businessId": zod.number().nullish(),
   "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
   "createdBy": zod.string().optional(),
+  "createdByPersonId": zod.number().nullish(),
+  "parentId": zod.number().nullish(),
   "returnComment": zod.string().nullish(),
   "resultNote": zod.string().nullish(),
   "lastActivityAt": zod.string(),
@@ -542,6 +546,8 @@ export const AcceptTaskResponse = zod.object({
   "businessId": zod.number().nullish(),
   "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
   "createdBy": zod.string().optional(),
+  "createdByPersonId": zod.number().nullish(),
+  "parentId": zod.number().nullish(),
   "returnComment": zod.string().nullish(),
   "resultNote": zod.string().nullish(),
   "lastActivityAt": zod.string(),
@@ -581,6 +587,8 @@ export const ReturnTaskResponse = zod.object({
   "businessId": zod.number().nullish(),
   "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
   "createdBy": zod.string().optional(),
+  "createdByPersonId": zod.number().nullish(),
+  "parentId": zod.number().nullish(),
   "returnComment": zod.string().nullish(),
   "resultNote": zod.string().nullish(),
   "lastActivityAt": zod.string(),
@@ -593,7 +601,8 @@ export const ReturnTaskResponse = zod.object({
  */
 export const ListTasksQueryParams = zod.object({
   "box": zod.enum(['active', 'review']).optional(),
-  "assigneeId": zod.coerce.number().optional()
+  "assigneeId": zod.coerce.number().optional(),
+  "createdByPersonId": zod.coerce.number().optional()
 })
 
 export const ListTasksResponseItem = zod.object({
@@ -617,6 +626,8 @@ export const ListTasksResponseItem = zod.object({
   "businessId": zod.number().nullish(),
   "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
   "createdBy": zod.string().optional(),
+  "createdByPersonId": zod.number().nullish(),
+  "parentId": zod.number().nullish(),
   "returnComment": zod.string().nullish(),
   "resultNote": zod.string().nullish(),
   "lastActivityAt": zod.string(),
@@ -635,7 +646,10 @@ export const CreateTaskBody = zod.object({
   "watchers": zod.array(zod.number()).optional(),
   "priority": zod.enum(['high', 'medium', 'low']).optional(),
   "dueDate": zod.string().nullish(),
-  "businessId": zod.number().nullish()
+  "businessId": zod.number().nullish(),
+  "createdByPersonId": zod.number().optional(),
+  "parentId": zod.number().optional(),
+  "createdBy": zod.string().optional()
 })
 
 

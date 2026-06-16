@@ -17,4 +17,7 @@ export interface TaskInput {
   dueDate?: string | null;
   /** @nullable */
   businessId?: number | null;
+  createdByPersonId?: number;
+  parentId?: number;
+  createdBy?: string;
 }

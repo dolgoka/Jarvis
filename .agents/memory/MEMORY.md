@@ -3,3 +3,4 @@
 - [Scripts seed pattern](scripts-seed-pattern.md) — seed scripts cannot import drizzle-orm directly; filter in JS or add drizzle-orm to scripts deps
 - [Screenshot rule](screenshot-rule.md) — after every task: use ?role=client param, hard-refresh before screenshotting to avoid stale HMR
 - [Task activity journal](task-activity-journal.md) — task_activity table + writeActivity helper; seed guard blocks backfill if review tasks exist — use separate backfill script
+- [Director board chain](director-board-chain.md) — createdByPersonId integer on tasks drives director↔staff routing; feed recipientRole='director' for task_review/task_accepted events

@@ -516,6 +516,11 @@ paths:
           required: false
           schema:
             type: integer
+        - name: createdByPersonId
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         "200":
           description: List of tasks
@@ -1145,6 +1150,10 @@ components:
           enum: [draft, sent, in_progress, review, done, returned]
         createdBy:
           type: string
+        createdByPersonId:
+          type: ["integer", "null"]
+        parentId:
+          type: ["integer", "null"]
         returnComment:
           type: ["string", "null"]
         resultNote:
@@ -1175,6 +1184,12 @@ components:
           type: ["string", "null"]
         businessId:
           type: ["integer", "null"]
+        createdByPersonId:
+          type: integer
+        parentId:
+          type: integer
+        createdBy:
+          type: string
 
     TaskActivity:
       type: object

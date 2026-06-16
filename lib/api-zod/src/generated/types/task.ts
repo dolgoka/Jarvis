@@ -25,6 +25,10 @@ export interface Task {
   status: TaskStatus;
   createdBy?: string;
   /** @nullable */
+  createdByPersonId?: number | null;
+  /** @nullable */
+  parentId?: number | null;
+  /** @nullable */
   returnComment?: string | null;
   /** @nullable */
   resultNote?: string | null;

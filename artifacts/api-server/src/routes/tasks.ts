@@ -48,6 +48,8 @@ function taskToResponse(
     businessId: task.businessId ?? null,
     status: task.status,
     createdBy: task.createdBy,
+    createdByPersonId: task.createdByPersonId ?? null,
+    parentId: task.parentId ?? null,
     returnComment: task.returnComment ?? null,
     resultNote: task.resultNote ?? null,
     lastActivityAt: task.lastActivityAt.toISOString(),
@@ -81,7 +83,7 @@ async function writeTaskFeedEvent(params: {
   type: "task_new" | "task_accepted" | "task_review" | "task_returned";
   title: string;
   body: string;
-  recipientRole: "owner" | "employee";
+  recipientRole: "owner" | "employee" | "director";
   severity: "attention" | "info";
 }) {
   const existing = await db
@@ -116,8 +118,9 @@ const ACTIVE_STATUSES = ["sent", "in_progress", "returned"] as const;
 const REVIEW_STATUSES = ["review"] as const;
 
 router.get("/tasks", async (req, res): Promise<void> => {
-  const box        = req.query["box"]        as string | undefined;
-  const assigneeId = req.query["assigneeId"] ? parseInt(req.query["assigneeId"] as string, 10) : undefined;
+  const box               = req.query["box"]               as string | undefined;
+  const assigneeId        = req.query["assigneeId"]        ? parseInt(req.query["assigneeId"] as string, 10) : undefined;
+  const createdByPersonId = req.query["createdByPersonId"] ? parseInt(req.query["createdByPersonId"] as string, 10) : undefined;
 
   const [tasks, allPeople] = await Promise.all([
     db.select().from(tasksTable).orderBy(tasksTable.createdAt),
@@ -133,6 +136,10 @@ router.get("/tasks", async (req, res): Promise<void> => {
 
   if (assigneeId && !isNaN(assigneeId)) {
     filtered = filtered.filter(t => t.assigneeId === assigneeId);
+  }
+
+  if (createdByPersonId && !isNaN(createdByPersonId)) {
+    filtered = filtered.filter(t => t.createdByPersonId === createdByPersonId);
   }
 
   const result = filtered.map(task => {
@@ -186,7 +193,18 @@ router.post("/tasks/accept", async (req, res): Promise<void> => {
     return;
   }
 
-  await writeActivity({ taskId: id, type: "accepted_final", actorRole: "owner", at: now });
+  const actorLabel = updated.createdByPersonId ? "director" : "owner";
+  await writeActivity({ taskId: id, type: "accepted_final", actorRole: actorLabel, at: now });
+
+  // Notify the assignee (employee) that their work was accepted
+  await writeTaskFeedEvent({
+    taskId:        id,
+    type:          "task_accepted",
+    title:         "Задача принята",
+    body:          updated.title,
+    recipientRole: "employee",
+    severity:      "info",
+  });
 
   const allPeople = await db.select().from(peopleTable);
   const assignee = allPeople.find(p => p.id === updated.assigneeId)!;
@@ -218,7 +236,8 @@ router.post("/tasks/return", async (req, res): Promise<void> => {
     return;
   }
 
-  await writeActivity({ taskId: id, type: "returned", actorRole: "owner", text: comment.trim(), at: now });
+  const actorLabel = updated.createdByPersonId ? "director" : "owner";
+  await writeActivity({ taskId: id, type: "returned", actorRole: actorLabel, text: comment.trim(), at: now });
 
   // Feed: task returned → notify assignee (employee inbox)
   await writeTaskFeedEvent({
@@ -254,15 +273,18 @@ router.post("/tasks/start", async (req, res): Promise<void> => {
     return;
   }
 
-  await writeActivity({ taskId: id, type: "accepted", actorRole: updated.createdBy ?? "owner", at: now });
+  await writeActivity({ taskId: id, type: "accepted", actorRole: updated.assigneeId ? "assignee" : "owner", at: now });
 
-  // Feed: accepted into work → notify owner
+  // Notify the task creator that work has started
+  // If createdByPersonId is set → task was from director → notify director
+  // Otherwise → task was from owner → notify owner
+  const notifyRole = updated.createdByPersonId ? "director" : "owner";
   await writeTaskFeedEvent({
     taskId:        id,
     type:          "task_accepted",
     title:         "Задача принята в работу",
     body:          updated.title,
-    recipientRole: "owner",
+    recipientRole: notifyRole,
     severity:      "info",
   });
 
@@ -306,7 +328,10 @@ router.post("/tasks/submit", async (req, res): Promise<void> => {
     at: now,
   });
 
-  // Feed: submitted for review → notify owner
+  // Feed: submitted for review
+  // If createdByPersonId is set → submitted back to director (not owner)
+  // Otherwise → submitted to owner
+  const notifyRole: "owner" | "director" = updated.createdByPersonId ? "director" : "owner";
   const bodyParts = [updated.title];
   if (resultNote?.trim()) bodyParts.push(resultNote.trim());
   await writeTaskFeedEvent({
@@ -314,7 +339,7 @@ router.post("/tasks/submit", async (req, res): Promise<void> => {
     type:          "task_review",
     title:         "Задача сдана на проверку",
     body:          bodyParts.join(" — "),
-    recipientRole: "owner",
+    recipientRole: notifyRole,
     severity:      "attention",
   });
 
@@ -438,6 +463,9 @@ router.post("/tasks", async (req, res): Promise<void> => {
     priority,
     dueDate,
     businessId,
+    createdByPersonId,
+    parentId,
+    createdBy,
   } = req.body as {
     title?: string;
     body?: string;
@@ -446,6 +474,9 @@ router.post("/tasks", async (req, res): Promise<void> => {
     priority?: string;
     dueDate?: string | null;
     businessId?: number | null;
+    createdByPersonId?: number;
+    parentId?: number;
+    createdBy?: string;
   };
 
   if (!title?.trim() || !assigneeId) {
@@ -464,6 +495,8 @@ router.post("/tasks", async (req, res): Promise<void> => {
     ? (priority as "high" | "medium" | "low")
     : "medium";
 
+  const actorLabel = createdBy ?? (createdByPersonId ? "director" : "owner");
+
   const now = new Date();
   const [task] = await db.insert(tasksTable).values({
     title: title.trim(),
@@ -474,12 +507,15 @@ router.post("/tasks", async (req, res): Promise<void> => {
     dueDate: dueDate ?? null,
     businessId: businessId ?? null,
     status: "sent",
+    createdBy: actorLabel,
+    createdByPersonId: createdByPersonId ?? null,
+    parentId: parentId ?? null,
     lastActivityAt: now,
   }).returning();
 
-  await writeActivity({ taskId: task!.id, type: "created", actorRole: "owner", at: now });
+  await writeActivity({ taskId: task!.id, type: "created", actorRole: actorLabel, at: now });
 
-  // Feed: task created/sent → notify assignee (employee inbox)
+  // Feed: task created → notify assignee (always employee in this case)
   await writeTaskFeedEvent({
     taskId:        task!.id,
     type:          "task_new",

@@ -14,7 +14,7 @@ interface Card {
 
 const CARDS: Card[] = [
   { role: "client",    icon: Globe,          title: "Заказчик",               desc: "Полный обзор холдинга",   wip: false },
-  { role: "director",  icon: BarChart2,       title: "Директор / C-level",     desc: "Своё направление",        wip: true  },
+  { role: "director",  icon: BarChart2,       title: "Директор / C-level",     desc: "Своё направление",        wip: false },
   { role: "partner",   icon: Users2,          title: "Партнёр",                desc: "Внешний контур",          wip: true  },
   { role: "staff",     icon: ClipboardList,   title: "Сотрудник",              desc: "Мои задачи и инбокс",     wip: false },
 ];
@@ -34,11 +34,13 @@ interface RoleSelectProps {
   onSelect: (role: Role, personId?: number) => void;
 }
 
-/* ── Person picker (second step for staff) ─────────────────────────────── */
+/* ── Person picker (second step for staff / director) ──────────────────── */
 function PersonPicker({
+  role = "staff",
   onPick,
   onBack,
 }: {
+  role?: "staff" | "director";
   onPick: (personId: number) => void;
   onBack: () => void;
 }) {
@@ -63,7 +65,7 @@ function PersonPicker({
         </button>
         <div>
           <div style={{ fontFamily: HF, fontWeight: 700, fontSize: 17, color: "rgba(228,232,255,0.88)" }}>
-            Сотрудник
+            {role === "director" ? "Директор / C-level" : "Сотрудник"}
           </div>
           <div style={{ fontFamily: HF, fontSize: 12, color: "rgba(228,232,255,0.35)", marginTop: 1 }}>
             Выберите свою роль
@@ -140,11 +142,14 @@ function PersonPicker({
 export default function RoleSelect({ onSelect }: RoleSelectProps) {
   const [hovered, setHovered] = useState<Role | null>(null);
   const [staffPickerOpen, setStaffPickerOpen] = useState(false);
+  const [directorPickerOpen, setDirectorPickerOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
 
   function handleCardClick(role: Role) {
     if (role === "staff") {
       setStaffPickerOpen(true);
+    } else if (role === "director") {
+      setDirectorPickerOpen(true);
     } else {
       onSelect(role);
     }
@@ -153,6 +158,12 @@ export default function RoleSelect({ onSelect }: RoleSelectProps) {
   function handlePersonPick(personId: number) {
     onSelect("staff", personId);
   }
+
+  function handleDirectorPick(personId: number) {
+    onSelect("director", personId);
+  }
+
+  const pickerOpen = staffPickerOpen || directorPickerOpen;
 
   return (
     <div
@@ -178,7 +189,7 @@ export default function RoleSelect({ onSelect }: RoleSelectProps) {
       <div className="relative w-full max-w-2xl mx-auto px-4 flex flex-col items-center gap-10">
 
         {/* Brand */}
-        {!staffPickerOpen && (
+        {!pickerOpen && (
           <div className="flex flex-col items-center gap-3">
             <button
               onClick={toggleTheme}
@@ -200,7 +211,7 @@ export default function RoleSelect({ onSelect }: RoleSelectProps) {
         )}
 
         {/* Step 1: Role cards */}
-        {!staffPickerOpen && (
+        {!pickerOpen && (
           <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-3">
             {CARDS.map(({ role, icon: Icon, title, desc, wip }) => {
               const isHovered = hovered === role;
@@ -255,8 +266,17 @@ export default function RoleSelect({ onSelect }: RoleSelectProps) {
           />
         )}
 
+        {/* Step 2: Person picker (director) */}
+        {directorPickerOpen && (
+          <PersonPicker
+            role="director"
+            onPick={handleDirectorPick}
+            onBack={() => setDirectorPickerOpen(false)}
+          />
+        )}
+
         {/* Footer */}
-        {!staffPickerOpen && (
+        {!pickerOpen && (
           <div className="text-[11px] text-center" style={{ color: "var(--jarvis-text-muted)" }}>
             Демо-навигатор · данные не сохраняются
           </div>

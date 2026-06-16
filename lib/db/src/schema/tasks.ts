@@ -22,6 +22,7 @@ export const tasksTable = pgTable("tasks", {
   acceptedAt: timestamp("accepted_at"),
   blockedByApprovalId: integer("blocked_by_approval_id"),
   createdBy: text("created_by").notNull().default("owner"),
+  createdByPersonId: integer("created_by_person_id"),
   parentId: integer("parent_id"),
   returnComment: text("return_comment"),
   resultNote: text("result_note"),

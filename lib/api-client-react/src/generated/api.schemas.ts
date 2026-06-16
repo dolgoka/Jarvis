@@ -267,6 +267,10 @@ export interface Task {
   status: TaskStatus;
   createdBy?: string;
   /** @nullable */
+  createdByPersonId?: number | null;
+  /** @nullable */
+  parentId?: number | null;
+  /** @nullable */
   returnComment?: string | null;
   /** @nullable */
   resultNote?: string | null;
@@ -293,6 +297,9 @@ export interface TaskInput {
   dueDate?: string | null;
   /** @nullable */
   businessId?: number | null;
+  createdByPersonId?: number;
+  parentId?: number;
+  createdBy?: string;
 }
 
 export type TaskActivityType = typeof TaskActivityType[keyof typeof TaskActivityType];
@@ -845,6 +852,7 @@ id: number;
 export type ListTasksParams = {
 box?: ListTasksBox;
 assigneeId?: number;
+createdByPersonId?: number;
 };
 
 export type ListTasksBox = typeof ListTasksBox[keyof typeof ListTasksBox];

@@ -12,15 +12,16 @@ import RoleSelect from "./pages/role-select/RoleSelect";
 import RoleStub from "./pages/role-select/RoleStub";
 import { ThemeProvider } from "./hooks/ThemeContext";
 
-const GlobeDashboard  = lazy(() => import("./pages/dashboard/GlobeDashboard"));
-const BusinessList    = lazy(() => import("./pages/businesses/BusinessList"));
-const BusinessDetail  = lazy(() => import("./pages/businesses/BusinessDetail"));
-const AiSummary       = lazy(() => import("./pages/ai-summary/AiSummary"));
-const ConnectBusiness = lazy(() => import("./pages/connect/ConnectBusiness"));
-const AiChat          = lazy(() => import("./pages/chat/AiChat"));
-const TasksPage       = lazy(() => import("./pages/tasks/TasksPage"));
-const MorningFeed     = lazy(() => import("./pages/morning/MorningFeed"));
-const MyTasksPage     = lazy(() => import("./pages/tasks/MyTasksPage"));
+const GlobeDashboard    = lazy(() => import("./pages/dashboard/GlobeDashboard"));
+const BusinessList      = lazy(() => import("./pages/businesses/BusinessList"));
+const BusinessDetail    = lazy(() => import("./pages/businesses/BusinessDetail"));
+const AiSummary         = lazy(() => import("./pages/ai-summary/AiSummary"));
+const ConnectBusiness   = lazy(() => import("./pages/connect/ConnectBusiness"));
+const AiChat            = lazy(() => import("./pages/chat/AiChat"));
+const TasksPage         = lazy(() => import("./pages/tasks/TasksPage"));
+const MorningFeed       = lazy(() => import("./pages/morning/MorningFeed"));
+const MyTasksPage       = lazy(() => import("./pages/tasks/MyTasksPage"));
+const DirectorBoardPage = lazy(() => import("./pages/tasks/DirectorBoardPage"));
 
 const PageFallback = (
   <div style={{ width: "100%", height: "100dvh", background: "#0b0b12" }} />
@@ -71,6 +72,17 @@ function AppInner() {
       <AuthContext.Provider value={{ switchRole, personId }}>
         <Suspense fallback={PageFallback}>
           <MyTasksPage />
+        </Suspense>
+      </AuthContext.Provider>
+    );
+  }
+
+  /* ── Director view ── */
+  if (effectiveRole === "director") {
+    return (
+      <AuthContext.Provider value={{ switchRole, personId }}>
+        <Suspense fallback={PageFallback}>
+          <DirectorBoardPage />
         </Suspense>
       </AuthContext.Provider>
     );
