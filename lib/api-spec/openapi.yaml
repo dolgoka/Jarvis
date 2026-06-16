@@ -511,6 +511,11 @@ paths:
           schema:
             type: string
             enum: [active, review]
+        - name: assigneeId
+          in: query
+          required: false
+          schema:
+            type: integer
       responses:
         "200":
           description: List of tasks

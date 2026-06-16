@@ -116,7 +116,8 @@ const ACTIVE_STATUSES = ["sent", "in_progress", "returned"] as const;
 const REVIEW_STATUSES = ["review"] as const;
 
 router.get("/tasks", async (req, res): Promise<void> => {
-  const box = req.query["box"] as string | undefined;
+  const box        = req.query["box"]        as string | undefined;
+  const assigneeId = req.query["assigneeId"] ? parseInt(req.query["assigneeId"] as string, 10) : undefined;
 
   const [tasks, allPeople] = await Promise.all([
     db.select().from(tasksTable).orderBy(tasksTable.createdAt),
@@ -128,6 +129,10 @@ router.get("/tasks", async (req, res): Promise<void> => {
     filtered = tasks.filter(t => (REVIEW_STATUSES as readonly string[]).includes(t.status));
   } else if (box === "active") {
     filtered = tasks.filter(t => (ACTIVE_STATUSES as readonly string[]).includes(t.status));
+  }
+
+  if (assigneeId && !isNaN(assigneeId)) {
+    filtered = filtered.filter(t => t.assigneeId === assigneeId);
   }
 
   const result = filtered.map(task => {

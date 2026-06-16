@@ -592,7 +592,8 @@ export const ReturnTaskResponse = zod.object({
  * @summary List all tasks with assignee info
  */
 export const ListTasksQueryParams = zod.object({
-  "box": zod.enum(['active', 'review']).optional()
+  "box": zod.enum(['active', 'review']).optional(),
+  "assigneeId": zod.coerce.number().optional()
 })
 
 export const ListTasksResponseItem = zod.object({

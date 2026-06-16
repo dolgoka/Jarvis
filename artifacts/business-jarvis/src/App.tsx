@@ -20,6 +20,7 @@ const ConnectBusiness = lazy(() => import("./pages/connect/ConnectBusiness"));
 const AiChat          = lazy(() => import("./pages/chat/AiChat"));
 const TasksPage       = lazy(() => import("./pages/tasks/TasksPage"));
 const MorningFeed     = lazy(() => import("./pages/morning/MorningFeed"));
+const MyTasksPage     = lazy(() => import("./pages/tasks/MyTasksPage"));
 
 const PageFallback = (
   <div style={{ width: "100%", height: "100dvh", background: "#0b0b12" }} />
@@ -56,7 +57,7 @@ function getUrlRole(): Role | null {
 }
 
 function AppInner() {
-  const { selectedRole, selectRole, switchRole } = useRole();
+  const { selectedRole, personId, selectRole, switchRole } = useRole();
 
   const effectiveRole = getUrlRole() ?? selectedRole;
 
@@ -64,17 +65,30 @@ function AppInner() {
     return <RoleSelect onSelect={selectRole} />;
   }
 
-  if (effectiveRole !== "client") {
-    return <RoleStub role={effectiveRole} onBack={switchRole} />;
+  /* ── Employee / staff view ── */
+  if (effectiveRole === "staff") {
+    return (
+      <AuthContext.Provider value={{ switchRole, personId }}>
+        <Suspense fallback={PageFallback}>
+          <MyTasksPage />
+        </Suspense>
+      </AuthContext.Provider>
+    );
   }
 
-  return (
-    <AuthContext.Provider value={{ switchRole }}>
-      <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-        <Router />
-      </WouterRouter>
-    </AuthContext.Provider>
-  );
+  /* ── Owner / client view ── */
+  if (effectiveRole === "client") {
+    return (
+      <AuthContext.Provider value={{ switchRole, personId: null }}>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <Router />
+        </WouterRouter>
+      </AuthContext.Provider>
+    );
+  }
+
+  /* ── Other roles (WIP stub) ── */
+  return <RoleStub role={effectiveRole} onBack={switchRole} />;
 }
 
 function App() {

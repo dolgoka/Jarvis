@@ -844,6 +844,7 @@ id: number;
 
 export type ListTasksParams = {
 box?: ListTasksBox;
+assigneeId?: number;
 };
 
 export type ListTasksBox = typeof ListTasksBox[keyof typeof ListTasksBox];

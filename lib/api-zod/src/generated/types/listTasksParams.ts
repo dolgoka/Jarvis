@@ -9,4 +9,5 @@ import type { ListTasksBox } from './listTasksBox';
 
 export type ListTasksParams = {
 box?: ListTasksBox;
+assigneeId?: number;
 };
