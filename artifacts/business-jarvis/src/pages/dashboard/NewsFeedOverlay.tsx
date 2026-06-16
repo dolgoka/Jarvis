@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, ExternalLink, MessageSquare, ArrowRight, CheckCircle2, RotateCcw, Loader2, Stamp, XCircle } from "lucide-react";
-import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem, useAcceptTask, useReturnTask, useApproveTask, useRejectApproval, usePingTask, useEscalateTask } from "@workspace/api-client-react";
+import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem, useAcceptTask, useReturnTask, useApproveTask, useRejectApproval, usePingTask, useEscalateTask, useRemindTask, useReassignTask, useListPeople } from "@workspace/api-client-react";
 import type { NewsItem } from "@workspace/api-client-react";
 import { VoiceCapture } from "@/components/ui/VoiceCapture";
 import { useLocation } from "wouter";
@@ -146,6 +146,22 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
       onError: () => {},
     },
   });
+  const { mutate: remindTask, isPending: isReminding } = useRemindTask({
+    mutation: {
+      onSuccess: () => { onTaskSuccessRef.current(); },
+      onError: () => {},
+    },
+  });
+  const { mutate: reassignTask, isPending: isReassigning } = useReassignTask({
+    mutation: {
+      onSuccess: () => { setReassignOpen(false); onTaskSuccessRef.current(); },
+      onError: () => {},
+    },
+  });
+
+  /* Reassign picker state */
+  const [reassignOpen, setReassignOpen] = useState(false);
+  const { data: people } = useListPeople();
 
   /* Touch swipe */
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -194,6 +210,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
     setRejectOpen(false);
     setRejectComment("");
     setRejectCommentError("");
+    setReassignOpen(false);
   }, [safeIdx]);
 
   /* Navigation */
@@ -874,39 +891,106 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                       </div>
                     )}
 
-                    {/* task_escalated → Пнуть + Открыть задачу */}
+                    {/* task_escalated → Напомнить лично + Переназначить + Открыть задачу */}
                     {item.type === "task_escalated" && (item as any).taskId != null && (
-                      <div style={{ display: "flex", gap: 7 }}>
-                        <button
-                          onClick={() => { pingTask({ params: { id: (item as any).taskId! } }); }}
-                          disabled={isPinging}
-                          style={{
-                            flex: 1, height: 36, borderRadius: 10,
-                            display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                            background: "rgba(240,181,74,0.12)", border: "1px solid rgba(240,181,74,0.35)",
-                            color: "#f0b54a", fontFamily: ff, fontSize: 11, fontWeight: 700,
-                            cursor: isPinging ? "not-allowed" : "pointer",
-                            opacity: isPinging ? 0.6 : 1, transition: "all 150ms",
-                          }}
-                        >
-                          {isPinging
-                            ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
-                            : "👊"
-                          }
-                          Пнуть
-                        </button>
-                        <button
-                          onClick={() => { onClose(); navigate("/tasks"); }}
-                          style={{
-                            flex: 1.5, height: 36, borderRadius: 10,
-                            display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                            background: "rgba(91,139,208,0.10)", border: "1px solid rgba(91,139,208,0.30)",
-                            color: "#5b8bd0", fontFamily: ff, fontSize: 12, fontWeight: 700,
-                            cursor: "pointer", transition: "all 150ms",
-                          }}
-                        >
-                          Открыть задачу →
-                        </button>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+
+                        {/* AI context hint */}
+                        <div style={{
+                          fontSize: 10, color: "rgba(228,232,255,0.35)", fontFamily: ff,
+                          display: "flex", alignItems: "center", gap: 5,
+                          padding: "4px 8px", borderRadius: 7,
+                          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                        }}>
+                          <span style={{ color: "#00d4ff", opacity: 0.6, fontSize: 9 }}>ИИ</span>
+                          ИИ уже напомнил исполнителю автоматически
+                        </div>
+
+                        {/* Action buttons row */}
+                        <div style={{ display: "flex", gap: 7 }}>
+                          {/* Напомнить лично */}
+                          <button
+                            onClick={() => { remindTask({ params: { id: (item as any).taskId! } }); }}
+                            disabled={isReminding || isReassigning}
+                            style={{
+                              flex: 1.2, height: 36, borderRadius: 10,
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                              background: "rgba(240,181,74,0.12)", border: "1px solid rgba(240,181,74,0.35)",
+                              color: "#f0b54a", fontFamily: ff, fontSize: 11, fontWeight: 700,
+                              cursor: isReminding ? "not-allowed" : "pointer",
+                              opacity: isReminding ? 0.6 : 1, transition: "all 150ms",
+                            }}
+                          >
+                            {isReminding
+                              ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
+                              : <MessageSquare style={{ width: 12, height: 12 }} />
+                            }
+                            Напомнить лично
+                          </button>
+
+                          {/* Переназначить */}
+                          <button
+                            onClick={() => setReassignOpen(v => !v)}
+                            disabled={isReminding || isReassigning}
+                            style={{
+                              flex: 1, height: 36, borderRadius: 10,
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                              background: reassignOpen ? "rgba(167,139,250,0.18)" : "rgba(167,139,250,0.10)",
+                              border: `1px solid ${reassignOpen ? "rgba(167,139,250,0.55)" : "rgba(167,139,250,0.30)"}`,
+                              color: "#a78bfa", fontFamily: ff, fontSize: 11, fontWeight: 700,
+                              cursor: "pointer", transition: "all 150ms",
+                            }}
+                          >
+                            <RotateCcw style={{ width: 12, height: 12 }} />
+                            Переназначить
+                          </button>
+
+                          {/* Открыть задачу */}
+                          <button
+                            onClick={() => { onClose(); navigate("/tasks"); }}
+                            style={{
+                              flex: 0.8, height: 36, borderRadius: 10,
+                              display: "flex", alignItems: "center", justifyContent: "center", gap: 4,
+                              background: "rgba(91,139,208,0.10)", border: "1px solid rgba(91,139,208,0.30)",
+                              color: "#5b8bd0", fontFamily: ff, fontSize: 11, fontWeight: 700,
+                              cursor: "pointer", transition: "all 150ms",
+                            }}
+                          >
+                            Открыть <ArrowRight style={{ width: 11, height: 11 }} />
+                          </button>
+                        </div>
+
+                        {/* Reassign person picker (inline dropdown) */}
+                        {reassignOpen && (
+                          <div className="glass" style={{ padding: "8px 6px", display: "flex", flexDirection: "column", gap: 4, maxHeight: 180, overflowY: "auto" }}>
+                            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "rgba(228,232,255,0.30)", padding: "0 6px 4px", fontFamily: ff }}>
+                              Выберите нового исполнителя
+                            </div>
+                            {(people ?? []).filter(p => !p.isAssistant || (people?.length ?? 0) <= 1).map(person => (
+                              <button
+                                key={person.id}
+                                onClick={() => reassignTask({ params: { id: (item as any).taskId!, assigneeId: person.id } })}
+                                disabled={isReassigning}
+                                style={{
+                                  width: "100%", padding: "6px 10px", borderRadius: 8, textAlign: "left",
+                                  background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)",
+                                  cursor: isReassigning ? "not-allowed" : "pointer",
+                                  display: "flex", alignItems: "center", gap: 8,
+                                  transition: "all 120ms",
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.background = "rgba(167,139,250,0.12)")}
+                                onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
+                              >
+                                <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#a78bfa", flexShrink: 0 }} />
+                                <div>
+                                  <div style={{ fontSize: 11, fontWeight: 600, color: "rgba(228,232,255,0.80)", fontFamily: ff }}>{person.role}</div>
+                                  {person.name && <div style={{ fontSize: 9, color: "rgba(228,232,255,0.35)", fontFamily: ff }}>{person.name}</div>}
+                                </div>
+                                {isReassigning && <Loader2 style={{ width: 10, height: 10, marginLeft: "auto", animation: "spin 1s linear infinite", color: "#a78bfa" }} />}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

@@ -790,6 +790,81 @@ export const EscalateTaskResponse = zod.object({
 
 
 /**
+ * @summary Owner personally reminds the assignee (weightier than AI auto-ping)
+ */
+export const RemindTaskQueryParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const RemindTaskResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "watchers": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
+  "email": zod.string().nullish()
+})),
+  "priority": zod.enum(['high', 'medium', 'low']),
+  "dueDate": zod.string().nullish(),
+  "businessId": zod.number().nullish(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "createdBy": zod.string().optional(),
+  "createdByPersonId": zod.number().nullish(),
+  "parentId": zod.number().nullish(),
+  "returnComment": zod.string().nullish(),
+  "resultNote": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
+ * @summary Reassign a task to a different person
+ */
+export const ReassignTaskQueryParams = zod.object({
+  "id": zod.coerce.number(),
+  "assigneeId": zod.coerce.number()
+})
+
+export const ReassignTaskResponse = zod.object({
+  "id": zod.number(),
+  "title": zod.string(),
+  "body": zod.string(),
+  "assigneeId": zod.number(),
+  "assigneeName": zod.string(),
+  "assigneeRole": zod.string(),
+  "watchers": zod.array(zod.object({
+  "id": zod.number(),
+  "name": zod.string(),
+  "role": zod.string(),
+  "groupLabel": zod.string().nullish(),
+  "isInnerCircle": zod.boolean(),
+  "isAssistant": zod.boolean(),
+  "email": zod.string().nullish()
+})),
+  "priority": zod.enum(['high', 'medium', 'low']),
+  "dueDate": zod.string().nullish(),
+  "businessId": zod.number().nullish(),
+  "status": zod.enum(['draft', 'sent', 'in_progress', 'review', 'done', 'returned']),
+  "createdBy": zod.string().optional(),
+  "createdByPersonId": zod.number().nullish(),
+  "parentId": zod.number().nullish(),
+  "returnComment": zod.string().nullish(),
+  "resultNote": zod.string().nullish(),
+  "lastActivityAt": zod.string(),
+  "createdAt": zod.string()
+})
+
+
+/**
  * @summary List all tasks with assignee info
  */
 export const ListTasksQueryParams = zod.object({

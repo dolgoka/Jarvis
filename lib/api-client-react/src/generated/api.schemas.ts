@@ -914,6 +914,15 @@ export type EscalateTaskParams = {
 id: number;
 };
 
+export type RemindTaskParams = {
+id: number;
+};
+
+export type ReassignTaskParams = {
+id: number;
+assigneeId: number;
+};
+
 export type ListTasksParams = {
 box?: ListTasksBox;
 assigneeId?: number;

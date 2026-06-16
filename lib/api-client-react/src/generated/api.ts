@@ -61,8 +61,10 @@ import type {
   NotePatch,
   Person,
   PingTaskParams,
+  ReassignTaskParams,
   RejectApprovalInput,
   RejectApprovalParams,
+  RemindTaskParams,
   Report,
   ReportInput,
   RequestApprovalInput,
@@ -2340,6 +2342,160 @@ export const useEscalateTask = <TError = ErrorType<void>,
         TContext
       > => {
       return useMutation(getEscalateTaskMutationOptions(options));
+    }
+
+export const getRemindTaskUrl = (params: RemindTaskParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/remind?${stringifiedParams}` : `/api/tasks/remind`
+}
+
+/**
+ * @summary Owner personally reminds the assignee (weightier than AI auto-ping)
+ */
+export const remindTask = async (params: RemindTaskParams, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getRemindTaskUrl(params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getRemindTaskMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof remindTask>>, TError,{params: RemindTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof remindTask>>, TError,{params: RemindTaskParams}, TContext> => {
+
+const mutationKey = ['remindTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof remindTask>>, {params: RemindTaskParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  remindTask(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemindTaskMutationResult = NonNullable<Awaited<ReturnType<typeof remindTask>>>
+
+    export type RemindTaskMutationError = ErrorType<void>
+
+    /**
+ * @summary Owner personally reminds the assignee (weightier than AI auto-ping)
+ */
+export const useRemindTask = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof remindTask>>, TError,{params: RemindTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof remindTask>>,
+        TError,
+        {params: RemindTaskParams},
+        TContext
+      > => {
+      return useMutation(getRemindTaskMutationOptions(options));
+    }
+
+export const getReassignTaskUrl = (params: ReassignTaskParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/tasks/reassign?${stringifiedParams}` : `/api/tasks/reassign`
+}
+
+/**
+ * @summary Reassign a task to a different person
+ */
+export const reassignTask = async (params: ReassignTaskParams, options?: RequestInit): Promise<Task> => {
+
+  return customFetch<Task>(getReassignTaskUrl(params),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getReassignTaskMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reassignTask>>, TError,{params: ReassignTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reassignTask>>, TError,{params: ReassignTaskParams}, TContext> => {
+
+const mutationKey = ['reassignTask'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reassignTask>>, {params: ReassignTaskParams}> = (props) => {
+          const {params} = props ?? {};
+
+          return  reassignTask(params,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReassignTaskMutationResult = NonNullable<Awaited<ReturnType<typeof reassignTask>>>
+
+    export type ReassignTaskMutationError = ErrorType<void>
+
+    /**
+ * @summary Reassign a task to a different person
+ */
+export const useReassignTask = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reassignTask>>, TError,{params: ReassignTaskParams}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reassignTask>>,
+        TError,
+        {params: ReassignTaskParams},
+        TContext
+      > => {
+      return useMutation(getReassignTaskMutationOptions(options));
     }
 
 export const getListTasksUrl = (params?: ListTasksParams,) => {

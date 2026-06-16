@@ -635,6 +635,53 @@ paths:
         "404":
           description: Not found
 
+  /tasks/remind:
+    post:
+      operationId: remindTask
+      tags: [tasks]
+      summary: Owner personally reminds the assignee (weightier than AI auto-ping)
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reminder sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+
+  /tasks/reassign:
+    post:
+      operationId: reassignTask
+      tags: [tasks]
+      summary: Reassign a task to a different person
+      parameters:
+        - name: id
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: assigneeId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Reassigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Task"
+        "404":
+          description: Not found
+
   /tasks:
     get:
       operationId: listTasks

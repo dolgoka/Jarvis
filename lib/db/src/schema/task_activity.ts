@@ -11,6 +11,8 @@ export const taskActivityTypeEnum = pgEnum("task_activity_type", [
   "commented",
   "escalated",
   "pinged",
+  "owner_reminded",
+  "reassigned",
 ]);
 
 export const taskActivityTable = pgTable("task_activity", {

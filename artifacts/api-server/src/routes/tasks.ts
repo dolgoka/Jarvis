@@ -783,6 +783,83 @@ router.post("/tasks/ping", async (req, res): Promise<void> => {
   res.json(taskToResponse(task, assignee, allPeople));
 });
 
+router.post("/tasks/remind", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id) { res.status(400).json({ error: "id required" }); return; }
+
+  const allPeople = await db.select().from(peopleTable);
+  const rows = await db.select().from(tasksTable).where(eq(tasksTable.id, id)).limit(1);
+  const task = rows[0];
+  if (!task) { res.status(404).json({ error: "Task not found" }); return; }
+  const assignee = allPeople.find(p => p.id === task.assigneeId);
+  if (!assignee) { res.status(404).json({ error: "Assignee not found" }); return; }
+
+  const now = new Date();
+  await writeActivity({ taskId: id, type: "owner_reminded", actorRole: "owner", text: "Заказчик напомнил лично", at: now });
+  await db.insert(newsItemsTable).values({
+    taskId: id,
+    type: "task_stuck",
+    severity: "attention",
+    title: "Личное напоминание заказчика",
+    body: `Заказчик лично ждёт результата по задаче «${task.title}»`,
+    recipientRole: "employee",
+    sourceLabel: "Заказчик",
+    isUrgentFlag: true,
+    actionable: false,
+    status: "new",
+  });
+
+  res.json(taskToResponse(task, assignee, allPeople));
+});
+
+router.post("/tasks/reassign", async (req, res): Promise<void> => {
+  const id = Number(req.query["id"]);
+  if (!id) { res.status(400).json({ error: "id required" }); return; }
+
+  const assigneeId = Number(req.query["assigneeId"]);
+  if (!assigneeId) { res.status(400).json({ error: "assigneeId required" }); return; }
+
+  const allPeople = await db.select().from(peopleTable);
+  const newAssignee = allPeople.find(p => p.id === assigneeId);
+  if (!newAssignee) { res.status(400).json({ error: "New assignee not found" }); return; }
+
+  const rows = await db.select().from(tasksTable).where(eq(tasksTable.id, id)).limit(1);
+  const task = rows[0];
+  if (!task) { res.status(404).json({ error: "Task not found" }); return; }
+
+  const oldAssignee = allPeople.find(p => p.id === task.assigneeId);
+  const now = new Date();
+
+  const [updated] = await db
+    .update(tasksTable)
+    .set({ assigneeId, lastActivityAt: now })
+    .where(eq(tasksTable.id, id))
+    .returning();
+
+  await writeActivity({
+    taskId: id,
+    type: "reassigned",
+    actorRole: "owner",
+    text: `Переназначено с «${oldAssignee?.role ?? "—"}» на «${newAssignee.role}»`,
+    at: now,
+  });
+
+  await db.insert(newsItemsTable).values({
+    taskId: id,
+    type: "task_new",
+    severity: "attention",
+    title: "Задача переназначена на вас",
+    body: `Заказчик переназначил задачу «${task.title}» — теперь она на вас`,
+    recipientRole: "employee",
+    sourceLabel: "Заказчик",
+    isUrgentFlag: true,
+    actionable: true,
+    status: "new",
+  });
+
+  res.json(taskToResponse(updated!, newAssignee, allPeople));
+});
+
 router.post("/tasks/escalate", async (req, res): Promise<void> => {
   const id = Number(req.query["id"]);
   if (!id) { res.status(400).json({ error: "id required" }); return; }
