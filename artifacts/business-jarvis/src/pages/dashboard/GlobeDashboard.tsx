@@ -18,7 +18,6 @@ import {
 import { Link, useLocation } from "wouter";
 import NewsFeedOverlay from "./NewsFeedOverlay";
 import { BottomDock, type DockPanel } from "./BottomDock";
-import { CornerMenu } from "./CornerMenu";
 import BusinessCardOverlay from "./BusinessCardOverlay";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuthContext } from "@/hooks/AuthContext";
@@ -945,7 +944,6 @@ export default function GlobeDashboard() {
         )}
 
         {/* ── Corner menu ── */}
-        <CornerMenu />
 
         {/* Slide-over / bottom sheet */}
         {selectedBusiness && !cardBusinessId && (
