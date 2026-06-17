@@ -735,13 +735,13 @@ export default function GlobeDashboard() {
           }}
         >
           <h1 className="text-base md:text-xl font-bold leading-none" style={{ color: "rgba(228,232,255,0.90)", fontFamily: HF }}>Глобальный центр</h1>
-          <div className="text-[10px] font-semibold uppercase tracking-widest mt-1" style={{ color: "rgba(228,232,255,0.26)", fontFamily: HF }}>Командный центр</div>
+          <div className="text-[10px] font-semibold uppercase tracking-widest mt-1" style={{ color: "hsl(var(--muted-foreground))", fontFamily: HF }}>Командный центр</div>
           {/* Traffic-light chips */}
           <div className="hidden md:flex items-center gap-3 mt-3">
             {(["green", "yellow", "red"] as const).map(h => (
               <div key={h} style={{ display: "flex", alignItems: "center", gap: 5 }}>
                 <div style={{ width: 8, height: 8, borderRadius: "50%", background: HEALTH_COLORS[h], boxShadow: `0 0 5px 2px ${HEALTH_COLORS[h]}66`, flexShrink: 0 }} />
-                <span style={{ fontSize: 11, color: "rgba(228,232,255,0.48)", fontFamily: HF }}>
+                <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", fontFamily: HF }}>
                   {healthCounts[h]} {HEALTH_LABELS[h]}
                 </span>
               </div>
@@ -782,8 +782,8 @@ export default function GlobeDashboard() {
           }}
         >
           {/* Revenue readout */}
-          <div className="glass" style={{ padding: "16px 20px", minWidth: 190 }}>
-            <div className="uppercase tracking-widest font-semibold" style={{ fontSize: 10, color: "rgba(228,232,255,0.30)", fontFamily: HF, marginBottom: 8 }}>
+          <div className="glass-panel" style={{ padding: "16px 20px", minWidth: 190 }}>
+            <div className="uppercase tracking-widest font-semibold" style={{ fontSize: 10, color: "hsl(var(--muted-foreground))", fontFamily: HF, marginBottom: 8 }}>
               Выручка · 30 дн
             </div>
             {isLoadingStats
@@ -860,14 +860,14 @@ export default function GlobeDashboard() {
             transform: cornersVisible ? "translateX(0)" : "translateX(-120%)",
           }}
         >
-          <div className="glass" style={{ padding: "12px 16px" }}>
-            <div className="uppercase tracking-widest font-semibold mb-2" style={{ fontSize: 9, color: "rgba(228,232,255,0.22)", fontFamily: HF }}>
+          <div className="glass-panel" style={{ padding: "12px 16px" }}>
+            <div className="uppercase tracking-widest font-semibold mb-2" style={{ fontSize: 9, color: "hsl(var(--muted-foreground))", fontFamily: HF }}>
               Валюты · Ключевое
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {([["USD/EUR", "0.924"], ["USD/RUB", "89.4"], ["BTC", "$67 240"]] as const).map(([k, v]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 22 }}>
-                  <span style={{ fontSize: 11, color: "rgba(228,232,255,0.26)", fontFamily: HF }}>{k}</span>
+                  <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", fontFamily: HF }}>{k}</span>
                   <span style={{ fontSize: 11, color: "rgba(228,232,255,0.38)", fontFamily: HF, fontVariantNumeric: "tabular-nums" }}>{v}</span>
                 </div>
               ))}
@@ -878,13 +878,13 @@ export default function GlobeDashboard() {
         {/* ── Mobile: revenue badge + collapsible nodes ── */}
         {!selectedBusiness && (
           <div className="md:hidden absolute top-14 right-3 z-10 pointer-events-auto flex flex-col items-end gap-2">
-            <div className="glass text-right" style={{ padding: "10px 16px" }}>
-              <div className="uppercase tracking-widest font-semibold" style={{ fontSize: 9, color: "rgba(228,232,255,0.38)", fontFamily: HF }}>Выручка 30Д</div>
+            <div className="glass-panel text-right" style={{ padding: "12px 16px" }}>
+              <div className="uppercase tracking-widest font-semibold" style={{ fontSize: 9, color: "hsl(var(--muted-foreground))", fontFamily: HF }}>Выручка 30Д</div>
               <div className="tabular-nums mt-0.5" style={{ fontSize: 14, fontWeight: 700, color: "rgba(228,232,255,0.90)", fontFamily: HF }}>
                 {isLoadingStats ? "…" : formatCurrency(stats?.totalRevenue || 0)}
               </div>
             </div>
-            <div className="glass flex items-center gap-3" style={{ borderRadius: 14, padding: "8px 12px" }}>
+            <div className="glass flex items-center gap-3" style={{ padding: "8px 12px" }}>
               {(["green", "yellow", "red"] as const).map(h => (
                 <div key={h} style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <div style={{ width: 9, height: 9, borderRadius: "50%", flexShrink: 0, background: HEALTH_COLORS[h], boxShadow: `0 0 5px 2px ${HEALTH_COLORS[h]}55` }} />

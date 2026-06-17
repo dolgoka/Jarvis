@@ -330,7 +330,7 @@ export function BottomDock({ activePanel, onPanelChange, chatPrefill, onChatPref
       )}
 
       {/* ── Pill row ── */}
-      <div className="glass flex items-center gap-1.5 p-1.5">
+      <div className="glass flex items-center gap-2 p-2">
         <DockPill
           icon={<MessageSquare className="w-4 h-4" />}
           label="Спросить"
