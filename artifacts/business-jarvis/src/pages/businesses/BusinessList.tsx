@@ -52,14 +52,14 @@ export default function BusinessList() {
             <div
               className="hidden md:block rounded-xl overflow-hidden"
               style={{
-                border: "1px solid var(--jarvis-border)",
-                background: "rgba(29,26,22,0.80)",
+                border: "1px solid var(--jarvis-glass-border)",
+                background: "rgba(8,12,24,0.80)",
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
               }}
             >
               <table className="w-full">
-                <thead style={{ background: "#24201a" }}>
+                <thead style={{ background: "rgba(5,9,20,0.95)" }}>
                   <tr style={{ borderBottom: "1px solid var(--jarvis-border)" }}>
                     <th
                       className="text-left px-6 py-3 text-xs font-semibold"
@@ -123,8 +123,8 @@ export default function BusinessList() {
             <div
               className="md:hidden rounded-xl overflow-hidden"
               style={{
-                border: "1px solid var(--jarvis-border)",
-                background: "rgba(29,26,22,0.80)",
+                border: "1px solid var(--jarvis-glass-border)",
+                background: "rgba(8,12,24,0.80)",
                 backdropFilter: "blur(12px)",
                 WebkitBackdropFilter: "blur(12px)",
               }}
