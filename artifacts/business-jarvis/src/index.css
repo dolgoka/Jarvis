@@ -97,7 +97,7 @@
   --secondary: 240 10% 16%;
   --secondary-foreground: 230 40% 92%;
   --muted: 240 12% 15%;
-  --muted-foreground: 230 20% 58%;
+  --muted-foreground: 213 25% 74%;
   --accent: 248 100% 74%;
   --accent-foreground: 230 40% 92%;
   --destructive: 3 75% 65%;
@@ -115,15 +115,28 @@
   --radius: .5rem;
 
   /* ─── Liquid Glass токены (тёмная тема) ─── */
-  --glass-tint:       rgba(8, 12, 24, 0.82);
-  --glass-tint-hover: rgba(12, 18, 32, 0.87);
-  --glass-edge:       rgba(255, 255, 255, 0.09);
-  --glass-edge-hover: rgba(255, 255, 255, 0.14);
-  --glass-blur:       12px;
-  --glass-sat:        100%;
+  /* Structure — shared by all glass variants */
+  --glass-blur:              16px;
+  --glass-sat:               140%;
+  --glass-radius:            16px;
+  --glass-border-color:      rgba(255, 255, 255, 0.09);
   --glass-shadow:
     0 4px 20px rgba(0, 0, 0, 0.45),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
+
+  /* Fill — only this varies between variants */
+  --glass-fill:              rgba(8, 12, 24, 0.72);
+  --glass-fill-hover:        rgba(12, 18, 32, 0.78);
+  --glass-fill-strong:       rgba(5,  9, 20, 0.90);   /* panels over globe */
+  --glass-fill-strong-hover: rgba(7, 11, 24, 0.93);
+  --glass-fill-cyan:         rgba(0, 34, 55, 0.72);   /* accent tint */
+  --glass-fill-cyan-hover:   rgba(0, 42, 66, 0.80);
+
+  /* Legacy aliases (used by light-theme overrides) */
+  --glass-tint:       var(--glass-fill);
+  --glass-tint-hover: var(--glass-fill-hover);
+  --glass-edge:       var(--glass-border-color);
+  --glass-edge-hover: rgba(255, 255, 255, 0.14);
 
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
@@ -163,37 +176,69 @@
    Нет SVG-фильтров, нет radужного ::after — только один канонический класс.
 ════════════════════════════════════════════════════════════════ */
 
-/* ── Единый жидкий материал ── */
-.glass {
+/* ── Единый жидкий материал — три варианта, одна структура ── */
+
+/* Shared mixin via custom properties */
+.glass,
+.glass-panel,
+.glass-cyan {
   position: relative;
-  border-radius: 16px;
-  background: var(--glass-tint);
+  border-radius: var(--glass-radius);
   backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  border: 1px solid var(--glass-edge);
   box-shadow: var(--glass-shadow);
   isolation: isolate;
   transition: background 200ms ease, border-color 200ms ease;
 }
 
-.glass:hover {
-  background: var(--glass-tint-hover);
-  border-color: var(--glass-edge-hover);
-}
-
 /* Контент над слоями */
-.glass > * {
+.glass > *,
+.glass-panel > *,
+.glass-cyan > * {
   position: relative;
   z-index: 1;
 }
 
+/* ── Base: cards, chips, tooltips ── */
+.glass {
+  background: var(--glass-fill);
+  border: 1px solid var(--glass-border-color);
+}
+.glass:hover {
+  background: var(--glass-fill-hover);
+  border-color: var(--glass-edge-hover);
+}
+
+/* ── Panel: dense fill — readable over patterned globe ── */
+.glass-panel {
+  background: var(--glass-fill-strong);
+  border: 1px solid var(--glass-border-color);
+}
+.glass-panel:hover {
+  background: var(--glass-fill-strong-hover);
+}
+
+/* ── Cyan: accent tint, same blur / border width / radius ── */
+.glass-cyan {
+  background: var(--glass-fill-cyan);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+}
+.glass-cyan:hover {
+  background: var(--glass-fill-cyan-hover);
+  border-color: rgba(0, 212, 255, 0.38);
+}
+
 /* Пилюля — навбар, кнопки */
-.glass.pill {
+.glass.pill,
+.glass-panel.pill,
+.glass-cyan.pill {
   border-radius: 999px;
 }
 
 /* Мелкий чип */
-.glass.chip {
+.glass.chip,
+.glass-panel.chip,
+.glass-cyan.chip {
   border-radius: 12px;
 }
 

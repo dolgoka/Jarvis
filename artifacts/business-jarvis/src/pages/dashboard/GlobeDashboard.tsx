@@ -103,7 +103,7 @@ function BusinessSlideOver({ businessId, color: _color, onClose, onOpenCard }: {
   );
 
   const StatCard = ({ label, value, showMargin }: { label: string; value: string; showMargin?: boolean }) => (
-    <div className="glass" style={{ padding: "14px 16px" }}>
+    <div className="glass" style={{ padding: "16px" }}>
       <div style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(228,232,255,0.45)", fontFamily: HF, marginBottom: 8 }}>{label}</div>
       <div style={{ fontSize: 20, fontWeight: 800, color: "rgba(228,232,255,0.95)", fontFamily: HF, lineHeight: 1 }}>{value}</div>
       {showMargin && marginNum !== null && (
@@ -773,7 +773,7 @@ export default function GlobeDashboard() {
 
         {/* ── Desktop: top-right compact HUD (revenue + ranking) ── */}
         <div
-          className="hidden md:flex absolute top-6 right-6 z-10 flex-col items-end gap-2 pointer-events-auto"
+          className="hidden md:flex absolute top-6 right-6 z-10 flex-col items-end gap-3 pointer-events-auto"
           style={{
             transition: "transform 300ms cubic-bezier(0.4,0,0.2,1), opacity 300ms ease",
             transform: cornersVisible ? "translateX(0)" : "translateX(120%)",
@@ -782,7 +782,7 @@ export default function GlobeDashboard() {
           }}
         >
           {/* Revenue readout */}
-          <div className="glass" style={{ padding: "14px 20px", minWidth: 190 }}>
+          <div className="glass" style={{ padding: "16px 20px", minWidth: 190 }}>
             <div className="uppercase tracking-widest font-semibold" style={{ fontSize: 10, color: "rgba(228,232,255,0.30)", fontFamily: HF, marginBottom: 8 }}>
               Выручка · 30 дн
             </div>
@@ -792,7 +792,7 @@ export default function GlobeDashboard() {
                   <div className="tabular-nums" style={{ fontSize: 30, fontWeight: 800, lineHeight: 1, color: "rgba(228,232,255,0.95)", fontFamily: HF }}>
                     {formatCurrency(stats?.totalRevenue || 0)}
                   </div>
-                  <div className="inline-flex items-center gap-1 mt-2.5" style={{ fontSize: 11, fontWeight: 600, color: "#3ed9a0", fontFamily: HF }}>
+                  <div className="inline-flex items-center gap-1 mt-3" style={{ fontSize: 11, fontWeight: 600, color: "#3ed9a0", fontFamily: HF }}>
                     ↑ Активно
                   </div>
                 </>
@@ -854,17 +854,17 @@ export default function GlobeDashboard() {
         <div
           className="hidden md:block absolute left-6 z-10 pointer-events-none"
           style={{
-            bottom: 20,
+            bottom: 24,
             transition: "transform 300ms cubic-bezier(0.4,0,0.2,1), opacity 300ms ease",
             opacity: cornersVisible ? 1 : 0,
             transform: cornersVisible ? "translateX(0)" : "translateX(-120%)",
           }}
         >
-          <div className="glass" style={{ padding: "10px 16px" }}>
+          <div className="glass" style={{ padding: "12px 16px" }}>
             <div className="uppercase tracking-widest font-semibold mb-2" style={{ fontSize: 9, color: "rgba(228,232,255,0.22)", fontFamily: HF }}>
               Валюты · Ключевое
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {([["USD/EUR", "0.924"], ["USD/RUB", "89.4"], ["BTC", "$67 240"]] as const).map(([k, v]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 22 }}>
                   <span style={{ fontSize: 11, color: "rgba(228,232,255,0.26)", fontFamily: HF }}>{k}</span>
