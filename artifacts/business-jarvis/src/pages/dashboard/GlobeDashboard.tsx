@@ -475,14 +475,12 @@ export default function GlobeDashboard() {
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 px-3 font-medium text-sm min-h-[46px]"
+              className="jarvis-btn relative flex items-center gap-3 px-3 font-medium text-sm transition-all duration-150 min-h-[46px]"
               style={{
                 borderRadius: 12,
-                textDecoration: "none",
                 color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.38)",
                 background: active ? "rgba(0,60,100,0.32)" : "transparent",
                 border: active ? "1px solid rgba(0,212,255,0.20)" : "1px solid transparent",
-                transition: "background 150ms, color 150ms, border-color 150ms",
                 fontFamily: HF,
               }}
               onClick={onNav}
