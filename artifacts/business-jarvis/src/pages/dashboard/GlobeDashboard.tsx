@@ -61,7 +61,7 @@ const GLOBE_NAV = [
   { href: "/tasks",      label: "Задачи",            icon: ClipboardList },
   { href: "/ai-summary", label: "Сводка ИИ",         icon: Brain },
   { href: "/chat",       label: "Чат с ИИ",          icon: MessageSquare },
-  { href: "/connect",    label: "Подключения",       icon: LinkIcon },
+  { href: "/connect",    label: "Добавить компанию",  icon: LinkIcon },
 ] as const;
 
 /* ── BusinessSlideOver ─────────────────────────────────────────────────────── */
