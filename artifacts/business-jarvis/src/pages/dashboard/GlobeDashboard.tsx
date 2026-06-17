@@ -13,11 +13,12 @@ import {
   Loader2, X, MapPin, User, Mail,
   Zap, ChevronDown, Newspaper, Globe as GlobeIcon, ExternalLink,
   PanelLeft, LayoutGrid, Brain, MessageSquare, ClipboardList,
-  Link as LinkIcon, RefreshCcw, Menu,
+  Link as LinkIcon, RefreshCcw, Menu, Sparkles,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import NewsFeedOverlay from "./NewsFeedOverlay";
 import { BottomDock, type DockPanel } from "./BottomDock";
+import { AIChatSidePanel } from "./AIChatSidePanel";
 import BusinessCardOverlay from "./BusinessCardOverlay";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuthContext } from "@/hooks/AuthContext";
@@ -257,6 +258,7 @@ export default function GlobeDashboard() {
   const [feedOpen, setFeedOpen] = useState(false);
   const [feedDismissed, setFeedDismissed] = useState(false);
   const [dockPanel, setDockPanel] = useState<DockPanel>(null);
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [chatPrefill, setChatPrefill] = useState<{ bizName: string; msg: string } | null>(null);
   const [taskOpenRequest, setTaskOpenRequest] = useState<{ text: string } | null>(null);
   const feedAutoOpenedRef = useRef(false);
@@ -961,7 +963,57 @@ export default function GlobeDashboard() {
             onAskChat={handleAskChat}
           />
         )}
+
+        {/* ── AI FAB button (bottom-right) ── */}
+        {!selectedBusiness && !cardBusinessId && (
+          <button
+            onClick={() => setAiPanelOpen(v => !v)}
+            className="hidden md:flex items-center gap-2 fixed z-50 transition-all duration-200"
+            style={{
+              bottom: 28,
+              right: 28,
+              height: 44,
+              paddingInline: 18,
+              borderRadius: 999,
+              background: aiPanelOpen
+                ? "rgba(0,212,255,0.18)"
+                : "rgba(4,8,20,0.90)",
+              backdropFilter: "blur(16px) saturate(160%)",
+              WebkitBackdropFilter: "blur(16px) saturate(160%)",
+              border: aiPanelOpen
+                ? "1px solid rgba(0,212,255,0.50)"
+                : "1px solid rgba(0,212,255,0.22)",
+              color: aiPanelOpen ? "var(--jarvis-accent)" : "rgba(0,212,255,0.75)",
+              boxShadow: aiPanelOpen
+                ? "0 0 24px rgba(0,212,255,0.25), 0 4px 20px rgba(0,0,0,0.4)"
+                : "0 4px 20px rgba(0,0,0,0.4)",
+              fontFamily: HF,
+              fontSize: 12,
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              cursor: "pointer",
+            }}
+            onMouseEnter={e => {
+              if (!aiPanelOpen) {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,212,255,0.12)";
+                (e.currentTarget as HTMLButtonElement).style.color = "var(--jarvis-accent)";
+              }
+            }}
+            onMouseLeave={e => {
+              if (!aiPanelOpen) {
+                (e.currentTarget as HTMLButtonElement).style.background = "rgba(4,8,20,0.90)";
+                (e.currentTarget as HTMLButtonElement).style.color = "rgba(0,212,255,0.75)";
+              }
+            }}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            {aiPanelOpen ? "Закрыть" : "AI"}
+          </button>
+        )}
       </div>
+
+      {/* AI Chat side panel — outside overflow-hidden container so slide works */}
+      <AIChatSidePanel open={aiPanelOpen} onClose={() => setAiPanelOpen(false)} />
     </div>
   );
 }
