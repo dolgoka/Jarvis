@@ -756,14 +756,14 @@ export default function GlobeDashboard() {
             className="flex items-center gap-2 px-4 transition-all hover:scale-105"
             style={{
               height: 36, borderRadius: 999,
-              background: feedOpen ? "rgba(239,68,68,0.14)" : "rgba(12,20,36,0.55)",
-              backdropFilter: "blur(22px) saturate(120%)",
-              WebkitBackdropFilter: "blur(22px) saturate(120%)",
-              border: feedOpen ? "1px solid rgba(239,68,68,0.50)" : "1px solid rgba(255,255,255,0.10)",
+              background: feedOpen ? "rgba(239,68,68,0.14)" : "rgba(8,12,24,0.82)",
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+              border: feedOpen ? "1px solid rgba(239,68,68,0.50)" : "1px solid rgba(255,255,255,0.09)",
               color: feedOpen ? "#ef4444" : "rgba(228,232,255,0.65)",
               fontFamily: HF, fontSize: 12, fontWeight: 600, letterSpacing: "0.05em",
               cursor: "pointer",
-              boxShadow: "0 8px 32px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.07)",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.05)",
               transition: "background 200ms, border-color 200ms, color 200ms, transform 200ms",
             }}
           >

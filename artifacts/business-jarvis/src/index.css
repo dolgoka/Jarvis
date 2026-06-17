@@ -115,15 +115,15 @@
   --radius: .5rem;
 
   /* ─── Liquid Glass токены (тёмная тема) ─── */
-  --glass-tint:       rgba(12, 20, 36, 0.55);
-  --glass-tint-hover: rgba(20, 32, 52, 0.62);
-  --glass-edge:       rgba(255, 255, 255, 0.10);
-  --glass-edge-hover: rgba(255, 255, 255, 0.16);
-  --glass-blur:       22px;
-  --glass-sat:        120%;
+  --glass-tint:       rgba(8, 12, 24, 0.82);
+  --glass-tint-hover: rgba(12, 18, 32, 0.87);
+  --glass-edge:       rgba(255, 255, 255, 0.09);
+  --glass-edge-hover: rgba(255, 255, 255, 0.14);
+  --glass-blur:       12px;
+  --glass-sat:        100%;
   --glass-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    0 4px 20px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 
   --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
   --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
