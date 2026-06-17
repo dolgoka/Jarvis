@@ -13,8 +13,8 @@ function statusLabel(status: string) {
 }
 
 function statusStyle(status: string) {
-  if (status === "active") return "border-green-500/50 text-green-400 bg-green-500/10";
-  if (status === "inactive") return "border-red-500/50 text-red-400 bg-red-500/10";
+  if (status === "active") return "border-green-500/40 text-green-400 bg-transparent";
+  if (status === "inactive") return "border-red-500/40 text-red-400 bg-transparent";
   return "border-yellow-500/40 text-yellow-400 bg-transparent";
 }
 
