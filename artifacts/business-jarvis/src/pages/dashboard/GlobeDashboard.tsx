@@ -13,7 +13,7 @@ import {
   Loader2, X, MapPin, User, Mail,
   Zap, ChevronDown, Newspaper, Globe as GlobeIcon, ExternalLink,
   PanelLeft, LayoutGrid, Brain, MessageSquare, ClipboardList,
-  Link as LinkIcon, RefreshCcw, Sun, Moon, Menu,
+  Link as LinkIcon, RefreshCcw, Menu,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import NewsFeedOverlay from "./NewsFeedOverlay";
@@ -22,7 +22,6 @@ import { CornerMenu } from "./CornerMenu";
 import BusinessCardOverlay from "./BusinessCardOverlay";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuthContext } from "@/hooks/AuthContext";
-import { useTheme } from "@/hooks/ThemeContext";
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 
@@ -269,7 +268,6 @@ export default function GlobeDashboard() {
   });
   const [location] = useLocation();
   const { switchRole } = useAuthContext();
-  const { theme, toggleTheme } = useTheme();
 
   const toggleSidebar = useCallback(() => {
     setSidebarOpen(prev => {
@@ -483,8 +481,9 @@ export default function GlobeDashboard() {
                 borderRadius: 12,
                 textDecoration: "none",
                 color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.38)",
-                background: active ? "var(--jarvis-accent-12)" : "transparent",
-                transition: "background 150ms, color 150ms",
+                background: active ? "rgba(0,60,100,0.32)" : "transparent",
+                border: active ? "1px solid rgba(0,212,255,0.20)" : "1px solid transparent",
+                transition: "background 150ms, color 150ms, border-color 150ms",
                 fontFamily: HF,
               }}
               onClick={onNav}
@@ -497,17 +496,6 @@ export default function GlobeDashboard() {
         })}
       </nav>
       <div className="p-3 flex flex-col gap-0.5" style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-        <button
-          onClick={toggleTheme}
-          className="flex items-center gap-3 w-full px-3 text-sm min-h-[46px]"
-          style={{ borderRadius: 12, color: "rgba(228,232,255,0.25)", fontFamily: HF, background: "transparent", border: "none", cursor: "pointer" }}
-        >
-          {theme === "dark"
-            ? <Sun className="w-4 h-4 flex-shrink-0 opacity-40" />
-            : <Moon className="w-4 h-4 flex-shrink-0 opacity-40" />
-          }
-          {theme === "dark" ? "Светлая тема" : "Тёмная тема"}
-        </button>
         <button
           onClick={switchRole}
           className="flex items-center gap-3 w-full px-3 text-sm min-h-[46px]"
@@ -609,31 +597,35 @@ export default function GlobeDashboard() {
           </div>
         </div>
 
-        {/* ── Desktop: sidebar toggle button (always visible at top-left of globe area) ── */}
-        <button
-          onClick={toggleSidebar}
-          className="hidden md:flex items-center justify-center absolute z-30"
-          style={{
-            top: 14, left: 14,
-            width: 34, height: 34, borderRadius: 9,
-            background: "rgba(8,14,28,0.72)",
-            backdropFilter: "blur(12px) saturate(120%)",
-            WebkitBackdropFilter: "blur(12px) saturate(120%)",
-            border: "1px solid rgba(255,255,255,0.10)",
-            color: "rgba(228,232,255,0.50)",
-            cursor: "pointer",
-            transition: "background 150ms, color 150ms",
-          }}
-          title={sidebarOpen ? "Скрыть панель" : "Показать панель"}
-        >
-          <PanelLeft
-            className="w-4 h-4"
+        {/* ── Desktop: sidebar toggle button — only shown when sidebar is CLOSED ── */}
+        {!sidebarOpen && (
+          <button
+            onClick={toggleSidebar}
+            className="hidden md:flex items-center justify-center absolute z-30"
             style={{
-              transform: sidebarOpen ? "none" : "scaleX(-1)",
-              transition: "transform 280ms ease",
+              top: 16, left: 16,
+              width: 32, height: 32, borderRadius: 8,
+              background: "rgba(0,212,255,0.07)",
+              backdropFilter: "blur(14px) saturate(140%)",
+              WebkitBackdropFilter: "blur(14px) saturate(140%)",
+              border: "1px solid rgba(0,212,255,0.18)",
+              color: "rgba(0,212,255,0.65)",
+              cursor: "pointer",
+              transition: "background 150ms, border-color 150ms, color 150ms",
             }}
-          />
-        </button>
+            title="Показать панель"
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,212,255,0.13)";
+              (e.currentTarget as HTMLButtonElement).style.color = "#00d4ff";
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,212,255,0.07)";
+              (e.currentTarget as HTMLButtonElement).style.color = "rgba(0,212,255,0.65)";
+            }}
+          >
+            <PanelLeft className="w-4 h-4" style={{ transform: "scaleX(-1)" }} />
+          </button>
+        )}
 
         {/* Ambient glow blobs */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none" aria-hidden="true">
@@ -736,9 +728,10 @@ export default function GlobeDashboard() {
 
         {/* ── Top-left: title + health chips ── */}
         <div
-          className="absolute top-4 md:top-6 left-4 md:left-6 z-10 pointer-events-none"
+          className="absolute top-4 md:top-5 z-10 pointer-events-none"
           style={{
-            transition: "opacity 300ms ease",
+            left: sidebarOpen ? 24 : 58,
+            transition: "opacity 300ms ease, left 280ms cubic-bezier(0.4,0,0.2,1)",
             opacity: cornersVisible ? 1 : 0,
           }}
         >
