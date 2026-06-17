@@ -5,7 +5,7 @@ import { useAuthContext } from "@/hooks/AuthContext";
 
 const NAV = [
   { href: "/",            label: "Центр",   fullLabel: "Глобальный центр", icon: Globe },
-  { href: "/businesses",  label: "Сеть",    fullLabel: "Сеть",             icon: LayoutGrid },
+  { href: "/businesses",  label: "Сеть",    fullLabel: "Мои компании",      icon: LayoutGrid },
   { href: "/tasks",       label: "Задачи",  fullLabel: "Задачи",           icon: ClipboardList },
   { href: "/ai-summary",  label: "Сводка",  fullLabel: "Сводка ИИ",        icon: Brain },
   { href: "/chat",        label: "Чат",     fullLabel: "Чат с ИИ",         icon: MessageSquare },

@@ -31,7 +31,7 @@ export default function BusinessList() {
             className="text-2xl md:text-3xl font-semibold tracking-tight"
             style={{ color: "var(--jarvis-text-primary)", fontFamily: HF }}
           >
-            Сеть
+            Мои компании
           </h1>
           <p className="text-sm mt-1" style={{ color: "var(--jarvis-text-muted)", fontFamily: HF }}>
             Компании холдинга

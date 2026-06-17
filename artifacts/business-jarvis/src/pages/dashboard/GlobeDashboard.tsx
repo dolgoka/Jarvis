@@ -58,7 +58,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 const GLOBE_NAV = [
   { href: "/",           label: "Глобальный центр", icon: GlobeIcon },
-  { href: "/businesses", label: "Сеть",             icon: LayoutGrid },
+  { href: "/businesses", label: "Мои компании",      icon: LayoutGrid },
   { href: "/tasks",      label: "Задачи",            icon: ClipboardList },
   { href: "/ai-summary", label: "Сводка ИИ",         icon: Brain },
   { href: "/chat",       label: "Чат с ИИ",          icon: MessageSquare },
