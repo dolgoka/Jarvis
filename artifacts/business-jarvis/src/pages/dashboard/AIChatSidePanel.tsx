@@ -107,9 +107,6 @@ export function AIChatSidePanel({ open, onClose }: AIChatSidePanelProps) {
               <div className="text-sm font-semibold tracking-wide" style={{ color: "rgba(228,232,255,0.92)", fontFamily: HF }}>
                 ИИ Ассистент
               </div>
-              <div className="text-[10px] font-semibold uppercase tracking-widest" style={{ color: "rgba(0,212,255,0.5)", fontFamily: HF }}>
-                JARVIS · GPT
-              </div>
             </div>
           </div>
           <button
