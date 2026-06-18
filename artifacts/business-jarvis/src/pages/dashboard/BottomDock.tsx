@@ -382,10 +382,10 @@ function DockPill({ icon, label, active, accentColor, onClick }: DockPillProps) 
         border: active
           ? `1px solid color-mix(in srgb, ${accentColor} 35%, transparent)`
           : "1px solid rgba(255,255,255,0.07)",
-        color: active ? accentColor : "rgba(228,232,255,0.35)",
+        color: active ? accentColor : "rgba(255,255,255,0.82)",
         fontFamily: HF,
         fontSize: 13,
-        fontWeight: active ? 600 : 400,
+        fontWeight: active ? 600 : 500,
         cursor: "pointer",
       }}
     >
