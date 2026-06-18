@@ -1003,7 +1003,7 @@ export default function GlobeDashboard() {
               }
             }}
           >
-            <Sparkles className="w-4 h-4" />
+            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: HF, letterSpacing: "0.04em" }}>AI</span>
           </button>
         )}
       </div>
