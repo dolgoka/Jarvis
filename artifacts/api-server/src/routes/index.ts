@@ -1,4 +1,5 @@
 import { Router, type IRouter } from "express";
+import rateLimit from "express-rate-limit";
 import businessesRouter from "./businesses";
 import reportsRouter from "./reports";
 import dashboardRouter from "./dashboard";
@@ -13,6 +14,14 @@ import feedNewsRouter from "./feedNews";
 import notesRouter from "./notes";
 import businessCardRouter from "./businessCard";
 
+const aiLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Слишком много запросов, попробуйте позже" },
+});
+
 const router: IRouter = Router();
 
 router.use(businessCardRouter);
@@ -20,13 +29,13 @@ router.use(businessesRouter);
 router.use(reportsRouter);
 router.use(dashboardRouter);
 router.use(managersRouter);
-router.use(aiRouter);
+router.use(aiLimiter, aiRouter);
 router.use(eventsRouter);
-router.use(voiceRouter);
+router.use(aiLimiter, voiceRouter);
 router.use(peopleRouter);
 router.use(tasksRouter);
 router.use(feedNewsRouter);
-router.use(feedRouter);
-router.use(notesRouter);
+router.use(aiLimiter, feedRouter);
+router.use(aiLimiter, notesRouter);
 
 export default router;
