@@ -1,8 +1,16 @@
 import { Router, type IRouter } from "express";
+import { timingSafeEqual } from "crypto";
 import { db, businessesTable } from "@workspace/db";
 import { ConnectBusinessBody, GetBusinessResponse } from "@workspace/api-zod";
 
 const router: IRouter = Router();
+
+const ACCESS_CODE = process.env.MANAGER_ACCESS_CODE ?? "";
+
+function safeEqual(a: string, b: string): boolean {
+  const ab = Buffer.from(a), bb = Buffer.from(b);
+  return ab.length === bb.length && timingSafeEqual(ab, bb);
+}
 
 router.post("/managers/connect", async (req, res): Promise<void> => {
   const parsed = ConnectBusinessBody.safeParse(req.body);
@@ -11,8 +19,12 @@ router.post("/managers/connect", async (req, res): Promise<void> => {
     return;
   }
 
-  const ACCESS_CODE = "JARVIS2024";
-  if (parsed.data.accessCode !== ACCESS_CODE) {
+  if (!ACCESS_CODE) {
+    res.status(503).json({ error: "Access code not configured" });
+    return;
+  }
+
+  if (!safeEqual(parsed.data.accessCode, ACCESS_CODE)) {
     res.status(403).json({ error: "Invalid access code" });
     return;
   }

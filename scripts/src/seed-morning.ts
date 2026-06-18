@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { db, peopleTable, feedItemsTable, businessesTable } from "@workspace/db";
 
 const PEOPLE = [
@@ -95,9 +96,9 @@ async function main() {
       await db.insert(peopleTable).values(person);
       console.log(`   + ${person.name} (${person.shortName})`);
     } else {
-      await db.execute(
-        `UPDATE people SET short_name = '${person.shortName}', role = '${person.role}' WHERE id = ${found.id}`
-      );
+      await db.update(peopleTable)
+        .set({ shortName: person.shortName, role: person.role })
+        .where(eq(peopleTable.id, found.id));
       console.log(`   ~ ${person.name} (updated shortName & role)`);
     }
   }

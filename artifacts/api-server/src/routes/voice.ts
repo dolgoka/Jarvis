@@ -3,7 +3,7 @@ import express from "express";
 import OpenAI, { toFile } from "openai";
 
 const router: IRouter = Router();
-const audioBodyParser = express.json({ limit: "50mb" });
+const audioBodyParser = express.json({ limit: "8mb" });
 
 function makeClient() {
   const baseURL = process.env.AI_INTEGRATIONS_OPENAI_BASE_URL;
@@ -30,6 +30,10 @@ router.post("/voice/transcribe", audioBodyParser, async (req, res): Promise<void
       return;
     }
     const buf = Buffer.from(audio, "base64");
+    if (buf.length > 6 * 1024 * 1024) {
+      res.status(413).json({ error: "Файл слишком большой" });
+      return;
+    }
     const fmt = detectFormat(buf);
     const file = await toFile(buf, `audio.${fmt}`, { type: `audio/${fmt}` });
     const client = makeClient();
