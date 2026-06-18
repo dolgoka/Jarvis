@@ -1063,14 +1063,6 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
           </div>
         )}
 
-        {/* Swipe hint — fades out after first interaction */}
-        {!prefersReducedMotion && deck.length > 1 && (
-          <div style={{ textAlign: "center", pointerEvents: "none" }}>
-            <span style={{ fontSize: 9, color: "rgba(228,232,255,0.18)", letterSpacing: "0.05em", fontFamily: ff }}>
-              ← свайп: вперёд · → назад · ↓ позже
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );
