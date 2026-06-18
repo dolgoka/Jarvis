@@ -4,7 +4,9 @@ import { z } from "zod/v4";
 
 export const feedSeverityEnum = pgEnum("feed_severity", ["critical", "important", "info"]);
 export const feedTypeEnum = pgEnum("feed_type", ["task_stuck", "staff", "red_zone", "routine"]);
-export const feedStatusEnum = pgEnum("feed_status", ["pending", "dismissed", "resolved"]);
+export const feedStatusEnum = pgEnum("feed_status", [
+  "pending", "dismissed", "resolved", "in_progress", "delegated", "snoozed",
+]);
 
 export const feedItemsTable = pgTable("feed_items", {
   id: serial("id").primaryKey(),
@@ -14,6 +16,9 @@ export const feedItemsTable = pgTable("feed_items", {
   title: text("title").notNull(),
   body: text("body").notNull(),
   relatedPerson: text("related_person"),
+  recommendation: text("recommendation"),
+  defaultAssignee: text("default_assignee"),
+  snoozedUntil: timestamp("snoozed_until"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   status: feedStatusEnum("status").notNull().default("pending"),
 });

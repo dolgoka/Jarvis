@@ -1,5 +1,7 @@
 import { useRef, useState, useCallback } from "react";
 
+const API_TOKEN = (import.meta.env.VITE_API_TOKEN as string) ?? "";
+
 function getMimeType(): string {
   const types = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"];
   for (const t of types) {
@@ -48,7 +50,10 @@ export function useVoiceRecorder({ onTranscript, onError }: UseVoiceRecorderOpti
           const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
           const resp = await fetch("/api/voice/transcribe", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            headers: {
+              "Content-Type": "application/json",
+              "x-api-token": API_TOKEN,
+            },
             body: JSON.stringify({ audio: b64 }),
           });
           const data = await resp.json() as { text?: string };
