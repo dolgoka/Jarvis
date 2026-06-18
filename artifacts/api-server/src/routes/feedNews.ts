@@ -1,6 +1,7 @@
 import { Router, type IRouter } from "express";
-import { eq, or, lte, and, inArray, isNull } from "drizzle-orm";
+import { eq, or, lte, and, inArray } from "drizzle-orm";
 import { db, newsItemsTable, businessesTable } from "@workspace/db";
+import { getExternalNews } from "../lib/externalNews";
 
 const router: IRouter = Router();
 
@@ -26,18 +27,16 @@ router.get("/feed", async (req, res): Promise<void> => {
       ),
     ));
 
-  let items = rows.filter(isActive);
+  // Always exclude DB external items — real external news comes from RSS
+  let items = rows.filter(isActive).filter(i => i.type !== "external");
 
-  if (!includeExternal) {
-    items = items.filter(i => i.type !== "external");
-  }
   if (severityFilter) {
     items = items.filter(i => i.severity === severityFilter);
   }
 
   // Role-based inbox filter:
   // owner sees: items with no recipientRole (general news) + items addressed to 'owner'
-  // director/employee: only items addressed to their role (C2)
+  // director/employee: only items addressed to their role
   // no role param: all items (backward compat)
   if (role === "owner") {
     items = items.filter(i => i.recipientRole == null || i.recipientRole === "owner");
@@ -60,7 +59,7 @@ router.get("/feed", async (req, res): Promise<void> => {
     : [];
   const bizMap = new Map(businesses.map(b => [b.id, b.name]));
 
-  res.json(items.map(item => ({
+  const dbItems = items.map(item => ({
     id:            item.id,
     severity:      item.severity,
     type:          item.type,
@@ -77,12 +76,43 @@ router.get("/feed", async (req, res): Promise<void> => {
     createdAt:     item.createdAt.toISOString(),
     taskId:        item.taskId ?? null,
     recipientRole: item.recipientRole ?? null,
-  })));
+  }));
+
+  if (!includeExternal) {
+    res.json(dbItems);
+    return;
+  }
+
+  // Fetch real external news and merge
+  const rssItems = await getExternalNews();
+  const externalMapped = rssItems.map(item => ({
+    id:            item.id,
+    severity:      item.severity,
+    type:          item.type,
+    title:         item.title,
+    body:          item.body,
+    businessId:    item.businessId,
+    businessName:  item.businessName,
+    sourceLabel:   item.sourceLabel,
+    authorName:    item.authorName,
+    isUrgentFlag:  item.isUrgentFlag,
+    actionable:    item.actionable,
+    status:        item.status,
+    snoozedUntil:  item.snoozedUntil,
+    createdAt:     item.createdAt,
+    taskId:        item.taskId,
+    recipientRole: item.recipientRole,
+  }));
+
+  // Merge: internal items first (sorted), then external RSS by date
+  res.json([...dbItems, ...externalMapped]);
 });
 
 router.post("/feed/seen", async (req, res): Promise<void> => {
   const id = parseInt(req.query["id"] as string, 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
+  // Negative IDs are RSS items — no DB record to update, just acknowledge
+  if (id < 0) { res.json({ dismissed: 1 }); return; }
   await db.update(newsItemsTable).set({ status: "done" }).where(eq(newsItemsTable.id, id));
   res.json({ dismissed: 1 });
 });
@@ -91,6 +121,8 @@ router.post("/feed/snooze", async (req, res): Promise<void> => {
   const id    = parseInt(req.query["id"] as string, 10);
   const hours = parseInt(req.query["hours"] as string ?? "8", 10);
   if (isNaN(id)) { res.status(400).json({ error: "invalid id" }); return; }
+  // Negative IDs are RSS items — no DB record to snooze, just acknowledge
+  if (id < 0) { res.json({ dismissed: 1 }); return; }
   const snoozedUntil = new Date(Date.now() + (isNaN(hours) ? 8 : hours) * 3_600_000);
   await db.update(newsItemsTable).set({ status: "snoozed", snoozedUntil }).where(eq(newsItemsTable.id, id));
   res.json({ dismissed: 1 });
