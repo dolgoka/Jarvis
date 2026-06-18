@@ -24,6 +24,10 @@ args = "Frontend"
 task = "workflow.run"
 args = "API Server"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Install Dependencies"
+
 [[workflows.workflow]]
 name = "Frontend"
 author = "agent"
@@ -44,6 +48,17 @@ author = "agent"
 task = "shell.exec"
 args = "PORT=8080 pnpm --filter @workspace/api-server run dev"
 waitForPort = 8080
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow]]
+name = "Install Dependencies"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "pnpm install --no-frozen-lockfile 2>&1 && echo 'INSTALL DONE'"
 
 [workflows.workflow.metadata]
 outputType = "console"
