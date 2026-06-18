@@ -69,6 +69,7 @@ router.get("/feed", async (req, res): Promise<void> => {
     businessId:    item.businessId ?? null,
     businessName:  item.businessId != null ? (bizMap.get(item.businessId) ?? null) : null,
     sourceLabel:   item.sourceLabel,
+    authorName:    item.authorName ?? null,
     isUrgentFlag:  item.isUrgentFlag,
     actionable:    item.actionable,
     status:        item.status,

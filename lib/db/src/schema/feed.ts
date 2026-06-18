@@ -18,6 +18,7 @@ export const newsItemsTable = pgTable("news_items", {
   body:          text("body").notNull(),
   businessId:    integer("business_id").references(() => businessesTable.id, { onDelete: "set null" }),
   sourceLabel:   text("source_label").notNull(),
+  authorName:    text("author_name"),
   isUrgentFlag:  boolean("is_urgent_flag").notNull().default(false),
   actionable:    boolean("actionable").notNull().default(false),
   status:        newsStatusEnum("status").notNull().default("new"),

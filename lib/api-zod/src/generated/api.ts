@@ -957,6 +957,7 @@ export const GetFeedResponseItem = zod.object({
   "businessId": zod.number().nullish(),
   "businessName": zod.string().nullish(),
   "sourceLabel": zod.string(),
+  "authorName": zod.string().nullish(),
   "isUrgentFlag": zod.boolean(),
   "actionable": zod.boolean(),
   "status": zod.enum(['new', 'snoozed', 'done']),

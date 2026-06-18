@@ -474,7 +474,13 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                 )}
 
                 {/* Source + time */}
-                <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 10 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 10, flexWrap: "wrap" }}>
+                  {item?.authorName && (
+                    <>
+                      <span style={{ fontSize: 11, color: "rgba(228,232,255,0.82)", fontWeight: 600 }}>{item.authorName}</span>
+                      <span style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(228,232,255,0.40)", flexShrink: 0 }} />
+                    </>
+                  )}
                   <span style={{ fontSize: 11, color: "rgba(228,232,255,0.60)", fontWeight: 500 }}>{item?.sourceLabel}</span>
                   <span style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(228,232,255,0.40)", flexShrink: 0 }} />
                   <span style={{ fontSize: 11, color: "rgba(228,232,255,0.60)" }}>{item ? timeAgo(item.createdAt) : ""}</span>

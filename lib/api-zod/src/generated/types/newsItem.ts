@@ -20,6 +20,8 @@ export interface NewsItem {
   /** @nullable */
   businessName?: string | null;
   sourceLabel: string;
+  /** @nullable */
+  authorName?: string | null;
   isUrgentFlag: boolean;
   actionable: boolean;
   status: NewsItemStatus;
