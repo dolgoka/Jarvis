@@ -1,4 +1,4 @@
-modules = ["nodejs-20", "web", "bash", "postgresql-16"]
+modules = ["nodejs-20", "web", "bash"]
 
 [deployment]
 router = "application"
@@ -88,3 +88,4 @@ channel = "stable-25_05"
 
 [userenv.shared]
 VITE_API_TOKEN = "a49ac1668f62b286a037830d60264b8c652b5758f586c345"
+API_TOKEN = "a49ac1668f62b286a037830d60264b8c652b5758f586c345"
