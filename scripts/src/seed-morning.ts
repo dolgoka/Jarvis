@@ -1,8 +1,8 @@
 import { db, peopleTable, feedItemsTable, businessesTable } from "@workspace/db";
 
 const PEOPLE = [
-  { name: "Анна Солонская",   shortName: "Аня",    role: "Финансовый директор" },
-  { name: "Александр Батов",  shortName: "Саша",   role: "Коммерческий директор" },
+  { name: "Анна Петрова",     shortName: "Аня",    role: "Финансовый директор" },
+  { name: "Александр Смирнов", shortName: "Саша",  role: "Коммерческий директор" },
   { name: "Николай Смирнов",  shortName: "Коля",   role: "Операционный директор" },
   { name: "Татьяна Орлова",   shortName: "Таня",   role: "Главный бухгалтер" },
   { name: "Алексей Громов",   shortName: "Лёша",   role: "Руководитель безопасности" },
@@ -69,7 +69,7 @@ const FEED_TEMPLATES = [
     severity: "info" as const,
     title: "Еженедельный финансовый отчёт готов",
     body: "Аня подготовила сводку за неделю: выручка +12%, расходы в норме. Отчёт ждёт согласования.",
-    relatedPerson: "Анна Солонская",
+    relatedPerson: "Анна Петрова",
   },
   {
     bizName: "Дальстрой",

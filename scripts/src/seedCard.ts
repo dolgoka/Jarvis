@@ -23,7 +23,7 @@ const BUSINESSES = [
     health: "green" as const,
     currency: "RUB",
     managerName: "Денис Воронов",
-    managerEmail: "d.voronov@prima-media.ru",
+    managerEmail: "d.voronov@example.com",
     description: "Медиахолдинг: 3 радиосети, 2 digital-издания, продакшн-студия. Выручка ₽2.8B, рост +18% г/г.",
     stage: "operational" as const,
     circle: "internal" as const,
@@ -41,7 +41,7 @@ const BUSINESSES = [
     health: "yellow" as const,
     currency: "RUB",
     managerName: "Артём Белоусов",
-    managerEmail: "a.belousov@investvektor.ru",
+    managerEmail: "a.belousov@example.com",
     description: "Фонд ранних стадий. AUM ₽8.4B, 22 портфельных компании, IRR 19% по закрытым позициям.",
     stage: "investment" as const,
     circle: "internal" as const,
@@ -64,7 +64,7 @@ const BUSINESSES = [
     health: "yellow" as const,
     currency: "RUB",
     managerName: "Павел Стрельцов",
-    managerEmail: "p.streltsov@allianstrade.ru",
+    managerEmail: "p.streltsov@example.com",
     description: "Региональный дистрибьютор FMCG. Выручка ₽1.1B. Контур — внешний пассивный.",
     stage: "operational" as const,
     circle: "external_passive" as const,
@@ -86,7 +86,7 @@ const BUSINESSES = [
     health: "red" as const,
     currency: "RUB",
     managerName: "Олег Меркулов",
-    managerEmail: "o.merkulov@regionstroi.ru",
+    managerEmail: "o.merkulov@example.com",
     description: "Жилой девелопер. Backlog ₽14.2B, 7 активных ЖК. Задержки по 2 объектам, кассовый разрыв.",
     stage: "investment" as const,
     circle: "internal" as const,
@@ -101,22 +101,22 @@ const BUSINESSES = [
 
 const TOP_MGMT: Record<string, Array<{ name: string; role: string; cLevel: string; effectiveness: "green" | "yellow" | "red"; email: string }>> = {
   "Прима Медиагрупп АО": [
-    { name: "Денис Воронов",     role: "Генеральный директор",   cLevel: "gd",         effectiveness: "green",  email: "d.voronov@prima-media.ru" },
-    { name: "Светлана Щепкина",  role: "Исполнительный директор",cLevel: "executive",  effectiveness: "green",  email: "s.shepkina@prima-media.ru" },
-    { name: "Игорь Матвеев",     role: "Финансовый директор",    cLevel: "financial",  effectiveness: "yellow", email: "i.matveev@prima-media.ru" },
-    { name: "Оксана Близнец",    role: "Коммерческий директор",  cLevel: "commercial", effectiveness: "green",  email: "o.bliznets@prima-media.ru" },
+    { name: "Денис Воронов",     role: "Генеральный директор",   cLevel: "gd",         effectiveness: "green",  email: "d.voronov@example.com" },
+    { name: "Светлана Щепкина",  role: "Исполнительный директор",cLevel: "executive",  effectiveness: "green",  email: "s.shepkina@example.com" },
+    { name: "Игорь Матвеев",     role: "Финансовый директор",    cLevel: "financial",  effectiveness: "yellow", email: "i.matveev@example.com" },
+    { name: "Оксана Близнец",    role: "Коммерческий директор",  cLevel: "commercial", effectiveness: "green",  email: "o.bliznets@example.com" },
   ],
   "ИнвестВектор ГК": [
-    { name: "Артём Белоусов",    role: "Генеральный директор",   cLevel: "gd",         effectiveness: "yellow", email: "a.belousov@investvektor.ru" },
-    { name: "Наталья Кузина",    role: "Исполнительный директор",cLevel: "executive",  effectiveness: "green",  email: "n.kuzina@investvektor.ru" },
-    { name: "Глеб Карпов",       role: "Финансовый директор",    cLevel: "financial",  effectiveness: "yellow", email: "g.karpov@investvektor.ru" },
-    { name: "Роман Сидоренко",   role: "Коммерческий директор",  cLevel: "commercial", effectiveness: "green",  email: "r.sidorenko@investvektor.ru" },
+    { name: "Артём Белоусов",    role: "Генеральный директор",   cLevel: "gd",         effectiveness: "yellow", email: "a.belousov@example.com" },
+    { name: "Наталья Кузина",    role: "Исполнительный директор",cLevel: "executive",  effectiveness: "green",  email: "n.kuzina@example.com" },
+    { name: "Глеб Карпов",       role: "Финансовый директор",    cLevel: "financial",  effectiveness: "yellow", email: "g.karpov@example.com" },
+    { name: "Роман Сидоренко",   role: "Коммерческий директор",  cLevel: "commercial", effectiveness: "green",  email: "r.sidorenko@example.com" },
   ],
   "РегионСтрой ПАО": [
-    { name: "Олег Меркулов",     role: "Генеральный директор",   cLevel: "gd",         effectiveness: "red",    email: "o.merkulov@regionstroi.ru" },
-    { name: "Марина Зотова",     role: "Исполнительный директор",cLevel: "executive",  effectiveness: "yellow", email: "m.zotova@regionstroi.ru" },
-    { name: "Виктор Чернов",     role: "Финансовый директор",    cLevel: "financial",  effectiveness: "red",    email: "v.chernov@regionstroi.ru" },
-    { name: "Алексей Лукин",     role: "Коммерческий директор",  cLevel: "commercial", effectiveness: "yellow", email: "a.lukin@regionstroi.ru" },
+    { name: "Олег Меркулов",     role: "Генеральный директор",   cLevel: "gd",         effectiveness: "red",    email: "o.merkulov@example.com" },
+    { name: "Марина Зотова",     role: "Исполнительный директор",cLevel: "executive",  effectiveness: "yellow", email: "m.zotova@example.com" },
+    { name: "Виктор Чернов",     role: "Финансовый директор",    cLevel: "financial",  effectiveness: "red",    email: "v.chernov@example.com" },
+    { name: "Алексей Лукин",     role: "Коммерческий директор",  cLevel: "commercial", effectiveness: "yellow", email: "a.lukin@example.com" },
   ],
 };
 
@@ -202,7 +202,7 @@ async function seedCard(): Promise<void> {
   const [existing] = await db
     .select({ n: count() })
     .from(businessesTable)
-    .where(eq(businessesTable.managerEmail, "d.voronov@prima-media.ru"));
+    .where(eq(businessesTable.managerEmail, "d.voronov@example.com"));
   if ((existing?.n ?? 0) > 0) {
     console.log("Card seed already applied — skipping.");
     return;

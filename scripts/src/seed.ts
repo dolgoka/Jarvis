@@ -94,7 +94,7 @@ const BUSINESSES: Array<{
     name: "Meridian Capital Group",
     city: "Dubai", country: "UAE", lat: 25.2048, lng: 55.2708,
     industry: "Investment Management", status: "active", health: "green", currency: "USD",
-    managerName: "Александр Вернер", managerEmail: "a.werner@meridiancapital.ae",
+    managerName: "Александр Вернер", managerEmail: "a.werner@example.com",
     description: "Диверсифицированная инвестиционная группа с AUM $2.1B. Фокус на PE, Real Estate и VC в регионе MENA и глобально.",
     revenue: 34700000, orders: 47, profit: 7634000,
     analytics: {
@@ -119,7 +119,7 @@ const BUSINESSES: Array<{
     name: "NovaTech Solutions Ltd",
     city: "London", country: "UK", lat: 51.5074, lng: -0.1278,
     industry: "IT / SaaS", status: "active", health: "green", currency: "USD",
-    managerName: "Оливер Харрис", managerEmail: "o.harris@novatech.io",
+    managerName: "Оливер Харрис", managerEmail: "o.harris@example.com",
     description: "SaaS-платформа для автоматизации enterprise процессов. Выручка $89.2M, рост +31% YoY.",
     revenue: 7433333, orders: 1847, profit: 1040666,
     analytics: {
@@ -173,7 +173,7 @@ const BUSINESSES: Array<{
     name: "Azure Hospitality Group",
     city: "Dubai", country: "UAE", lat: 25.1972, lng: 55.2796,
     industry: "Hospitality", status: "active", health: "green", currency: "USD",
-    managerName: "Карим Эль-Хайям", managerEmail: "k.hayam@azure-hospitality.ae",
+    managerName: "Карим Эль-Хайям", managerEmail: "k.hayam@example.com",
     description: "Сеть бутик-отелей премиум-класса в Дубае. 4 объекта, 705 номеров, occupancy 84.3%.",
     revenue: 3983333, orders: 705, profit: 477999,
     analytics: {
@@ -199,7 +199,7 @@ const BUSINESSES: Array<{
     name: "Pacific Trade Partners Pte Ltd",
     city: "Singapore", country: "Singapore", lat: 1.3521, lng: 103.8198,
     industry: "Commodities Trading", status: "pending", health: "yellow", currency: "USD",
-    managerName: "Тан Вэй Минь", managerEmail: "tanwm@pacifictrade.sg",
+    managerName: "Тан Вэй Минь", managerEmail: "tanwm@example.com",
     description: "Commodity trader: пальмовое масло, каучук, металлы. Выручка $156M, маржа сжата до 3.2%.",
     revenue: 13000000, orders: 28, profit: 416000,
     analytics: {
@@ -225,7 +225,7 @@ const BUSINESSES: Array<{
     name: "Helios Real Estate Ltd",
     city: "Limassol", country: "Cyprus", lat: 34.6841, lng: 33.0331,
     industry: "Real Estate", status: "active", health: "green", currency: "USD",
-    managerName: "Николас Пападопулос", managerEmail: "n.papadopoulos@heliosre.cy",
+    managerName: "Николас Пападопулос", managerEmail: "n.papadopoulos@example.com",
     description: "Кипрский девелопер luxury недвижимости. AUM €185M, маржа 28%. Акцент на Лимассол.",
     revenue: 2583333, orders: 12, profit: 723333,
     analytics: {
@@ -249,7 +249,7 @@ const BUSINESSES: Array<{
     name: "AutoDrive Systems GmbH",
     city: "Munich", country: "Germany", lat: 48.1351, lng: 11.582,
     industry: "Automotive Tech / AI", status: "pending", health: "red", currency: "USD",
-    managerName: "Маркус Браун", managerEmail: "m.braun@autodrive.de",
+    managerName: "Маркус Браун", managerEmail: "m.braun@example.com",
     description: "ADAS L3+ стартап. Burn rate €650K/мес, runway 14 мес. Series A на €15M в процессе.",
     revenue: 683333, orders: 3, profit: -287000,
     analytics: {
@@ -285,7 +285,7 @@ const BUSINESSES: Array<{
     name: "Atlas Digital Agency",
     city: "New York", country: "USA", lat: 40.7128, lng: -74.006,
     industry: "Digital Marketing", status: "active", health: "green", currency: "USD",
-    managerName: "Michael Torres", managerEmail: "m.torres@atlasdigital.com",
+    managerName: "Michael Torres", managerEmail: "m.torres@example.com",
     description: "Performance digital агентство. Managed ad spend $180M/год, 67 клиентов, ROAS 4.2x.",
     revenue: 2366666, orders: 67, profit: 425999,
     analytics: {
@@ -311,7 +311,7 @@ const BUSINESSES: Array<{
     name: "SkyLine Construction LLC",
     city: "Dubai", country: "UAE", lat: 25.2048, lng: 55.2708,
     industry: "Construction", status: "active", health: "green", currency: "USD",
-    managerName: "Abdullah Al-Maktoum", managerEmail: "a.almaktoum@skylineconstruction.ae",
+    managerName: "Abdullah Al-Maktoum", managerEmail: "a.almaktoum@example.com",
     description: "Ведущий генподрядчик в Дубае. Backlog $780M, 2847 сотрудников, 14 активных проектов.",
     revenue: 26000000, orders: 14, profit: 2340000,
     analytics: {
@@ -365,11 +365,11 @@ const BUSINESSES: Array<{
     name: "Северный Капитал АО",
     city: "Moscow", country: "Russia", lat: 55.7558, lng: 37.6173,
     industry: "Asset Management", status: "pending", health: "yellow", currency: "USD",
-    managerName: "Андрей Северов", managerEmail: "a.severov@severkapital.ru",
+    managerName: "Андрей Киселёв", managerEmail: "a.kiselev@example.com",
     description: "Российская УК, AUM ₽142B. Работает в условиях санкционного давления с 2022 года.",
     revenue: 1533333, orders: 847, profit: 168666,
     analytics: {
-      ...minimalAnalytics("Андрей Северов", "Генеральный директор", "yellow", 1533333, 168666, "USD", "investment", "external",
+      ...minimalAnalytics("Андрей Киселёв", "Генеральный директор", "yellow", 1533333, 168666, "USD", "investment", "external",
         "Задержка регуляторного одобрения нового фонда, санкционное давление ограничивает операции"),
       investmentData: {
         runwayMonths: 11,
@@ -389,11 +389,11 @@ const BUSINESSES: Array<{
     name: "Колымские Недра АО",
     city: "Magadan", country: "Russia", lat: 59.5635, lng: 150.8082,
     industry: "Mining", status: "active", health: "yellow", currency: "USD",
-    managerName: "Виктор Колымцев", managerEmail: "v.kolymtsev@kn-ao.ru",
+    managerName: "Виктор Морозов", managerEmail: "v.morozov@example.com",
     description: "Золото-серебряный добытчик. 4.2 т/год, AISC $980/oz, рентабельность 31%.",
     revenue: 650000, orders: 12, profit: 201500,
     analytics: {
-      ...minimalAnalytics("Виктор Колымцев", "Директор", "yellow", 650000, 201500, "USD", "operational", "external",
+      ...minimalAnalytics("Виктор Морозов", "Директор", "yellow", 650000, 201500, "USD", "operational", "external",
         "Задержка поставки оборудования замедляет добычу, AISC $980/oz выше планового $920/oz"),
       recommendation: "Форсировать поставку через альтернативного вендора — каждая неделя простоя стоит $25K недополученной добычи.",
       monthlyHistory: [
@@ -415,7 +415,7 @@ const BUSINESSES: Array<{
     name: "Siam Pacific Foods Co Ltd",
     city: "Bangkok", country: "Thailand", lat: 13.7563, lng: 100.5018,
     industry: "Food & Agriculture", status: "active", health: "green", currency: "USD",
-    managerName: "Somchai Wattanaprapa", managerEmail: "s.wattanaprapa@siampacific.th",
+    managerName: "Somchai Wattanaprapa", managerEmail: "s.wattanaprapa@example.com",
     description: "Тайский производитель и экспортёр. 28 экспортных рынков, 64% выручки — экспорт.",
     revenue: 5583333, orders: 412, profit: 446666,
     analytics: {
@@ -441,7 +441,7 @@ const BUSINESSES: Array<{
     name: "TajEnergo JSC",
     city: "Dushanbe", country: "Tajikistan", lat: 38.5598, lng: 68.7737,
     industry: "Energy", status: "pending", health: "red", currency: "USD",
-    managerName: "Фируз Рахимов", managerEmail: "f.rakhimov@tajenergo.tj",
+    managerName: "Фируз Рахимов", managerEmail: "f.rakhimov@example.com",
     description: "Таджикская энергетическая компания. 180 МВт, гидро 78%. Регулируемые тарифы.",
     revenue: 2833333, orders: 847, profit: 113333,
     analytics: {
@@ -480,7 +480,7 @@ const BUSINESSES: Array<{
     name: "SilkRoad Logistics LLC",
     city: "Tashkent", country: "Uzbekistan", lat: 41.2995, lng: 69.2401,
     industry: "Logistics", status: "active", health: "red", currency: "USD",
-    managerName: "Бобур Юсупов", managerEmail: "b.yusupov@silkroadlogistics.uz",
+    managerName: "Бобур Юсупов", managerEmail: "b.yusupov@example.com",
     description: "Узбекский 3PL-оператор. 87 единиц флота, 24K sqm складов, рост +28% YoY.",
     revenue: 1583333, orders: 234, profit: 205833,
     analytics: {
@@ -506,13 +506,13 @@ const BUSINESSES: Array<{
     name: "Profimonsters",
     city: "Moscow", country: "Russia", lat: 55.7439, lng: 37.6207,
     industry: "Logistics / HRtech", status: "active", health: "yellow", currency: "RUB",
-    managerName: "Мурашов Виталий Владимирович", managerEmail: "v.murashov@profimonsters.ru",
+    managerName: "Дмитрий Горелов", managerEmail: "d.gorelov@example.com",
     description: "ООО «Деливери Солюшенс», торговая марка PROFIMONSTERS. Аутсорсинг персонала, курьерская доставка, логистика для e-commerce. Выручка 5,46 млрд ₽ (+111% YoY), рентабельность 0,3%.",
     revenue: 5460000000, orders: 0, profit: 17490000,
     analytics: {
       stage: "operational",
       contour: "external",
-      responsible: { name: "Мурашов Виталий Владимирович", role: "Генеральный директор" },
+      responsible: { name: "Дмитрий Горелов", role: "Генеральный директор" },
       whyColor: "Оборот растёт +111% YoY, но чистая рентабельность 0,3% — критически низкая. Косты опережают выручку",
       planFact: [
         { metric: "Оборот", plan: 5200000000, actual: 5460000000, unit: "₽" },
