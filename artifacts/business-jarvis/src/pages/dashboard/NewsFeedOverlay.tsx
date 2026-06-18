@@ -539,9 +539,8 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                     <div style={{ display: "flex", gap: 8, marginTop: 2 }}>
                       <button
                         onClick={() => {
-                          const ctx = item
-                            ? `По новости «${item.title}»${item.businessName ? ` (${item.businessName})` : ""}:\n\n${getAiRec(item.type)}`
-                            : getAiRec(item.type);
+                          if (!item) return;
+                          const ctx = `По новости «${item.title}»${item.businessName ? ` (${item.businessName})` : ""}:\n\n${getAiRec(item.type)}`;
                           onOpenTask?.(ctx);
                         }}
                         style={{
