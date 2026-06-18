@@ -207,7 +207,10 @@ export function LazyTaskDistributionTree({ taskId, createdBy }: { taskId: number
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/tasks/tree?id=${taskId}`)
+    const token = import.meta.env["VITE_API_TOKEN"] as string | undefined;
+    fetch(`/api/tasks/tree?id=${taskId}`, {
+      headers: token ? { "x-api-token": token } : {},
+    })
       .then(r => r.ok ? r.json() as Promise<TaskTreeData> : null)
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));

@@ -217,9 +217,13 @@ function AiCheckBlock({ task }: { task: Task }) {
     setLoading(true);
     setError("");
     try {
+      const token = import.meta.env["VITE_API_TOKEN"] as string | undefined;
       const resp = await fetch("/api/tasks/ai-check", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { "x-api-token": token } : {}),
+        },
         body: JSON.stringify({ taskBody: task.body, resultNote: task.resultNote }),
       });
       if (!resp.ok) throw new Error("Ошибка сервера");
@@ -982,7 +986,6 @@ export default function TasksPage() {
           <section className="space-y-2">
             <SectionHeader
               color={STATUS_COLORS.review}
-              pulse={staleCount > 0}
               label="На приёмке"
               count={sortedReview.length}
               hint={staleCount > 0 ? `· ${staleCount} зависших` : undefined}
