@@ -31,8 +31,18 @@ app.use(
     },
   }),
 );
-const ORIGINS = (process.env.CORS_ORIGINS ?? "").split(",").map(s => s.trim()).filter(Boolean);
-app.use(cors({ origin: ORIGINS.length ? ORIGINS : false, credentials: true }));
+// Allow any *.replit.dev or *.replit.app origin (covers dev preview + deployed app)
+// plus any explicit origins listed in CORS_ORIGINS.
+const explicitOrigins = (process.env.CORS_ORIGINS ?? "").split(",").map(s => s.trim()).filter(Boolean);
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true); // same-origin / server-to-server
+    if (origin.endsWith(".replit.dev") || origin.endsWith(".replit.app")) return cb(null, true);
+    if (explicitOrigins.includes(origin)) return cb(null, true);
+    cb(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
