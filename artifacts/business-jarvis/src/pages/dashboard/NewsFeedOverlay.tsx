@@ -413,42 +413,9 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
 
               <div style={{ padding: "18px 22px 16px 26px" }}>
 
-                {/* Meta row */}
-                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
-                  <span style={{
-                    padding: "2px 7px", borderRadius: 5, fontSize: 9, fontWeight: 700,
-                    letterSpacing: "0.07em", textTransform: "uppercase",
-                    background: `${sevColor}20`, color: sevColor, border: `1px solid ${sevColor}40`,
-                  }}>
-                    {SEV_LABEL[item?.severity ?? "info"]}
-                  </span>
-
-                  {item && (
-                    <span style={{
-                      padding: "2px 7px", borderRadius: 5, fontSize: 9, fontWeight: 600,
-                      background: "rgba(255,255,255,0.05)", color: "rgba(228,232,255,0.40)",
-                      border: "1px solid rgba(255,255,255,0.08)",
-                    }}>
-                      {TYPE_LABEL[item.type]}
-                    </span>
-                  )}
-
-                  {/* СРОЧНО badge — pulsing, always red */}
-                  {item?.isUrgentFlag && !isActioned && (
-                    <span style={{
-                      padding: "2px 8px", borderRadius: 5, fontSize: 9, fontWeight: 800,
-                      letterSpacing: "0.08em", textTransform: "uppercase",
-                      background: "rgba(239,68,68,0.18)", color: "#ef4444",
-                      border: "1px solid rgba(239,68,68,0.45)",
-                      display: "inline-flex", alignItems: "center", gap: 3,
-                      animation: prefersReducedMotion ? undefined : "nf-pulse-badge 1.8s ease-in-out infinite",
-                    }}>
-                      <AlertTriangle style={{ width: 8, height: 8 }} /> СРОЧНО
-                    </span>
-                  )}
-
-                  {/* Actioned indicator */}
-                  {isActioned && (
+                {/* Actioned indicator */}
+                {isActioned && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
                     <span style={{
                       padding: "2px 7px", borderRadius: 5, fontSize: 9, fontWeight: 600,
                       background: "rgba(255,255,255,0.04)", color: "rgba(228,232,255,0.28)",
@@ -456,10 +423,8 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                     }}>
                       {actionedType === "done" ? "✓ готово" : "⏰ позже"}
                     </span>
-                  )}
-
-                  <div style={{ flexGrow: 1 }} />
-                </div>
+                  </div>
+                )}
 
                 {/* Business chip */}
                 {item?.businessName && (
