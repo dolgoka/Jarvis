@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, ExternalLink, MessageSquare, ArrowRight, CheckCircle2, RotateCcw, Loader2, Stamp, XCircle } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Clock, AlertTriangle, ExternalLink, MessageSquare, ArrowRight, CheckCircle2, RotateCcw, Loader2, Stamp, XCircle, Mic, Play, UserCheck } from "lucide-react";
 import { useGetFeed, useMarkFeedSeen, useSnoozeFeedItem, useAcceptTask, useReturnTask, useApproveTask, useRejectApproval, usePingTask, useEscalateTask, useRemindTask, useReassignTask, useListPeople } from "@workspace/api-client-react";
 import type { NewsItem } from "@workspace/api-client-react";
 import { VoiceCapture } from "@/components/ui/VoiceCapture";
@@ -62,6 +62,24 @@ function timeAgo(iso: string): string {
   const h = Math.floor(diff / 60);
   if (h < 24) return `${h} ч назад`;
   return `${Math.floor(h / 24)} дн назад`;
+}
+
+function getInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+}
+
+const AI_REC: Record<string, string> = {
+  urgent:    "Созвать экстренное совещание и согласовать план действий в течение 24 часов.",
+  hr:        "Назначить замену и провести knowledge transfer до выхода сотрудника.",
+  corporate: "Инициировать рабочую группу и запросить детальный отчёт с дедлайном.",
+  task:      "Эскалировать задачу и назначить ответственного с чётким дедлайном.",
+  external:  "Поставить на мониторинг и уведомить профильного менеджера.",
+  approval:  "Рассмотреть документы и вынести решение до истечения срока.",
+};
+function getAiRec(type: string): string {
+  return AI_REC[type] ?? "Проверить статус и согласовать следующий шаг с командой.";
 }
 
 /* ─── Props ──────────────────────────────────────────────────────────────── */
@@ -320,6 +338,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
             {/* Severity filter chips */}
             {(["critical","attention","info"] as const).map(s => {
               const cnt   = s === "critical" ? critCount : s === "attention" ? attCount : infoCount;
+              const label = s === "critical" ? "срочно" : s === "attention" ? "важно" : "инфо";
               const active = severityFilter === s;
               return (
                 <button key={s} onClick={() => { setSeverityFilter(active ? undefined : s); }} style={{
@@ -329,7 +348,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                   cursor: "pointer", transition: "all 150ms",
                 }}>
                   <div style={{ width: 6, height: 6, borderRadius: "50%", background: SEV_COLOR[s], boxShadow: `0 0 5px 2px ${SEV_COLOR[s]}88` }} />
-                  <span style={{ fontSize: 10, fontWeight: 700, color: active ? SEV_COLOR[s] : "rgba(228,232,255,0.40)" }}>{cnt}</span>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: active ? SEV_COLOR[s] : "rgba(228,232,255,0.40)" }}>{label} {cnt}</span>
                 </button>
               );
             })}
@@ -474,47 +493,95 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                 )}
 
                 {/* Source + time */}
-                <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 10, flexWrap: "wrap" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 10, flexWrap: "wrap" }}>
                   {item?.authorName && (
-                    <>
-                      <span style={{ fontSize: 11, color: "rgba(228,232,255,0.82)", fontWeight: 600 }}>{item.authorName}</span>
-                      <span style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(228,232,255,0.40)", flexShrink: 0 }} />
-                    </>
+                    <div style={{
+                      width: 22, height: 22, borderRadius: "50%", flexShrink: 0,
+                      background: "linear-gradient(135deg, #00d4ff33, #0099cc55)",
+                      border: "1px solid rgba(0,212,255,0.35)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: 8, fontWeight: 800, color: "#00d4ff", letterSpacing: "0.02em",
+                    }}>
+                      {getInitials(item.authorName)}
+                    </div>
                   )}
-                  <span style={{ fontSize: 11, color: "rgba(228,232,255,0.60)", fontWeight: 500 }}>{item?.sourceLabel}</span>
-                  <span style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(228,232,255,0.40)", flexShrink: 0 }} />
-                  <span style={{ fontSize: 11, color: "rgba(228,232,255,0.60)" }}>{item ? timeAgo(item.createdAt) : ""}</span>
+                  {item?.authorName && (
+                    <span style={{ fontSize: 11, color: "rgba(228,232,255,0.82)", fontWeight: 600 }}>{item.authorName}</span>
+                  )}
+                  <span style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(228,232,255,0.35)", flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, color: "rgba(228,232,255,0.55)", fontWeight: 500 }}>{item?.sourceLabel}</span>
+                  <span style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(228,232,255,0.35)", flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, color: "rgba(228,232,255,0.45)" }}>{item ? timeAgo(item.createdAt) : ""}</span>
                 </div>
               </div>
 
               {/* ── Action zone ── */}
               <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", padding: "10px 22px 14px" }}>
 
-                {/* Reply zone */}
-                {!replyOpen ? (
-                  /* Collapsed: toggle button */
-                  <button
-                    onClick={() => { setReplyOpen(true); setTimeout(() => replyRef.current?.focus(), 80); }}
-                    style={{
-                      width: "100%", height: 38, borderRadius: 12, marginBottom: 10,
-                      display: "flex", alignItems: "center", justifyContent: "center", gap: 7,
-                      background: "rgba(255,255,255,0.06)",
-                      border: "1px solid rgba(255,255,255,0.12)",
-                      cursor: "pointer", transition: "all 150ms",
-                      fontSize: 12, fontWeight: 700, fontFamily: ff,
-                      color: "rgba(228,232,255,0.55)",
-                      letterSpacing: "0.04em",
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.09)")}
-                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
-                  >
-                    <MessageSquare style={{ width: 13, height: 13 }} />
-                    Ответить
-                  </button>
-                ) : (
-                  /* Expanded: text + voice + action */
+                {/* ── AI Recommendation block (non-task items) ── */}
+                {item && !TASK_TYPES.has(item.type) && !isActioned && (
+                  <div style={{
+                    borderRadius: 12, marginBottom: 10,
+                    background: "rgba(0,212,255,0.06)",
+                    border: "1px solid rgba(0,212,255,0.22)",
+                    padding: "10px 13px",
+                    display: "flex", flexDirection: "column", gap: 7,
+                  }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+                      <span style={{ color: "#00d4ff", fontSize: 11 }}>✦</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: "#00d4ff", letterSpacing: "0.06em", textTransform: "uppercase" }}>Рекомендую</span>
+                    </div>
+                    <div style={{ fontSize: 12, color: "rgba(228,232,255,0.78)", lineHeight: 1.55 }}>
+                      {getAiRec(item.type)}
+                    </div>
+
+                    {/* Action buttons: Запустить план + Поручить */}
+                    <div style={{ display: "flex", gap: 8, marginTop: 2 }}>
+                      <button
+                        onClick={() => {
+                          const ctx = item
+                            ? `По новости «${item.title}»${item.businessName ? ` (${item.businessName})` : ""}:\n\n${getAiRec(item.type)}`
+                            : getAiRec(item.type);
+                          onOpenTask?.(ctx);
+                        }}
+                        style={{
+                          flex: 2, height: 38, borderRadius: 11,
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                          background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)",
+                          border: "none", cursor: "pointer",
+                          fontSize: 12, fontWeight: 700, fontFamily: ff, color: "#fff",
+                          boxShadow: "0 3px 14px rgba(0,212,255,0.32)",
+                          transition: "all 150ms",
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,212,255,0.50)")}
+                        onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 3px 14px rgba(0,212,255,0.32)")}
+                      >
+                        <Play style={{ width: 12, height: 12, fill: "#fff" }} />
+                        Запустить план
+                      </button>
+                      <button
+                        onClick={() => { setReplyOpen(true); setTimeout(() => replyRef.current?.focus(), 80); }}
+                        style={{
+                          flex: 1, height: 38, borderRadius: 11,
+                          display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
+                          background: "rgba(255,255,255,0.06)",
+                          border: "1px solid rgba(255,255,255,0.14)",
+                          cursor: "pointer", fontSize: 11, fontWeight: 700, fontFamily: ff,
+                          color: "rgba(228,232,255,0.72)", transition: "all 150ms",
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.10)")}
+                        onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.06)")}
+                      >
+                        <UserCheck style={{ width: 13, height: 13 }} />
+                        Поручить
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Reply zone (expanded when Поручить clicked) */}
+                {replyOpen && (
                   <div style={{ marginBottom: 10, display: "flex", flexDirection: "column", gap: 8 }}>
-                    {/* Text area row */}
                     <div style={{
                       display: "flex", alignItems: "flex-start", gap: 6,
                       background: "rgba(255,255,255,0.04)",
@@ -526,21 +593,18 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                         rows={3}
                         value={replyText}
                         onChange={e => setReplyText(e.target.value)}
-                        placeholder="Ответить: что и кому…"
+                        placeholder="Поручить: кому и что…"
                         style={{
                           flex: 1, resize: "none", background: "none", border: "none", outline: "none",
                           fontSize: 12, fontFamily: ff, lineHeight: 1.55,
                           color: "rgba(228,232,255,0.88)", caretColor: "#00d4ff",
                         }}
                       />
-                      {/* Voice capture — appends transcribed text */}
                       <VoiceCapture
                         onText={t => setReplyText(prev => prev ? `${prev} ${t}` : t)}
                         accentColor="rgba(0,212,255,0.7)"
                       />
                     </div>
-
-                    {/* Bottom row: cancel + submit */}
                     <div style={{ display: "flex", gap: 7 }}>
                       <button
                         onClick={() => { setReplyOpen(false); setReplyText(""); }}
@@ -967,65 +1031,81 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                   </div>
                 )}
 
-                {/* 3-button row */}
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                {/* 4-button row: Назад · Напомнить завтра · Далее · 🎤 */}
+                <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
 
                   {/* ← Назад */}
                   <button
                     onClick={handlePrev}
                     disabled={safeIdx === 0}
                     style={{
-                      flex: 1, height: 34, borderRadius: 10,
+                      flex: 1, height: 36, borderRadius: 10,
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                       background: "rgba(255,255,255,0.04)",
                       border: "1px solid rgba(255,255,255,0.09)",
                       cursor: safeIdx === 0 ? "not-allowed" : "pointer",
-                      opacity: safeIdx === 0 ? 0.35 : 1,
+                      opacity: safeIdx === 0 ? 0.30 : 1,
                       fontSize: 11, fontWeight: 600, fontFamily: ff,
-                      color: "rgba(228,232,255,0.72)",
+                      color: "rgba(228,232,255,0.65)",
                       transition: "all 150ms",
                     }}
                   >
                     <ChevronLeft style={{ width: 13, height: 13 }} /> Назад
                   </button>
 
-                  {/* Вернуться позже */}
+                  {/* Напомнить завтра */}
                   <button
                     onClick={handleSnooze}
                     style={{
-                      flex: 1.2, height: 34, borderRadius: 10,
+                      flex: 1.5, height: 36, borderRadius: 10,
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
                       background: "rgba(255,255,255,0.04)",
                       border: "1px solid rgba(255,255,255,0.09)",
                       cursor: "pointer",
-                      fontSize: 11, fontWeight: 600, fontFamily: ff,
-                      color: "rgba(228,232,255,0.72)",
+                      fontSize: 10.5, fontWeight: 600, fontFamily: ff,
+                      color: "rgba(228,232,255,0.65)",
                       transition: "all 150ms",
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
                     onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.04)")}
                   >
-                    <Clock style={{ width: 12, height: 12 }} /> Позже
+                    <Clock style={{ width: 11, height: 11 }} /> Напомнить завтра
                   </button>
 
-                  {/* Далее → */}
+                  {/* Далее — secondary style */}
                   <button
                     onClick={handleSeen}
                     style={{
-                      flex: 1, height: 34, borderRadius: 10,
+                      flex: 1, height: 36, borderRadius: 10,
                       display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-                      background: "linear-gradient(135deg, #00d4ff 0%, #0099cc 100%)",
-                      border: "none",
+                      background: "rgba(255,255,255,0.07)",
+                      border: "1px solid rgba(255,255,255,0.14)",
                       cursor: "pointer",
                       fontSize: 11, fontWeight: 700, fontFamily: ff,
-                      color: "#fff",
-                      boxShadow: "0 3px 12px rgba(0,212,255,0.28)",
+                      color: "rgba(228,232,255,0.82)",
                       transition: "all 150ms",
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.boxShadow = "0 4px 18px rgba(0,212,255,0.45)")}
-                    onMouseLeave={e => (e.currentTarget.style.boxShadow = "0 3px 12px rgba(0,212,255,0.28)")}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.11)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
                   >
                     Далее <ChevronRight style={{ width: 13, height: 13 }} />
+                  </button>
+
+                  {/* 🎤 Mic */}
+                  <button
+                    onClick={() => { setReplyOpen(v => !v); setTimeout(() => replyRef.current?.focus(), 80); }}
+                    style={{
+                      width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      background: "rgba(0,212,255,0.10)",
+                      border: "1px solid rgba(0,212,255,0.30)",
+                      cursor: "pointer", transition: "all 150ms",
+                      color: "#00d4ff",
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,212,255,0.20)")}
+                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,212,255,0.10)")}
+                  >
+                    <Mic style={{ width: 14, height: 14 }} />
                   </button>
                 </div>
               </div>
