@@ -1,6 +1,6 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Globe, LayoutGrid, Brain, Link as LinkIcon, MessageSquare, ClipboardList, RefreshCcw } from "lucide-react";
+import { Globe, LayoutGrid, Brain, Link as LinkIcon, ClipboardList, RefreshCcw } from "lucide-react";
 import { useAuthContext } from "@/hooks/AuthContext";
 
 const NAV = [
@@ -8,7 +8,6 @@ const NAV = [
   { href: "/businesses",  label: "Сеть",    fullLabel: "Мои компании",      icon: LayoutGrid },
   { href: "/tasks",       label: "Задачи",  fullLabel: "Задачи",           icon: ClipboardList },
   { href: "/ai-summary",  label: "Сводка",  fullLabel: "Сводка ИИ",        icon: Brain },
-  { href: "/chat",        label: "Чат",     fullLabel: "Чат с ИИ",         icon: MessageSquare },
   { href: "/connect",     label: "Связь",   fullLabel: "Подключения",      icon: LinkIcon },
 ];
 

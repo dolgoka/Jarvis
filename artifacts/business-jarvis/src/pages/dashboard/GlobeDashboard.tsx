@@ -12,7 +12,7 @@ import { formatCurrency, formatMoney, formatNumber } from "@/lib/utils";
 import {
   Loader2, X, MapPin, User, Mail,
   Zap, ChevronDown, Newspaper, Globe as GlobeIcon, ExternalLink,
-  PanelLeft, LayoutGrid, Brain, MessageSquare, ClipboardList,
+  PanelLeft, LayoutGrid, Brain, ClipboardList,
   Link as LinkIcon, RefreshCcw, Menu, Sparkles,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
@@ -61,7 +61,6 @@ const GLOBE_NAV = [
   { href: "/businesses", label: "Мои компании",      icon: LayoutGrid },
   { href: "/tasks",      label: "Задачи",            icon: ClipboardList },
   { href: "/ai-summary", label: "Сводка ИИ",         icon: Brain },
-  { href: "/chat",       label: "Чат с ИИ",          icon: MessageSquare },
   { href: "/connect",    label: "Добавить компанию",  icon: LinkIcon },
 ] as const;
 
