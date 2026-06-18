@@ -1,5 +1,4 @@
 import { Router, type IRouter } from "express";
-import healthRouter from "./health";
 import businessesRouter from "./businesses";
 import reportsRouter from "./reports";
 import dashboardRouter from "./dashboard";
@@ -16,7 +15,6 @@ import businessCardRouter from "./businessCard";
 
 const router: IRouter = Router();
 
-router.use(healthRouter);
 router.use(businessCardRouter);
 router.use(businessesRouter);
 router.use(reportsRouter);

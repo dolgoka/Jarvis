@@ -83,3 +83,8 @@ externalPort = 3002
 
 [nix]
 channel = "stable-25_05"
+
+[userenv]
+
+[userenv.shared]
+VITE_API_TOKEN = "a49ac1668f62b286a037830d60264b8c652b5758f586c345"

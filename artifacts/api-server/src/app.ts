@@ -2,6 +2,8 @@ import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
 import router from "./routes";
+import healthRouter from "./routes/health";
+import { requireAuth } from "./middlewares/auth";
 import { logger } from "./lib/logger";
 
 const app: Express = express();
@@ -29,6 +31,10 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use("/api", router);
+// Public: health check (no token required)
+app.use("/api", healthRouter);
+
+// Protected: all other routes require a valid API token
+app.use("/api", requireAuth, router);
 
 export default app;
