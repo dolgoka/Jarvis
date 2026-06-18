@@ -6,6 +6,7 @@ import {
   useAcceptTask, useReturnTask, useGetTaskActivity,
 } from "@workspace/api-client-react";
 import { LazyTaskDistributionTree } from "@/components/tasks/TaskDistributionTree";
+import { ReviewOverlay } from "@/components/tasks/ReviewOverlay";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { LiquidFilters } from "@/components/liquid/LiquidFilters";
 import {
@@ -300,53 +301,17 @@ function AiCheckBlock({ task }: { task: Task }) {
   );
 }
 
-// ── Review card (expandable) ──────────────────────────────────────────────────
+// ── Review card (click → overlay) ────────────────────────────────────────────
 function ReviewCard({
-  task, expanded, onToggle, onDone,
+  task, onClick,
 }: {
   task: Task;
-  expanded: boolean;
-  onToggle: () => void;
-  onDone: () => void;
+  onClick: () => void;
 }) {
-  const [returning, setReturning] = useState(false);
-  const [comment, setComment] = useState("");
-  const [commentError, setCommentError] = useState("");
-
-  const { mutate: accept, isPending: isAccepting } = useAcceptTask({
-    mutation: {
-      onSuccess: () => {
-        toast.success("Задача принята — переходит в архив", { description: task.title, duration: 3500 });
-        onDone();
-      },
-      onError: () => toast.error("Не удалось принять задачу"),
-    },
-  });
-  const { mutate: returnTask, isPending: isReturning } = useReturnTask({
-    mutation: {
-      onSuccess: () => {
-        toast.success("Задача возвращена исполнителю", { description: task.title, duration: 3500 });
-        onDone();
-      },
-      onError: () => toast.error("Не удалось вернуть задачу"),
-    },
-  });
-
   const { isStale, days, staleHours } = staleInfo(task.lastActivityAt, task.priority);
   const lateDays = lateInfo(task.submittedAt, task.dueDate);
   const pMeta = PRIORITY_META[task.priority] ?? PRIORITY_META.medium!;
-  const busy = isAccepting || isReturning;
   const returnCount = task.returnCount ?? 0;
-
-  function handleAccept() {
-    accept({ params: { id: task.id } });
-  }
-  function handleReturn() {
-    if (!returning) { setReturning(true); return; }
-    if (!comment.trim()) { setCommentError("Укажите причину возврата"); return; }
-    setCommentError("");
-    returnTask({ params: { id: task.id }, data: { comment: comment.trim() } });
-  }
 
   // Stale display label
   const staleLabel = days >= 1
@@ -355,10 +320,10 @@ function ReviewCard({
 
   return (
     <div className="glass overflow-hidden" style={{ borderRadius: 16 }}>
-      {/* ── Collapsed summary ── */}
+      {/* ── Clickable summary row ── */}
       <button
         className="w-full text-left"
-        onClick={onToggle}
+        onClick={onClick}
         style={{ display: "block", padding: "14px 18px", background: "transparent", border: "none", cursor: "pointer" }}
       >
         <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
@@ -374,7 +339,6 @@ function ReviewCard({
                 {pMeta.icon} {pMeta.label}
               </span>
 
-              {/* SLA late chip — highest priority, shown before stale */}
               {lateDays !== null && (
                 <span style={{
                   display: "inline-flex", alignItems: "center", gap: 4,
@@ -429,204 +393,34 @@ function ReviewCard({
               {task.title}
             </div>
 
-            {/* Assignee + participants count */}
+            {/* Assignee name + role + participants count */}
             <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 7, color: TEXT.lo, fontSize: 12, fontFamily: HF }}>
               <User style={{ width: 12, height: 12, flexShrink: 0 }} />
-              {task.assigneeRole}
+              {task.assigneeName} · {task.assigneeRole}
               {task.watchers.length > 0 && (
                 <span style={{ display: "inline-flex", alignItems: "center", gap: 3, color: TEXT.dim }}>
                   <Users style={{ width: 11, height: 11 }} />
-                  Участники: {task.watchers.length + 1}
+                  ещё {task.watchers.length}
                 </span>
               )}
             </div>
           </div>
-          <div style={{ flexShrink: 0, paddingTop: 2 }}>
-            {expanded
-              ? <ChevronUp style={{ width: 16, height: 16, color: TEXT.dim }} />
-              : <ChevronDown style={{ width: 16, height: 16, color: TEXT.dim }} />
-            }
+          {/* Arrow hint */}
+          <div style={{
+            flexShrink: 0, paddingTop: 4,
+            fontSize: 10, color: TEXT.dim, fontFamily: HF,
+            display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 3,
+          }}>
+            <span style={{
+              padding: "2px 7px", borderRadius: 6,
+              background: `${ACCENT}10`, border: `1px solid ${ACCENT}25`,
+              color: ACCENT, fontSize: 10, fontWeight: 600,
+            }}>
+              Открыть
+            </span>
           </div>
         </div>
       </button>
-
-      {/* ── Expanded detail ── */}
-      {expanded && (
-        <div style={{ borderTop: `1px solid ${DIVIDER}`, padding: "18px 18px 20px", display: "flex", flexDirection: "column", gap: 16 }}>
-
-          {/* Body */}
-          {task.body && (
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: TEXT.dim, fontFamily: HF, marginBottom: 6 }}>
-                Суть задачи
-              </div>
-              <p style={{ fontSize: 13, color: TEXT.mid, lineHeight: 1.65, fontFamily: HF }}>{task.body}</p>
-            </div>
-          )}
-
-          {/* Assignee + watchers */}
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: TEXT.dim, fontFamily: HF, marginBottom: 8 }}>
-              {task.watchers.length > 0
-                ? `Участники: ${task.watchers.length + 1}`
-                : "Исполнитель"}
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Avatar name={task.assigneeName} size="sm" />
-                <div>
-                  <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: TEXT.dim, fontFamily: HF }}>Исполнитель</div>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: TEXT.hi, fontFamily: HF }}>{task.assigneeRole}</div>
-                </div>
-              </div>
-              {task.watchers.map(w => (
-                <div key={w.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <Avatar name={w.name} size="sm" />
-                  <div>
-                    <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: TEXT.dim, fontFamily: HF }}>Соисполнитель</div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: TEXT.mid, fontFamily: HF }}>{w.role}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* What was done (resultNote) + AI check */}
-          <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(62,217,160,0.06)", border: "1px solid rgba(62,217,160,0.16)" }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "#3ed9a0", fontFamily: HF, marginBottom: 8 }}>
-              Что сделано
-            </div>
-            {task.resultNote ? (
-              <p style={{ fontSize: 13, color: TEXT.mid, lineHeight: 1.65, fontFamily: HF, marginBottom: 12 }}>{task.resultNote}</p>
-            ) : (
-              <p style={{ fontSize: 12, color: TEXT.dim, fontFamily: HF, fontStyle: "italic", marginBottom: 12 }}>
-                Исполнитель не оставил отчёт о выполнении
-              </p>
-            )}
-            <AiCheckBlock task={task} />
-          </div>
-
-          {/* SLA detail in expanded view */}
-          {lateDays !== null && (
-            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#f0625a", fontFamily: HF }}>
-              <Clock style={{ width: 13, height: 13 }} />
-              Сдана на {lateDays} {lateDays === 1 ? "день" : lateDays < 5 ? "дня" : "дней"} позже дедлайна
-              {task.submittedAt && task.dueDate && (
-                <span style={{ color: TEXT.dim, fontSize: 11 }}>
-                  ({fmtShortDate(task.dueDate)} → {fmtShortDate(task.submittedAt)})
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Activity timeline */}
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: TEXT.dim, fontFamily: HF, marginBottom: 10 }}>
-              Хроника пути задачи
-            </div>
-            <ActivityTimeline taskId={task.id} />
-            {isStale && (
-              <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "#f0b54a", fontFamily: HF }}>
-                <AlertTriangle style={{ width: 12, height: 12 }} />
-                Ждёт вашего решения {days >= 1 ? `${days} ${days === 1 ? "день" : days < 5 ? "дня" : "дней"}` : `${staleHours} ч`}
-              </div>
-            )}
-          </div>
-
-          {/* Distribution tree */}
-          <LazyTaskDistributionTree taskId={task.id} createdBy="заказчик" />
-
-          {/* Return comment textarea */}
-          {returning && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <label style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: TEXT.dim, fontFamily: HF }}>
-                Причина возврата
-              </label>
-              <textarea
-                value={comment}
-                onChange={e => { setComment(e.target.value); setCommentError(""); }}
-                rows={3}
-                placeholder="Укажите, что нужно доработать…"
-                style={{
-                  width: "100%", resize: "none", borderRadius: 10,
-                  padding: "10px 14px", fontSize: 13, fontFamily: HF,
-                  background: "rgba(255,255,255,0.04)",
-                  border: commentError ? "1px solid rgba(240,98,90,0.5)" : "1px solid rgba(255,255,255,0.09)",
-                  color: TEXT.hi, outline: "none",
-                  caretColor: ACCENT,
-                }}
-                onFocus={e => { e.currentTarget.style.border = `1px solid ${ACCENT}60`; }}
-                onBlur={e => { e.currentTarget.style.border = commentError ? "1px solid rgba(240,98,90,0.5)" : "1px solid rgba(255,255,255,0.09)"; }}
-                disabled={busy}
-                autoFocus
-              />
-              {commentError && (
-                <p style={{ fontSize: 11, color: "#f0625a", fontFamily: HF }}>{commentError}</p>
-              )}
-            </div>
-          )}
-
-          {/* Action buttons */}
-          <div style={{ display: "flex", gap: 10 }}>
-            {returning && (
-              <button
-                onClick={() => { setReturning(false); setComment(""); setCommentError(""); }}
-                disabled={busy}
-                style={{
-                  flex: 1, minHeight: 42, borderRadius: 10,
-                  background: "rgba(255,255,255,0.04)", border: `1px solid ${DIVIDER}`,
-                  color: TEXT.lo, fontFamily: HF, fontSize: 12, fontWeight: 600,
-                  cursor: "pointer", transition: "background 150ms",
-                }}
-              >
-                Отмена
-              </button>
-            )}
-            <button
-              onClick={handleReturn}
-              disabled={busy}
-              style={{
-                flex: returning ? 2 : 1, minHeight: 42, borderRadius: 10,
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                background: returning ? "rgba(240,98,90,0.14)" : "rgba(255,255,255,0.05)",
-                border: returning ? "1px solid rgba(240,98,90,0.40)" : `1px solid ${DIVIDER}`,
-                color: returning ? "#f0625a" : TEXT.lo,
-                fontFamily: HF, fontSize: 12, fontWeight: 700,
-                cursor: busy ? "not-allowed" : "pointer", transition: "all 150ms",
-                opacity: busy && isReturning ? 0.6 : 1,
-              }}
-            >
-              {isReturning
-                ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
-                : <RotateCcw style={{ width: 14, height: 14 }} />
-              }
-              {returning ? "Подтвердить возврат" : "Вернуть"}
-            </button>
-            {!returning && (
-              <button
-                onClick={handleAccept}
-                disabled={busy}
-                style={{
-                  flex: 2, minHeight: 42, borderRadius: 10,
-                  display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-                  background: "linear-gradient(135deg, #3ed9a0 0%, #2ab87f 100%)",
-                  border: "none", color: "#06111f",
-                  fontFamily: HF, fontSize: 13, fontWeight: 700,
-                  cursor: busy ? "not-allowed" : "pointer",
-                  boxShadow: "0 4px 14px rgba(62,217,160,0.28)",
-                  opacity: isAccepting ? 0.6 : 1, transition: "opacity 150ms",
-                }}
-              >
-                {isAccepting
-                  ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
-                  : <CheckCircle2 style={{ width: 15, height: 15 }} />
-                }
-                Принять
-              </button>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -921,7 +715,7 @@ function SectionHeader({
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export default function TasksPage() {
   const [composerOpen, setComposerOpen] = useState(false);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [overlayTask, setOverlayTask] = useState<Task | null>(null);
   const [activeCollapsed, setActiveCollapsed] = useState(true);
 
   const { data: tasks, isLoading, refetch } = useListTasks();
@@ -997,9 +791,7 @@ export default function TasksPage() {
               <ReviewCard
                 key={t.id}
                 task={t}
-                expanded={expandedId === t.id}
-                onToggle={() => setExpandedId(expandedId === t.id ? null : t.id)}
-                onDone={() => { setExpandedId(null); refetch(); }}
+                onClick={() => setOverlayTask(t)}
               />
             ))}
           </section>
@@ -1035,6 +827,15 @@ export default function TasksPage() {
 
       {composerOpen && typedPeople.length > 0 && (
         <TaskComposer people={typedPeople} onClose={() => setComposerOpen(false)} onCreated={() => refetch()} />
+      )}
+
+      {overlayTask && (
+        <ReviewOverlay
+          task={overlayTask as any}
+          people={typedPeople}
+          onClose={() => setOverlayTask(null)}
+          onDone={() => { setOverlayTask(null); refetch(); }}
+        />
       )}
     </Shell>
   );

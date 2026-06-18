@@ -208,6 +208,7 @@ router.get("/tasks/tree", async (req, res): Promise<void> => {
       id: t.id,
       title: t.title,
       assigneeRole: assignee?.role ?? "—",
+      assigneeName: assignee?.name ?? "—",
       status: t.status,
       acceptedAt: (t as any).acceptedAt ? (t as any).acceptedAt.toISOString() : null,
       lastActivityAt: t.lastActivityAt.toISOString(),
@@ -917,7 +918,21 @@ router.post("/tasks/ai-check", async (req, res): Promise<void> => {
       messages: [
         {
           role: "system",
-          content: `Ты — помощник для проверки выполненных задач. Сравни суть задачи с отчётом исполнителя и напиши ОДИН краткий вывод (до 15 слов). Если всё в порядке — добавь ✓. Если есть проблемы — добавь ⚠. Отвечай строго в формате JSON: {"verdict": "..."}`,
+          content: `Ты — помощник для проверки выполненных задач. Сравни суть задачи с отчётом исполнителя.
+
+Верни JSON строго такого вида:
+{
+  "verdict": "краткий вывод до 15 слов, с ✓ если всё ок или ⚠ если есть проблемы",
+  "checklist": [
+    { "item": "что требовалось (кратко, до 8 слов)", "status": "ok" },
+    { "item": "другое требование", "status": "partial" }
+  ]
+}
+
+Для checklist: извлеки 3–5 ключевых требований из текста задачи. Для каждого оцени статус по отчёту:
+- "ok" = выполнено чётко и полно (✓)
+- "partial" = выполнено частично или поверхностно (?)
+Если отчёта нет — все ставь "partial".`,
         },
         {
           role: "user",
@@ -929,8 +944,14 @@ router.post("/tasks/ai-check", async (req, res): Promise<void> => {
     });
 
     const raw = completion.choices[0]?.message?.content ?? "{}";
-    const parsed = JSON.parse(raw) as { verdict?: string };
-    res.json({ verdict: parsed.verdict ?? "ИИ: результат проверен ✓" });
+    const parsed = JSON.parse(raw) as { verdict?: string; checklist?: Array<{ item: string; status: string }> };
+    res.json({
+      verdict: parsed.verdict ?? "ИИ: результат проверен ✓",
+      checklist: (parsed.checklist ?? []).map(c => ({
+        item: c.item,
+        status: c.status === "ok" ? "ok" : "partial",
+      })),
+    });
   } catch (err) {
     console.error("[AI] ai-check error:", err);
     res.status(500).json({ error: "Не удалось выполнить AI-проверку" });
