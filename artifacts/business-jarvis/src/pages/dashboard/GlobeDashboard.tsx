@@ -968,13 +968,13 @@ export default function GlobeDashboard() {
         {!selectedBusiness && !cardBusinessId && (
           <button
             onClick={() => setAiPanelOpen(v => !v)}
-            className="hidden md:flex items-center gap-2 fixed z-50 transition-all duration-200"
+            className="hidden md:flex items-center justify-center fixed z-50 transition-all duration-200"
             style={{
               bottom: 28,
               right: 28,
-              height: 44,
-              paddingInline: 18,
-              borderRadius: 999,
+              width: 40,
+              height: 40,
+              borderRadius: 12,
               background: aiPanelOpen
                 ? "rgba(0,212,255,0.18)"
                 : "rgba(4,8,20,0.90)",
@@ -985,14 +985,11 @@ export default function GlobeDashboard() {
                 : "1px solid rgba(0,212,255,0.22)",
               color: aiPanelOpen ? "var(--jarvis-accent)" : "rgba(0,212,255,0.75)",
               boxShadow: aiPanelOpen
-                ? "0 0 24px rgba(0,212,255,0.25), 0 4px 20px rgba(0,0,0,0.4)"
-                : "0 4px 20px rgba(0,0,0,0.4)",
-              fontFamily: HF,
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: "0.06em",
+                ? "0 0 20px rgba(0,212,255,0.22), 0 4px 16px rgba(0,0,0,0.4)"
+                : "0 4px 16px rgba(0,0,0,0.4)",
               cursor: "pointer",
             }}
+            title={aiPanelOpen ? "Закрыть AI" : "Открыть AI ассистент"}
             onMouseEnter={e => {
               if (!aiPanelOpen) {
                 (e.currentTarget as HTMLButtonElement).style.background = "rgba(0,212,255,0.12)";
@@ -1006,8 +1003,7 @@ export default function GlobeDashboard() {
               }
             }}
           >
-            <Sparkles className="w-3.5 h-3.5" />
-            {aiPanelOpen ? "Закрыть" : "AI"}
+            <Sparkles className="w-4 h-4" />
           </button>
         )}
       </div>
