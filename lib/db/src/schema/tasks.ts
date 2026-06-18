@@ -26,6 +26,8 @@ export const tasksTable = pgTable("tasks", {
   parentId: integer("parent_id"),
   returnComment: text("return_comment"),
   resultNote: text("result_note"),
+  submittedAt: timestamp("submitted_at"),
+  returnCount: integer("return_count").notNull().default(0),
   lastActivityAt: timestamp("last_activity_at").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   feedItemId: integer("feed_item_id"),

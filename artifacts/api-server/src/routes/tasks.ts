@@ -53,6 +53,8 @@ function taskToResponse(
     parentId: task.parentId ?? null,
     returnComment: task.returnComment ?? null,
     resultNote: task.resultNote ?? null,
+    submittedAt: task.submittedAt ? task.submittedAt.toISOString() : null,
+    returnCount: task.returnCount ?? 0,
     lastActivityAt: task.lastActivityAt.toISOString(),
     createdAt: task.createdAt.toISOString(),
   };
@@ -282,9 +284,13 @@ router.post("/tasks/return", async (req, res): Promise<void> => {
   }
 
   const now = new Date();
+
+  const existingTask = await db.select({ returnCount: tasksTable.returnCount }).from(tasksTable).where(eq(tasksTable.id, id)).limit(1);
+  const newReturnCount = (existingTask[0]?.returnCount ?? 0) + 1;
+
   const [updated] = await db
     .update(tasksTable)
-    .set({ status: "returned", returnComment: comment.trim(), lastActivityAt: now })
+    .set({ status: "returned", returnComment: comment.trim(), returnCount: newReturnCount, lastActivityAt: now })
     .where(eq(tasksTable.id, id))
     .returning();
 
@@ -365,6 +371,7 @@ router.post("/tasks/submit", async (req, res): Promise<void> => {
     .set({
       status: "review",
       resultNote: resultNote?.trim() ?? null,
+      submittedAt: now,
       lastActivityAt: now,
     })
     .where(eq(tasksTable.id, id))
@@ -381,7 +388,6 @@ router.post("/tasks/submit", async (req, res): Promise<void> => {
     taskId: id,
     type: "submitted",
     actorRole: assignee?.role ?? "assignee",
-    text: resultNote?.trim() ?? undefined,
     at: now,
   });
 
@@ -888,6 +894,47 @@ router.post("/tasks/escalate", async (req, res): Promise<void> => {
   });
 
   res.json(taskToResponse(task, assignee, allPeople));
+});
+
+router.post("/tasks/ai-check", async (req, res): Promise<void> => {
+  const { taskBody, resultNote } = req.body as { taskBody?: string; resultNote?: string };
+  if (!taskBody?.trim()) {
+    res.status(400).json({ error: "taskBody is required" });
+    return;
+  }
+
+  let client;
+  try {
+    client = makeClient();
+  } catch {
+    res.status(503).json({ error: "Ключ OpenAI не настроен" });
+    return;
+  }
+
+  try {
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: `Ты — помощник для проверки выполненных задач. Сравни суть задачи с отчётом исполнителя и напиши ОДИН краткий вывод (до 15 слов). Если всё в порядке — добавь ✓. Если есть проблемы — добавь ⚠. Отвечай строго в формате JSON: {"verdict": "..."}`,
+        },
+        {
+          role: "user",
+          content: `Задача: ${taskBody.trim()}\n\nЧто сделано: ${resultNote?.trim() || "(исполнитель не оставил отчёт)"}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.3,
+    });
+
+    const raw = completion.choices[0]?.message?.content ?? "{}";
+    const parsed = JSON.parse(raw) as { verdict?: string };
+    res.json({ verdict: parsed.verdict ?? "ИИ: результат проверен ✓" });
+  } catch (err) {
+    console.error("[AI] ai-check error:", err);
+    res.status(500).json({ error: "Не удалось выполнить AI-проверку" });
+  }
 });
 
 export default router;
