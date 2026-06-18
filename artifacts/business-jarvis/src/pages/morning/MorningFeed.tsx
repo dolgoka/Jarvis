@@ -710,27 +710,6 @@ export default function MorningFeed() {
         <div style={{ height: 28 }} />
       </div>
 
-      {/* ── Global mic (bottom-right, for voice commands) ── */}
-      {mode === "idle" && (
-        <button
-          onClick={globalMic.toggle}
-          title="Голосовая команда"
-          style={{
-            position: "fixed", bottom: 24, right: 24, zIndex: 10,
-            width: 50, height: 50, borderRadius: "50%", border: "none",
-            background: globalMic.isRecording ? "rgba(240,98,90,0.2)" : "rgba(255,255,255,0.06)",
-            color: globalMic.isRecording ? "#f0625a" : "rgba(255,255,255,0.35)",
-            boxShadow: globalMic.isRecording ? "0 0 0 6px rgba(240,98,90,0.15)" : "0 2px 12px rgba(0,0,0,0.3)",
-            cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            transition: "all 0.2s",
-          }}
-        >
-          {globalMic.isTranscribing
-            ? <Loader2 size={20} style={{ animation: "spin 1s linear infinite" }} />
-            : globalMic.isRecording ? <MicOff size={20} /> : <Mic size={20} />}
-        </button>
-      )}
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }

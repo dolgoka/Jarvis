@@ -1090,22 +1090,6 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                     Далее <ChevronRight style={{ width: 13, height: 13 }} />
                   </button>
 
-                  {/* 🎤 Mic */}
-                  <button
-                    onClick={() => { setReplyOpen(v => !v); setTimeout(() => replyRef.current?.focus(), 80); }}
-                    style={{
-                      width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      background: "rgba(0,212,255,0.10)",
-                      border: "1px solid rgba(0,212,255,0.30)",
-                      cursor: "pointer", transition: "all 150ms",
-                      color: "#00d4ff",
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = "rgba(0,212,255,0.20)")}
-                    onMouseLeave={e => (e.currentTarget.style.background = "rgba(0,212,255,0.10)")}
-                  >
-                    <Mic style={{ width: 14, height: 14 }} />
-                  </button>
                 </div>
               </div>
             </div>
