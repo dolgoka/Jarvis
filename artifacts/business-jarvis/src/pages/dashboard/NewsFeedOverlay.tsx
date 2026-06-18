@@ -453,7 +453,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                 {/* Body (expandable) */}
                 <div
                   style={{
-                    fontSize: 12.5, color: "rgba(228,232,255,0.52)", lineHeight: 1.65,
+                    fontSize: 12.5, color: "rgba(228,232,255,0.78)", lineHeight: 1.65,
                     overflow: expanded ? undefined : "hidden",
                     display: expanded ? undefined : "-webkit-box",
                     WebkitLineClamp: expanded ? undefined : 3,
@@ -475,9 +475,9 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
 
                 {/* Source + time */}
                 <div style={{ display: "flex", alignItems: "center", gap: 5, marginTop: 10 }}>
-                  <span style={{ fontSize: 10, color: "rgba(228,232,255,0.25)" }}>{item?.sourceLabel}</span>
-                  <span style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(228,232,255,0.18)", flexShrink: 0 }} />
-                  <span style={{ fontSize: 10, color: "rgba(228,232,255,0.25)" }}>{item ? timeAgo(item.createdAt) : ""}</span>
+                  <span style={{ fontSize: 11, color: "rgba(228,232,255,0.60)", fontWeight: 500 }}>{item?.sourceLabel}</span>
+                  <span style={{ width: 2, height: 2, borderRadius: "50%", background: "rgba(228,232,255,0.40)", flexShrink: 0 }} />
+                  <span style={{ fontSize: 11, color: "rgba(228,232,255,0.60)" }}>{item ? timeAgo(item.createdAt) : ""}</span>
                 </div>
               </div>
 
@@ -544,7 +544,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                           background: "rgba(255,255,255,0.04)",
                           border: "1px solid rgba(255,255,255,0.09)",
                           cursor: "pointer", fontSize: 11, fontWeight: 600, fontFamily: ff,
-                          color: "rgba(228,232,255,0.40)", transition: "all 150ms",
+                          color: "rgba(228,232,255,0.70)", transition: "all 150ms",
                         }}
                       >
                         Отмена
@@ -976,7 +976,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                       cursor: safeIdx === 0 ? "not-allowed" : "pointer",
                       opacity: safeIdx === 0 ? 0.35 : 1,
                       fontSize: 11, fontWeight: 600, fontFamily: ff,
-                      color: "rgba(228,232,255,0.50)",
+                      color: "rgba(228,232,255,0.72)",
                       transition: "all 150ms",
                     }}
                   >
@@ -993,7 +993,7 @@ export default function NewsFeedOverlay({ onClose, onSelectBusiness, onOpenTask 
                       border: "1px solid rgba(255,255,255,0.09)",
                       cursor: "pointer",
                       fontSize: 11, fontWeight: 600, fontFamily: ff,
-                      color: "rgba(228,232,255,0.45)",
+                      color: "rgba(228,232,255,0.72)",
                       transition: "all 150ms",
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = "rgba(255,255,255,0.07)")}
