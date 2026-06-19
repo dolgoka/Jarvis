@@ -866,8 +866,8 @@ export default function GlobeDashboard() {
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
               {([["USD/EUR", "0.924"], ["USD/RUB", "89.4"], ["BTC", "$67 240"]] as const).map(([k, v]) => (
                 <div key={k} style={{ display: "flex", justifyContent: "space-between", gap: 22 }}>
-                  <span style={{ fontSize: 11, color: "hsl(var(--muted-foreground))", fontFamily: HF }}>{k}</span>
-                  <span style={{ fontSize: 11, color: "rgba(228,232,255,0.38)", fontFamily: HF, fontVariantNumeric: "tabular-nums" }}>{v}</span>
+                  <span style={{ fontSize: 11, color: "rgba(255,255,255,0.75)", fontFamily: HF }}>{k}</span>
+                  <span style={{ fontSize: 11, color: "#ffffff", fontFamily: HF, fontVariantNumeric: "tabular-nums" }}>{v}</span>
                 </div>
               ))}
             </div>
