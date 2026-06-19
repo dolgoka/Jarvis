@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useAiChat } from "@workspace/api-client-react";
-import { X, Send, Loader2, Sparkles } from "lucide-react";
+import { X, Send, Loader2, Sparkles, Mic, MicOff } from "lucide-react";
 import { AiAnswer } from "@/components/ui/AiAnswer";
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
@@ -21,8 +21,40 @@ interface AIChatSidePanelProps {
 export function AIChatSidePanel({ open, onClose }: AIChatSidePanelProps) {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+
+  const startRecording = useCallback(() => {
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const rec = new SpeechRecognition();
+    rec.lang = "ru-RU";
+    rec.continuous = false;
+    rec.interimResults = true;
+
+    rec.onresult = (e: SpeechRecognitionEvent) => {
+      const transcript = Array.from(e.results)
+        .map(r => r[0].transcript)
+        .join("");
+      setInput(transcript);
+    };
+
+    rec.onend = () => setIsRecording(false);
+    rec.onerror = () => setIsRecording(false);
+
+    recognitionRef.current = rec;
+    rec.start();
+    setIsRecording(true);
+  }, []);
+
+  const stopRecording = useCallback(() => {
+    recognitionRef.current?.stop();
+    setIsRecording(false);
+  }, []);
 
   const { mutate: sendMessage, isPending } = useAiChat({
     mutation: {
@@ -229,38 +261,67 @@ export function AIChatSidePanel({ open, onClose }: AIChatSidePanelProps) {
 
         {/* Input bar */}
         <div
-          className="flex items-center gap-3 px-4 py-3 flex-shrink-0"
-          style={{
-            borderTop: "1px solid rgba(255,255,255,0.06)",
-            background: "rgba(0,0,0,0.25)",
-          }}
+          className="flex-shrink-0"
+          style={{ borderTop: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.25)" }}
         >
-          <input
-            ref={inputRef}
-            type="text"
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKey}
-            placeholder="Спросить про компанию…"
-            disabled={isPending}
-            className="flex-1 bg-transparent outline-none text-sm min-w-0"
-            style={{ color: "rgba(228,232,255,0.85)", fontFamily: HF }}
-          />
-          <button
-            onClick={() => handleSend()}
-            disabled={!input.trim() || isPending}
-            className="flex items-center justify-center w-8 h-8 flex-shrink-0 transition-all disabled:opacity-20"
-            style={{
-              borderRadius: 8,
-              background: input.trim() ? "rgba(0,212,255,0.14)" : "transparent",
-              border: input.trim() ? "1px solid rgba(0,212,255,0.30)" : "1px solid transparent",
-              color: ACCENT,
-              cursor: "pointer",
-            }}
-            aria-label="Отправить"
-          >
-            <Send className="w-3.5 h-3.5" />
-          </button>
+          {isRecording && (
+            <div
+              className="flex items-center gap-2 px-4 pt-2.5"
+            >
+              <span
+                className="inline-block w-2 h-2 rounded-full"
+                style={{ background: "#ff4444", boxShadow: "0 0 8px #ff4444", animation: "pulse 1s infinite" }}
+              />
+              <span className="text-xs" style={{ color: "rgba(228,232,255,0.45)", fontFamily: HF }}>
+                Говорите…
+              </span>
+            </div>
+          )}
+          <div className="flex items-center gap-2 px-4 py-3">
+            <input
+              ref={inputRef}
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKey}
+              placeholder={isRecording ? "Слушаю…" : "Спросить про компанию…"}
+              disabled={isPending}
+              className="flex-1 bg-transparent outline-none text-sm min-w-0"
+              style={{ color: "rgba(228,232,255,0.85)", fontFamily: HF }}
+            />
+            {/* Mic button */}
+            <button
+              onClick={isRecording ? stopRecording : startRecording}
+              disabled={isPending}
+              className="flex items-center justify-center w-8 h-8 flex-shrink-0 transition-all disabled:opacity-20"
+              style={{
+                borderRadius: 8,
+                background: isRecording ? "rgba(255,68,68,0.18)" : "rgba(255,255,255,0.05)",
+                border: isRecording ? "1px solid rgba(255,68,68,0.45)" : "1px solid rgba(255,255,255,0.10)",
+                color: isRecording ? "#ff6666" : "rgba(228,232,255,0.40)",
+                cursor: "pointer",
+              }}
+              aria-label={isRecording ? "Остановить запись" : "Говорить"}
+            >
+              {isRecording ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+            </button>
+            {/* Send button */}
+            <button
+              onClick={() => handleSend()}
+              disabled={!input.trim() || isPending}
+              className="flex items-center justify-center w-8 h-8 flex-shrink-0 transition-all disabled:opacity-20"
+              style={{
+                borderRadius: 8,
+                background: input.trim() ? "rgba(0,212,255,0.14)" : "transparent",
+                border: input.trim() ? "1px solid rgba(0,212,255,0.30)" : "1px solid transparent",
+                color: ACCENT,
+                cursor: "pointer",
+              }}
+              aria-label="Отправить"
+            >
+              <Send className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
       </div>
     </>
