@@ -1,6 +1,8 @@
 import express, { type Express } from "express";
 import cors from "cors";
 import pinoHttp from "pino-http";
+import path from "path";
+import { existsSync } from "fs";
 import router from "./routes";
 import healthRouter from "./routes/health";
 import { requireAuth } from "./middlewares/auth";
@@ -31,13 +33,13 @@ app.use(
     },
   }),
 );
-// Allow any *.replit.dev or *.replit.app origin (covers dev preview + deployed app)
-// plus any explicit origins listed in CORS_ORIGINS.
+// Allow Replit domains, Railway domains, and any explicit origins in CORS_ORIGINS.
 const explicitOrigins = (process.env.CORS_ORIGINS ?? "").split(",").map(s => s.trim()).filter(Boolean);
 app.use(cors({
   origin: (origin, cb) => {
     if (!origin) return cb(null, true); // same-origin / server-to-server
     if (origin.endsWith(".replit.dev") || origin.endsWith(".replit.app")) return cb(null, true);
+    if (origin.endsWith(".railway.app") || origin.endsWith(".up.railway.app")) return cb(null, true);
     if (explicitOrigins.includes(origin)) return cb(null, true);
     cb(new Error("Not allowed by CORS"));
   },
@@ -51,5 +53,17 @@ app.use("/api", healthRouter);
 
 // Protected: all other routes require a valid API token
 app.use("/api", requireAuth, router);
+
+// Serve the built frontend in production (Railway / any non-Replit host)
+// The frontend is built by nixpacks into artifacts/business-jarvis/dist/public
+const frontendDist = path.resolve(__dirname, "../../business-jarvis/dist/public");
+if (existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  // SPA fallback — send index.html for any non-API route
+  app.get("*", (_req, res) => {
+    res.sendFile(path.join(frontendDist, "index.html"));
+  });
+  logger.info({ frontendDist }, "[static] Serving frontend build");
+}
 
 export default app;

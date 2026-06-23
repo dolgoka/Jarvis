@@ -17,14 +17,6 @@ export async function initDb(): Promise<void> {
     return;
   }
 
-  const isReplit = !!process.env["REPL_ID"];
-  const isDev = process.env["NODE_ENV"] === "development";
-
-  if (!isReplit && !isDev) {
-    logger.info("[dbInit] Production env — schema & seed handled by deploy pipeline");
-    return;
-  }
-
   logger.info("[dbInit] Pushing schema...");
   try {
     run("pnpm --filter @workspace/db run push-force");
