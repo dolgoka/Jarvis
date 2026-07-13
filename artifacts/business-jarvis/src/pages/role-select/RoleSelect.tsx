@@ -97,7 +97,7 @@ function PersonPicker({
                   cursor: "pointer", transition: "all 150ms", fontFamily: HF,
                 }}
               >
-                {/* Avatar with initials */}
+                {/* Avatar with initials — first letter first name + first letter last name */}
                 <div style={{
                   width: 38, height: 38, borderRadius: 10, flexShrink: 0,
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -105,18 +105,22 @@ function PersonPicker({
                   border: `1.5px solid ${isHov ? "rgba(91,139,208,0.50)" : "rgba(91,139,208,0.25)"}`,
                   fontSize: 12, fontWeight: 700, color: isHov ? "#5b8bd0" : "rgba(91,139,208,0.65)",
                 }}>
-                  {person.role.slice(0, 2).toUpperCase()}
+                  {(() => {
+                    const parts = person.name.trim().split(" ");
+                    return parts.length >= 2
+                      ? (parts[0]![0]! + parts[1]![0]!).toUpperCase()
+                      : person.name.slice(0, 2).toUpperCase();
+                  })()}
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* Name primary, role secondary */}
                   <div style={{ fontSize: 14, fontWeight: 600, color: isHov ? "rgba(228,232,255,0.92)" : "rgba(228,232,255,0.72)", lineHeight: 1.2 }}>
-                    {person.role}
+                    {person.name}
                   </div>
-                  {person.groupLabel && (
-                    <div style={{ fontSize: 11, color: "rgba(228,232,255,0.30)", marginTop: 2 }}>
-                      {person.groupLabel}
-                    </div>
-                  )}
+                  <div style={{ fontSize: 11, color: "rgba(228,232,255,0.30)", marginTop: 2 }}>
+                    {person.role}{person.groupLabel ? ` · ${person.groupLabel}` : ""}
+                  </div>
                 </div>
 
                 {person.isInnerCircle && (
