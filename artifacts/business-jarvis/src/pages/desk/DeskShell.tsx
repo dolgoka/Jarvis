@@ -146,7 +146,7 @@ export function DeskShell() {
                 href={href}
                 style={{
                   display: "flex", alignItems: "center", gap: 10,
-                  padding: "0 10px", height: 40, borderRadius: 10,
+                  padding: "0 10px", height: 44, borderRadius: 10,
                   color: active ? "var(--jarvis-accent)" : "rgba(228,232,255,0.42)",
                   background: active ? "rgba(0,60,100,0.32)" : "transparent",
                   border: active ? "1px solid rgba(0,212,255,0.20)" : "1px solid transparent",
@@ -183,7 +183,7 @@ export function DeskShell() {
             onClick={switchRole}
             style={{
               display: "flex", alignItems: "center", gap: 10,
-              width: "100%", padding: "0 10px", height: 38, borderRadius: 10,
+              width: "100%", padding: "0 10px", height: 44, borderRadius: 10,
               color: "rgba(228,232,255,0.22)", background: "none",
               border: "none", cursor: "pointer",
               fontSize: 12, fontFamily: HF, fontWeight: 500,

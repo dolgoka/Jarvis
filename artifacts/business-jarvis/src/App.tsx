@@ -22,7 +22,6 @@ const AiChat            = lazy(() => import("./pages/chat/AiChat"));
 const TasksPage         = lazy(() => import("./pages/tasks/TasksPage"));
 const MorningFeed       = lazy(() => import("./pages/morning/MorningFeed"));
 const MyTasksPage       = lazy(() => import("./pages/tasks/MyTasksPage"));
-const DirectorBoardPage = lazy(() => import("./pages/tasks/DirectorBoardPage"));
 
 const PageFallback = (
   <div style={{ width: "100%", height: "100dvh", background: "#0b0b12" }} />
