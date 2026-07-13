@@ -7,12 +7,13 @@ import {
 import { useAuthContext } from "@/hooks/AuthContext";
 import { useListPeople } from "@workspace/api-client-react";
 
-const DeskToday   = lazy(() => import("./DeskToday"));
-const DeskPeople  = lazy(() => import("./DeskPeople"));
-const DeskDeals   = lazy(() => import("./DeskDeals"));
-const DeskTasks   = lazy(() => import("./DeskTasks"));
-const DeskControl = lazy(() => import("./DeskControl"));
-const DeskDiary   = lazy(() => import("./DeskDiary"));
+const DeskToday        = lazy(() => import("./DeskToday"));
+const DeskPeople       = lazy(() => import("./DeskPeople"));
+const DeskPersonDetail = lazy(() => import("./DeskPersonDetail"));
+const DeskDeals        = lazy(() => import("./DeskDeals"));
+const DeskTasks        = lazy(() => import("./DeskTasks"));
+const DeskControl      = lazy(() => import("./DeskControl"));
+const DeskDiary        = lazy(() => import("./DeskDiary"));
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 
@@ -199,12 +200,13 @@ export function DeskShell() {
       <main style={{ flex: 1, minWidth: 0, overflow: "auto", position: "relative" }}>
         <Suspense fallback={PageFallback}>
           <Switch>
-            <Route path="/"        component={DeskToday}   />
-            <Route path="/people"  component={DeskPeople}  />
-            <Route path="/deals"   component={DeskDeals}   />
-            <Route path="/tasks"   component={DeskTasks}   />
-            <Route path="/control" component={DeskControl} />
-            <Route path="/diary"   component={DeskDiary}   />
+            <Route path="/"           component={DeskToday}        />
+            <Route path="/people"     component={DeskPeople}       />
+            <Route path="/people/:id" component={DeskPersonDetail} />
+            <Route path="/deals"      component={DeskDeals}        />
+            <Route path="/tasks"      component={DeskTasks}        />
+            <Route path="/control"    component={DeskControl}      />
+            <Route path="/diary"      component={DeskDiary}        />
           </Switch>
         </Suspense>
       </main>
