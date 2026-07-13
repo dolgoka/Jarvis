@@ -11,6 +11,7 @@ import { LiquidFilters } from "./components/liquid/LiquidFilters";
 import RoleSelect from "./pages/role-select/RoleSelect";
 import RoleStub from "./pages/role-select/RoleStub";
 import { ThemeProvider } from "./hooks/ThemeContext";
+import { DeskShell }    from "./pages/desk/DeskShell";
 
 const GlobeDashboard    = lazy(() => import("./pages/dashboard/GlobeDashboard"));
 const BusinessList      = lazy(() => import("./pages/businesses/BusinessList"));
@@ -77,13 +78,13 @@ function AppInner() {
     );
   }
 
-  /* ── Director view ── */
+  /* ── Director view — Desk shell ── */
   if (effectiveRole === "director") {
     return (
       <AuthContext.Provider value={{ switchRole, personId }}>
-        <Suspense fallback={PageFallback}>
-          <DirectorBoardPage />
-        </Suspense>
+        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+          <DeskShell />
+        </WouterRouter>
       </AuthContext.Provider>
     );
   }

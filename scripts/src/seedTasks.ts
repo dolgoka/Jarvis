@@ -72,6 +72,14 @@ const PEOPLE = [
     isInnerCircle: false,
     isAssistant: false,
   },
+  {
+    name: "Александр",
+    role: "GR-директор",
+    groupLabel: "Внешние связи",
+    isInnerCircle: true,
+    isAssistant: false,
+    cLevel: "GR",
+  },
 ];
 
 async function seedPeople(): Promise<typeof peopleTable.$inferSelect[]> {
