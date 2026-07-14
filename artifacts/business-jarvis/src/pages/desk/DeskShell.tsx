@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import { Switch, Route, Link, useLocation } from "wouter";
 import {
   Sun, Users, Briefcase, ClipboardList,
-  Radio, BookOpen, RefreshCcw, CalendarDays, Loader2,
+  Radio, BookOpen, RefreshCcw, CalendarDays, Loader2, BarChart2,
 } from "lucide-react";
 import { useAuthContext } from "@/hooks/AuthContext";
 import { useListPeople } from "@workspace/api-client-react";
@@ -14,6 +14,7 @@ const DeskDeals        = lazy(() => import("./DeskDeals"));
 const DeskTasks        = lazy(() => import("./DeskTasks"));
 const DeskControl      = lazy(() => import("./DeskControl"));
 const DeskDiary        = lazy(() => import("./DeskDiary"));
+const DeskNumbers      = lazy(() => import("./DeskNumbers"));
 
 const HF = "'Hanken Grotesk', system-ui, sans-serif";
 
@@ -178,8 +179,22 @@ export function DeskShell() {
           })}
         </nav>
 
-        {/* Switch role */}
+        {/* Numbers shortcut + Switch role */}
         <div style={{ padding: "8px 10px 14px", borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+          <Link
+            href="/numbers"
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              width: "100%", padding: "0 10px", height: 38, borderRadius: 10,
+              color: "rgba(228,232,255,0.32)", background: "none",
+              border: "none", cursor: "pointer",
+              fontSize: 12, fontFamily: HF, fontWeight: 500,
+              textDecoration: "none", marginBottom: 2,
+            }}
+          >
+            <BarChart2 style={{ width: 13, height: 13 }} />
+            Цифры
+          </Link>
           <button
             onClick={switchRole}
             style={{
@@ -207,6 +222,7 @@ export function DeskShell() {
             <Route path="/tasks"      component={DeskTasks}        />
             <Route path="/control"    component={DeskControl}      />
             <Route path="/diary"      component={DeskDiary}        />
+            <Route path="/numbers"    component={DeskNumbers}      />
           </Switch>
         </Suspense>
       </main>
